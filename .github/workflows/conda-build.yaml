@@ -12,7 +12,9 @@ on:
       - ci_cd
 
   schedule:
-    - cron: '42 * * * *'
+    # run at 2:42 UTC every Saturday
+    # ref: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onschedule
+    - cron: '42 2 * * 6'
 
 
 jobs:
