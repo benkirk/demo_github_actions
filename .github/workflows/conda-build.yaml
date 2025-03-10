@@ -7,10 +7,13 @@ on:
         description: 'Build Simple OpenMP Hello World'
         type: boolean
         default: true
-
   push:
     branches:
       - ci_cd
+
+  schedule:
+    - cron: '42 * * * *'
+
 
 jobs:
   build-from-conda-env:
