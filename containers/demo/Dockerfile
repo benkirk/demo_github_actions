@@ -11,7 +11,15 @@ RUN cat /etc/os-release
 #-------------------------------------------------------------------------------
 FROM base-image AS final
 #-------------------------------------------------------------------------------
-RUN /container/extras/build_osu-micro-benchmarks.sh
+RUN cat <<EOF > /container/my_buildscript.sh
+\${MPICXX} -o /container/speak.exe /container/extras/hello_world_mpi.C -fopenmp
+EOF
+
+RUN echo "Building my application..." \
+    && chmod +x /container/my_buildscript.sh \
+    && /container/my_buildscript.sh \
+    && ldd /container/speak.exe \
+    && docker-clean
 
 # Local Variables:
 # mode: sh
