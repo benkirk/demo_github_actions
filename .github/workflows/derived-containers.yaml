@@ -35,16 +35,28 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64
-          #driver: remote
 
       - name: Pre-build Query Docker Environment
         run: |
           which docker
           docker --version
-          #docker buildx create --use --driver=remote tcp://buildkitd.arc-systems.svc.ml-cluster.local:1234
           docker buildx ls
           docker buildx inspect
           docker buildx du
 
-    # container:
-    #   image:  benjaminkirk/cisldev-almalinux9-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+      - name: Build My Container
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: demorepo/myapp-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+          context: containers/demo
+          file: containers/demo/Dockerfile
+          build-args: |
+            BASE_IMAGE=benjaminkirk/cisldev-almalinux9-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+          target: final
+
+      - name: Post-build Query Docker Images
+        run: |
+          which docker
+          docker --version
+          docker image ls
