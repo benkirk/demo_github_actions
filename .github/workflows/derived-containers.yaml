@@ -1,0 +1,54 @@
+name: Build Derived Container Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-env:
+    name: Checking Self-Hosted Runner
+    runs-on: ubuntu-latest
+
+  build-my-containers:
+    strategy:
+      fail-fast: true
+      matrix:
+        compiler: [gcc12]
+        mpi:      [openmpi]
+
+    name: Build Inside Container
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: Interrogate Environment
+        run: |
+          cat /etc/os-release
+          uname -a
+          env | sort
+          df -h
+          lscpu
+
+      - name: Set up Docker BuildX
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64
+          #driver: remote
+
+      - name: Pre-build Query Docker Environment
+        run: |
+          which docker
+          docker --version
+          #docker buildx create --use --driver=remote tcp://buildkitd.arc-systems.svc.ml-cluster.local:1234
+          docker buildx ls
+          docker buildx inspect
+          docker buildx du
+
+    # container:
+    #   image:  benjaminkirk/cisldev-almalinux9-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
