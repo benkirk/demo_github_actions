@@ -5,12 +5,19 @@ on:
     inputs:
       hello_world:
         description: 'Build Simple MPI Hello World'
-        default: true
         type: boolean
+        default: true
+
       dart:
         description: 'Build Simple Dart Example'
-        default: true
         type: boolean
+        default: true
+      dart_version:
+        description: 'DART Release Version'
+        required: true
+        type: string
+        default: 'v11.8.8'
+
   push:
     branches:
       - ci_cd
@@ -78,7 +85,8 @@ jobs:
           mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
           ldd ./hello_world_mpi
 
-      - name: Dart
+      - name: DART
         if: ${{ inputs.dart }}
         run: |
+          export DART_VERSION="${{ inputs.dart_version }}"
           ./scripts/build_dart.sh
