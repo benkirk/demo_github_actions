@@ -59,4 +59,8 @@ jobs:
         run: |
           which docker
           docker --version
+          docker buildx ls
+          docker buildx inspect
+          docker buildx du
           docker image ls
+          docker run --user root demorepo/myapp-${{ matrix.compiler }}-${{ matrix.mpi }}:latest /container/speak.exe
