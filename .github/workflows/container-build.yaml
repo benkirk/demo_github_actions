@@ -37,12 +37,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        compiler: [nvhpc, oneapi, aocc, gcc12]
+        compiler: [nvhpc, oneapi, aocc, gcc12, gcc13]
         mpi:      [mpich, openmpi]
 
         include:
-          - compiler: oneapi
-            extra_hw_args: '-qopenmp'
+          - mpi: openmpi
+            extra_mpiexec_args: '--allow-run-as-root'
 
     name: Build Inside Container
     runs-on: ubuntu-latest
@@ -94,7 +94,7 @@ jobs:
           mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
           ldd ./hello_world_mpi
           export OMP_NUM_THREADS=2
-          mpiexec -n 2 ./hello_world_mpi || true
+          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
 
       - name: DART
         if: ${{ inputs.dart }}
