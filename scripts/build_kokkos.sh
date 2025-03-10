@@ -75,7 +75,7 @@ cmake \
     --build ./build \
     --parallel ${MAKE_J_PROCS:-$(nproc)}
 
-OMP_PROC_BIND=spread ./build/example
+OMP_PROC_BIND=spread ./build/example 4096
 
 
 exit 0
