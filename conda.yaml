@@ -1,0 +1,17 @@
+# create a minimal conda env, suitable for compiling some demo examples.
+
+name: demo-github-actions
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - autoconf
+  - automake
+  - cmake
+  - compilers
+  - curl
+  - libtool
+  - make
+  - openmpi

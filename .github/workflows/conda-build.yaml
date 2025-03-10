@@ -1,0 +1,70 @@
+name: Conda Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      hello_world:
+        description: 'Build Simple OpenMP Hello World'
+        type: boolean
+        default: true
+
+  push:
+    branches:
+      - ci_cd
+
+jobs:
+  build-from-conda-env:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest]
+    name: Build With Conda
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: demo-github-actions
+          environment-file: conda.yaml
+
+      - name: Interrogate Environment
+        run: |
+          env | sort
+          conda list
+          df -h
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          nvidia-smi 2>/dev/null || true
+          echo && echo && echo
+          echo '----------------------------------------------------------------'
+          echo && echo && echo
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
+          echo "FC=${FC}"
+          echo "F77=${F77}"
+          echo
+          echo "CFLAGS=${CFLAGS}"
+          echo "CPPFLAGS=${CPPFLAGS}"
+          echo "CXXFLAGS=${CXXFLAGS}"
+          echo "FCFLAGS=${FCFLAGS}"
+          echo "F77FLAGS=${F77FLAGS}"
+          mpicc --version 2>/dev/null || true
+
+      - name: List Source Tree
+        run: |
+          pwd
+          find * ! -type d
+
+      - name: Hello World
+        if: ${{ inputs.hello_world }}
+        run: |
+          ${CXX} -o ./hello_world_openmp src/hello_world_openmp.C -fopenmp
+          OMP_NUM_THREADS=4 ./hello_world_openmp
