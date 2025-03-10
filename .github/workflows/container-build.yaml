@@ -18,6 +18,16 @@ on:
         type: string
         default: 'v11.8.8'
 
+      kokkos:
+        description: 'Build Simple Kokkos Example'
+        type: boolean
+        default: false
+      kokkos_version:
+        description: 'KOKKOS Release Version'
+        required: true
+        type: string
+        default: '4.5.01'
+
   push:
     branches:
       - ci_cd
@@ -46,7 +56,7 @@ jobs:
     steps:
       - name: Interrogate Environment
         run: |
-          env
+          env | sort
           cat /container/config_env.sh
           df -h
           cat /etc/os-release 2>/dev/null || true
@@ -66,7 +76,6 @@ jobs:
           echo "FCFLAGS=${FCFLAGS}"
           echo "F77FLAGS=${F77FLAGS}"
           export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
-          which mpicc
           mpicc --version 2>/dev/null || true
 
       - uses: actions/checkout@v4
@@ -84,9 +93,16 @@ jobs:
         run: |
           mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
           ldd ./hello_world_mpi
+          mpiexec -n 2 OMP_NUM_THREADS=2 ./hello_world_mpi
 
       - name: DART
         if: ${{ inputs.dart }}
         run: |
           export DART_VERSION="${{ inputs.dart_version }}"
           ./scripts/build_dart.sh
+
+      - name: Kokkos
+        if: ${{ inputs.kokkos }}
+        run: |
+          export KOKKOS_VERSION="${{ inputs.kokkos_version }}"
+          ./scripts/build_kokkos.sh
