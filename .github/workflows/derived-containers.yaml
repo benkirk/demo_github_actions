@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-env:
-    name: Checking Self-Hosted Runner
-    runs-on: ubuntu-latest
-
   build-my-containers:
     strategy:
       fail-fast: true
