@@ -69,7 +69,7 @@ jobs:
           pwd
           find * ! -type d
 
+      if ${{ inputs.hello_world }}
       - name: Hello World
-        if ${{ inputs.hello_world }}
         run: |
           echo "Hello, World!"
