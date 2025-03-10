@@ -16,6 +16,11 @@ event.
 The file [`.github/workflows/conda-build.yaml`](https://github.com/benkirk/demo_github_actions/blob/main/.github/workflows/conda-build.yaml)
 builds a simple application within a `conda` environment on `x86_64` and `aarch64` platforms.
 
+### Building a Container Image with `docker`
+
+The file [`.github/workflows/derived-containers.yaml`](https://github.com/benkirk/demo_github_actions/blob/main/.github/workflows/derived-containers.yaml)
+builds a container image from `containers/demo/Dockerfile`.
+
 ---
 **Latest Status**
 
