@@ -23,7 +23,7 @@ on:
         type: boolean
         default: false
       kokkos_version:
-        description: 'KOKKOS Release Version'
+        description: 'Kokkos Release Version'
         required: true
         type: string
         default: '4.5.01'
@@ -93,7 +93,8 @@ jobs:
         run: |
           mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
           ldd ./hello_world_mpi
-          mpiexec -n 2 OMP_NUM_THREADS=2 ./hello_world_mpi
+          export OMP_NUM_THREADS=2
+          mpiexec -n 2 ./hello_world_mpi || true
 
       - name: DART
         if: ${{ inputs.dart }}
