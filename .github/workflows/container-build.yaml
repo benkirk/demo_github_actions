@@ -7,6 +7,9 @@ on:
         description: 'Build Simple MPI Hello World'
         default: true
         type: boolean
+        description: 'Build Simple Dart Example'
+        default: true
+        type: boolean
   push:
     branches:
       - ci_cd
@@ -21,8 +24,7 @@ jobs:
 
         include:
           - compiler: oneapi
-            extra_osu_args: 'CFLAGS="-qopenmp"'
-            extra_hpcg_args: 'CXXFLAGS="-O3 -qopenmp"'
+            extra_hw_args: '-qopenmp'
 
     name: Build Inside Container
     runs-on: ubuntu-latest
@@ -59,7 +61,7 @@ jobs:
           which mpicc
           mpicc --version 2>/dev/null || true
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
           fetch-depth: 0
@@ -72,4 +74,10 @@ jobs:
       - name: Hello World
         if: ${{ inputs.hello_world }}
         run: |
-          echo "Hello, World!"
+          mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
+          ldd ./hello_world_mpi
+
+      - name: Dart
+        if: ${{ inputs.dart }}
+        run: |
+          ./scripts/build_dart.sh
