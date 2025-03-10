@@ -1,2 +1,3 @@
-# demo_github_actions
+# Demonstration of GitHub Actions
+
 GitHub Actions Demo
