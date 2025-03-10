@@ -21,3 +21,4 @@ builds a simple application within a `conda` environment on `x86_64` and `aarch6
 
 [![Container Build](https://github.com/benkirk/demo_github_actions/actions/workflows/container-build.yaml/badge.svg)](https://github.com/benkirk/demo_github_actions/actions/workflows/container-build.yaml)
 [![Conda Build](https://github.com/benkirk/demo_github_actions/actions/workflows/conda-build.yaml/badge.svg)](https://github.com/benkirk/demo_github_actions/actions/workflows/conda-build.yaml)
+[![Build Derived Container Images](https://github.com/benkirk/demo_github_actions/actions/workflows/derived-containers.yaml/badge.svg)](https://github.com/benkirk/demo_github_actions/actions/workflows/derived-containers.yaml)
