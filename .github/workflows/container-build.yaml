@@ -1,0 +1,75 @@
+name: Container Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      hello_world:
+        description: 'Build Simple MPI Hello World'
+        default: true
+        type: boolean
+  push:
+    branches:
+      - ci_cd
+
+jobs:
+  build-from-container-env:
+    strategy:
+      fail-fast: true
+      matrix:
+        compiler: [nvhpc, oneapi, aocc, gcc12]
+        mpi:      [mpich, openmpi]
+
+        include:
+          - compiler: oneapi
+            extra_osu_args: 'CFLAGS="-qopenmp"'
+            extra_hpcg_args: 'CXXFLAGS="-O3 -qopenmp"'
+
+    name: Build Inside Container
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    container:
+      image:  benjaminkirk/cisldev-almalinux9-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+
+    steps:
+      - name: Interrogate Environment
+        run: |
+          env
+          cat /container/config_env.sh
+          df -h
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          nvidia-smi 2>/dev/null || true
+          echo && echo && echo
+          echo '----------------------------------------------------------------'
+          echo && echo && echo
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
+          echo "FC=${FC}"
+          echo "F77=${F77}"
+          echo
+          echo "CFLAGS=${CFLAGS}"
+          echo "CPPFLAGS=${CPPFLAGS}"
+          echo "CXXFLAGS=${CXXFLAGS}"
+          echo "FCFLAGS=${FCFLAGS}"
+          echo "F77FLAGS=${F77FLAGS}"
+          export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
+          which mpicc
+          mpicc --version 2>/dev/null || true
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: List Source Tree
+        run: |
+          pwd
+          find * ! -type d
+
+      - name: Hello World
+        if ${{ inputs.hello_world }}
+        run: |
+          echo "Hello, World!"
