@@ -19,6 +19,7 @@ RUN echo "Building my application..." \
     && chmod +x /container/my_buildscript.sh \
     && /container/my_buildscript.sh \
     && ldd /container/speak.exe \
+    && /container/speak.exe \
     && docker-clean
 
 # Local Variables:
