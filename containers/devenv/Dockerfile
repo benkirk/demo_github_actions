@@ -11,6 +11,7 @@ ARG COMPILERS_PREREQ="${BASE_OS}"
 ARG CUDA_PREREQ="compilers"
 ARG ROCM_PREREQ="compilers"
 ARG MINIFORGE_PREREQ="${BASE_OS}"
+ARG OS_GCC_PREREQ="${BASE_OS}"
 
 ARG MPI_PREREQ="compilers"
 
@@ -302,13 +303,31 @@ SHELL ["/bin/bash", "--login", "-c"]
 
 
 
+
+#-------------------------------------------------------------------------------
+# miniforge stage
+FROM ${MINIFORGE_PREREQ} AS miniforge
+#-------------------------------------------------------------------------------
+RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
+    && mkdir -p /container/miniforge \
+    && env \
+    && cd /tmp && wget --quiet "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" \
+    && bash ./Miniforge3-$(uname)-$(uname -m).sh -b -u -p /container/miniforge \
+    && ln -sf /container/miniforge/etc/profile.d/conda.sh /container/init-conda.sh \
+    && echo -e "\n# Miniforge" >> /container/config_env.sh \
+    && echo "source /container/miniforge/etc/profile.d/conda.sh" >> /container/config_env.sh \
+    && source /container/init-conda.sh \
+    && conda --version \
+    && docker-clean
+
+
 ################################################################################
 # Part 2: Compilers and other toolkits
 ################################################################################
 
 #-------------------------------------------------------------------------------
 # GCC compilers stage (from base OS)
-FROM ${BASE_OS} AS os-gcc
+FROM ${OS_GCC_PREREQ} AS os-gcc
 RUN echo "Selecting base OS gcc compilers" \
     && echo -e "\n# GCC compilers libraries (base OS)" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \
@@ -319,7 +338,6 @@ RUN echo "Selecting base OS gcc compilers" \
     && docker-clean
 LABEL compiler="gcc"
 LABEL gcc="os-gcc"
-
 
 
 #-------------------------------------------------------------------------------
@@ -609,73 +627,55 @@ LABEL cuda="${CUDA_VERSION}"
 
 
 
-#-------------------------------------------------------------------------------
-# ROCm stages
-FROM ${ROCM_PREREQ} AS rocm
-#-------------------------------------------------------------------------------
-ARG ROCM_VERSION="6.2.3"
-ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
-ENV ROCM_HOME="${ROCM_HOME}"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
-    && echo "Rocm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
-    && source /etc/os-release \
-    && cd /tmp \
-    && env \
-    && mkdir -p ${ROCM_HOME:-/container/rocm} \
-    && case "|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" in \
-        *"|platform:el8|"*) \
-            ${PKG_INSTALL_CMD} https://repo.radeon.com/amdgpu/${ROCM_VERSION}/el/8.10/main/x86_64/amdgpu-install-6.2.60203-2044426.el8.noarch.rpm \
-            ;; \
-        *"|platform:el9|"*) \
-            ${PKG_INSTALL_CMD} https://repo.radeon.com/amdgpu/${ROCM_VERSION}/el/9.4/main/x86_64/amdgpu-install-6.2.60203-2044426.el9.noarch.rpm \
-            ;; \
-        *"|leap|"*) \
-            echo -e "gpgcheck = off\nrepo_gpgcheck = off\npkg_gpgcheck = off" >> /etc/zypp/zypp.conf \
-            && zypper --gpg-auto-import-keys --no-gpg-checks --non-interactive \install https://repo.radeon.com/amdgpu/${ROCM_VERSION}/sle/15.6/main/x86_64/amdgpu-install-6.2.60203-2044426.noarch.rpm \
-            && zypper --gpg-auto-import-keys --no-gpg-checks --non-interactive update \
-            ;; \
-        *"|noble|"*) \
-            curl -sO https://repo.radeon.com/amdgpu-install/${ROCM_VERSION}/ubuntu/noble/amdgpu-install_6.2.60203-1_all.deb \
-            && ${PKG_INSTALL_CMD} ./amdgpu-install*.deb \
-            ;; \
-        *) \
-            exit 1 \
-            ;; \
-       esac \
-    && amdgpu-install --help \
-    && amdgpu-install --list-usecase \
-    && amdgpu-install -y --usecase=hiplibsdk --no-dkms --accept-eula --dryrun \
-    && amdgpu-install -y --usecase=hiplibsdk --no-dkms --accept-eula \
-    && echo -e "\n# ROCM ${ROCM_VERSION}" >> /container/config_env.sh \
-    && echo "export ROCM_VERSION=${ROCM_VERSION}" >> /container/config_env.sh \
-    && echo "export PATH=${ROCM_HOME}/bin:\${PATH}" >> /container/config_env.sh \
-    && echo "export CPATH=${ROCM_HOME}/include:\${CPATH}" >> /container/config_env.sh \
-    && echo "export LIBRARY_PATH=${ROCM_HOME}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${ROCM_HOME}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "${ROCM_HOME}/lib" >> /etc/ld.so.conf.d/rocm-${ROCM_VERSION}.conf \
-    && ldconfig --verbose \
-    && docker-clean
-# amdgpu-install -y --usecase=rocmdevtools,hiplibsdk --no-dkms --accept-eula --dryrun
-ARG TOGGLE_WITH_ROCM="--with-rocm=${ROCM_HOME} --with-hip=${ROCM_HOME}"
-LABEL rocm="${ROCM_VERSION}"
-
-
-
-#-------------------------------------------------------------------------------
-# miniforge stage
-FROM ${MINIFORGE_PREREQ} AS miniforge
-#-------------------------------------------------------------------------------
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
-    && mkdir -p /container/miniforge \
-    && env \
-    && cd /tmp && wget --quiet "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" \
-    && bash ./Miniforge3-$(uname)-$(uname -m).sh -b -u -p /container/miniforge \
-    && ln -sf /container/miniforge/etc/profile.d/conda.sh /container/init-conda.sh \
-    && echo -e "\n# Miniforge" >> /container/config_env.sh \
-    && echo "source /container/miniforge/etc/profile.d/conda.sh" >> /container/config_env.sh \
-    && source /container/init-conda.sh \
-    && conda --version \
-    && docker-clean
+# #-------------------------------------------------------------------------------
+# # ROCm stages
+# FROM ${ROCM_PREREQ} AS rocm
+# #-------------------------------------------------------------------------------
+# ARG ROCM_VERSION="6.2.3"
+# ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
+# ENV ROCM_HOME="${ROCM_HOME}"
+# RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
+#     && echo "Rocm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
+#     && source /etc/os-release \
+#     && cd /tmp \
+#     && env \
+#     && mkdir -p ${ROCM_HOME:-/container/rocm} \
+#     && case "|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" in \
+#         *"|platform:el8|"*) \
+#             ${PKG_INSTALL_CMD} https://repo.radeon.com/amdgpu/${ROCM_VERSION}/el/8.10/main/x86_64/amdgpu-install-6.2.60203-2044426.el8.noarch.rpm \
+#             ;; \
+#         *"|platform:el9|"*) \
+#             ${PKG_INSTALL_CMD} https://repo.radeon.com/amdgpu/${ROCM_VERSION}/el/9.4/main/x86_64/amdgpu-install-6.2.60203-2044426.el9.noarch.rpm \
+#             ;; \
+#         *"|leap|"*) \
+#             echo -e "gpgcheck = off\nrepo_gpgcheck = off\npkg_gpgcheck = off" >> /etc/zypp/zypp.conf \
+#             && zypper --gpg-auto-import-keys --no-gpg-checks --non-interactive \install https://repo.radeon.com/amdgpu/${ROCM_VERSION}/sle/15.6/main/x86_64/amdgpu-install-6.2.60203-2044426.noarch.rpm \
+#             && zypper --gpg-auto-import-keys --no-gpg-checks --non-interactive update \
+#             ;; \
+#         *"|noble|"*) \
+#             curl -sO https://repo.radeon.com/amdgpu-install/${ROCM_VERSION}/ubuntu/noble/amdgpu-install_6.2.60203-1_all.deb \
+#             && ${PKG_INSTALL_CMD} ./amdgpu-install*.deb \
+#             ;; \
+#         *) \
+#             exit 1 \
+#             ;; \
+#        esac \
+#     && amdgpu-install --help \
+#     && amdgpu-install --list-usecase \
+#     && amdgpu-install -y --usecase=hiplibsdk --no-dkms --accept-eula --dryrun \
+#     && amdgpu-install -y --usecase=hiplibsdk --no-dkms --accept-eula \
+#     && echo -e "\n# ROCM ${ROCM_VERSION}" >> /container/config_env.sh \
+#     && echo "export ROCM_VERSION=${ROCM_VERSION}" >> /container/config_env.sh \
+#     && echo "export PATH=${ROCM_HOME}/bin:\${PATH}" >> /container/config_env.sh \
+#     && echo "export CPATH=${ROCM_HOME}/include:\${CPATH}" >> /container/config_env.sh \
+#     && echo "export LIBRARY_PATH=${ROCM_HOME}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
+#     && echo "#export LD_LIBRARY_PATH=${ROCM_HOME}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
+#     && echo "${ROCM_HOME}/lib" >> /etc/ld.so.conf.d/rocm-${ROCM_VERSION}.conf \
+#     && ldconfig --verbose \
+#     && docker-clean
+# # amdgpu-install -y --usecase=rocmdevtools,hiplibsdk --no-dkms --accept-eula --dryrun
+# ARG TOGGLE_WITH_ROCM="--with-rocm=${ROCM_HOME} --with-hip=${ROCM_HOME}"
+# LABEL rocm="${ROCM_VERSION}"
 
 
 

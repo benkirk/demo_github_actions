@@ -16,7 +16,7 @@ on:
           - noble
 
       include_conda:
-        description: 'Include Miniconda3'
+        description: 'Include Conda (Miniforge)'
         #required: false
         type: boolean
 
@@ -38,7 +38,7 @@ on:
 
       mpi:
         description: 'MPI'
-        required: true
+        required: false
         default: openmpi
         type: choice
         options:
@@ -100,6 +100,8 @@ jobs:
           tags: demorepo/myimg:latest
           context: containers/devenv
           file: containers/devenv/Dockerfile
-          #build-args: |
-          #  BASE_IMAGE=benjaminkirk/cisldev-almalinux9-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+          build-args: |
+            BASE_OS=${{ inputs.os }}
+            FINAL_TARGET=os-gcc
+            OS_GCC_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
