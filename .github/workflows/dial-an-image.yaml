@@ -22,8 +22,8 @@ on:
 
       compiler:
         description: 'Compiler'
-        required: true
-        default: os-gcc
+        required: false
+        #default: os-gcc
         type: choice
         options:
           - os-gcc
@@ -109,7 +109,7 @@ jobs:
           target: final
 
       - name: Build BaseOS + Additional Compiler
-        if: ${{ inputs.compiler != 'os-gcc' }}
+        if: ${{ inputs.compiler != '' }}
         uses: docker/build-push-action@v6
         with:
           push: false
