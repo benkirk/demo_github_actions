@@ -22,8 +22,8 @@ on:
 
       compiler:
         description: 'Compiler'
-        required: false
-        #default: os-gcc
+        required: true
+        default: os-gcc
         type: choice
         options:
           - os-gcc
@@ -39,14 +39,13 @@ on:
 
       mpi:
         description: 'MPI'
-        required: false
+        required: true
         default: openmpi
         type: choice
         options:
           - opempi
           - mpich
           - mpich3
-          - none
 
       mpi_version:
         description: 'MPI Version'
@@ -121,4 +120,23 @@ jobs:
             FINAL_TARGET=${{ inputs.compiler }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
+          target: final
+
+      - name: Build BaseOS + Additional Compiler + MPI
+        if: ${{ inputs.mpi != '' }}
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: demorepo/myimg:latest
+          context: containers/devenv
+          file: containers/devenv/Dockerfile
+          build-args: |
+            BASE_OS=${{ inputs.os }}
+            FINAL_TARGET=fftlibs
+            COMPILER_FAMILY=${{ inputs.compiler_family }}
+            GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
+            COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
+            MPI_FAMILY=${{ inputs.mpi }}
+            MPICH_VERSION=${{ inputs.mpi == 'mpich' && inputs.mpi_version || 'none' }}
+            OPENMPI_VERSION=${{ inputs.mpi == 'openmpi' && inputs.mpi_version || 'none' }}
           target: final
