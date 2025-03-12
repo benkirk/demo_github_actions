@@ -43,7 +43,7 @@ on:
         default: openmpi
         type: choice
         options:
-          - opempi
+          - openmpi
           - mpich
           - mpich3
 
