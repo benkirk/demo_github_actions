@@ -133,7 +133,7 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=fftlibs
-            COMPILER_FAMILY=${{ inputs.compiler_family }}
+            COMPILER_FAMILY=${{ inputs.compiler }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
             MPI_FAMILY=${{ inputs.mpi }}
