@@ -117,6 +117,6 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=${{ inputs.compiler }}
-            GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || None }}
+            GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
