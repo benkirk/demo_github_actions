@@ -22,10 +22,11 @@ on:
 
       compiler:
         description: 'Compiler'
-        required: false
-        default: gcc
+        required: true
+        default: os-gcc
         type: choice
         options:
+          - os-gcc
           - gcc
           - oneapi
           - aocc
@@ -45,6 +46,7 @@ on:
           - opempi
           - mpich
           - mpich3
+          - none
 
       mpi_version:
         description: 'MPI Version'
@@ -106,8 +108,8 @@ jobs:
             OS_GCC_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
 
-      #if: ${{ inputs.compiler }}
-      - name: Build BaseOS + Compiler
+      - name: Build BaseOS + Additional Compiler
+        if: ${{ inputs.compiler != 'os-gcc' }}
         uses: docker/build-push-action@v6
         with:
           push: false
