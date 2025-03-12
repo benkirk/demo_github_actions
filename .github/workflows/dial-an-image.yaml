@@ -106,7 +106,7 @@ jobs:
             OS_GCC_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
 
-      if: ${{ inputs.compiler }}
+      #if: ${{ inputs.compiler }}
       - name: Build BaseOS + Compiler
         uses: docker/build-push-action@v6
         with:
