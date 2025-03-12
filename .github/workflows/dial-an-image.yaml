@@ -92,3 +92,14 @@ jobs:
           docker buildx ls
           docker buildx inspect
           docker buildx du
+
+      - name: Build My Container
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: demorepo/myimg:latest
+          context: containers/devenv
+          file: containers/devenv/Dockerfile
+          #build-args: |
+          #  BASE_IMAGE=benjaminkirk/cisldev-almalinux9-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+          target: final
