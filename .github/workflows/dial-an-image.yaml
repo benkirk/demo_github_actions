@@ -17,12 +17,12 @@ on:
 
       include_conda:
         description: 'Include Conda (Miniforge)'
-        #required: false
+        required: false
         type: boolean
 
       compiler:
         description: 'Compiler'
-        required: true
+        required: false
         default: gcc
         type: choice
         options:
@@ -93,7 +93,7 @@ jobs:
           docker buildx inspect
           docker buildx du
 
-      - name: Build My Container
+      - name: Build BaseOS
         uses: docker/build-push-action@v6
         with:
           push: false
@@ -104,4 +104,19 @@ jobs:
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=os-gcc
             OS_GCC_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
+          target: final
+
+      if: ${{ inputs.compiler }}
+      - name: Build BaseOS + Compiler
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: demorepo/myimg:latest
+          context: containers/devenv
+          file: containers/devenv/Dockerfile
+          build-args: |
+            BASE_OS=${{ inputs.os }}
+            FINAL_TARGET=${{ inputs.compiler }}
+            GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || None }}
+            COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final

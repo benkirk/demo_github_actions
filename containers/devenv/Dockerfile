@@ -396,9 +396,6 @@ FROM ${COMPILERS_PREREQ} AS oneapi
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/intel-oneapi-compilers/package.py
 # Intel compilers do not -rpath their own libraries, relying instead on LD_LIBRARY_PATH
 # We'd rather not need that, so add to the system search path
-#ARG ONEAPI_VERSION="2023.2.4"
-#ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/b00a4b0e-bd21-41fa-ab34-19e8e2a77c5a/l_dpcpp-cpp-compiler_p_2023.2.4.24_offline.sh"
-#ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5bfaa204-689d-4bf1-9656-e37e35ea3fc2/l_fortran-compiler_p_2023.2.4.31_offline.sh"
 ARG ONEAPI_VERSION="2024.2.1"
 ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/74587994-3c83-48fd-b963-b707521a63f4/l_dpcpp-cpp-compiler_p_2024.2.1.79_offline.sh"
 ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5e7b0f1c-6f25-4cc8-94d7-3a527e596739/l_fortran-compiler_p_2024.2.1.80_offline.sh"
