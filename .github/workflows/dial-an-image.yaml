@@ -15,6 +15,11 @@ on:
           - tumbleweed
           - noble
 
+      include_conda:
+        description: 'Include Miniconda3'
+        #required: false
+        type: boolean
+
       compiler:
         description: 'Compiler'
         required: true
@@ -26,6 +31,11 @@ on:
           - aocc
           - nvhpc
 
+      compiler_version:
+        description: 'Compiler Version'
+        #required: true
+        type: string
+
       mpi:
         description: 'MPI'
         required: true
@@ -35,6 +45,11 @@ on:
           - opempi
           - mpich
           - mpich3
+
+      mpi_version:
+        description: 'MPI Version'
+        #required: true
+        type: string
 
 jobs:
 
