@@ -43,8 +43,9 @@ curl -sSL https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmar
            LIBS="${CUDA_LIBS} ${ROCM_LIBS}" \
     && make --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make install-strip \
-    && (docker-clean || true)
+    && docker-clean
 
-#cd ${topdir}
-#mpiexec -n 2 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bibw
-#mpiexec -n 6 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/collective/osu_alltoallw
+cd ${topdir}
+
+mpiexec -n 2 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bibw
+mpiexec -n 6 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/collective/osu_alltoallw
