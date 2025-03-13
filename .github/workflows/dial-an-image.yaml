@@ -80,6 +80,11 @@ jobs:
           env | sort
           df -h
           lscpu
+          echo "inputs.os: " ${{ inputs.os }}
+          echo "inputs.compiler: " ${{ inputs.compiler }}
+          echo "inputs.compiler_version: " ${{ inputs.compiler_version }}
+          echo "inputs.mpi: " ${{ inputs.mpi }}
+          echo "inputs.mpi_version: " ${{ inputs.mpi_version }}
 
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
