@@ -24,7 +24,7 @@ on:
       compiler:
         description: 'Compiler'
         type: choice
-        #required: true
+        required: true
         #default: os-gcc
         options:
           - os-gcc
@@ -49,7 +49,7 @@ on:
       mpi:
         description: 'MPI'
         type: choice
-        #required: true
+        required: true
         #default: openmpi
         options:
           - openmpi
