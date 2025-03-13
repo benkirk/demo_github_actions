@@ -46,7 +46,7 @@ on:
 
       mpi:
         description: 'MPI'
-        required: true
+        #required: true
         #default: openmpi
         type: choice
         options:
