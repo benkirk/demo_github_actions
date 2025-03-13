@@ -327,7 +327,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
 
 #-------------------------------------------------------------------------------
 # GCC compilers stage (from base OS)
-FROM ${OS_GCC_PREREQ} AS os-gcc
+FROM ${COMPILERS_PREREQ} AS os-gcc
 RUN echo "Selecting base OS gcc compilers" \
     && echo -e "\n# GCC compilers libraries (base OS)" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \

@@ -5,9 +5,9 @@ on:
     inputs:
       os:
         description: 'Base OS'
+        type: choice
         required: true
         default: almalinux9
-        type: choice
         options:
           - almalinux8
           - almalinux9
@@ -17,48 +17,51 @@ on:
 
       include_conda:
         description: 'Include Conda (Miniforge)'
+        type: boolean
         required: false
         default: false
-        type: boolean
-
-      include_cuda:
-        description: 'Include CUDA'
-        required: false
-        default: false
-        type: boolean
 
       compiler:
         description: 'Compiler'
-        required: true
-        default: os-gcc
         type: choice
+        #required: true
+        #default: os-gcc
         options:
           - os-gcc
           - gcc
           - oneapi
           - aocc
           - nvhpc
+          - '<disabled>'
 
       compiler_version:
         description: 'Compiler Version'
-        #required: true
         type: string
+        default: ''
+        #required: true
+
+      include_cuda:
+        description: 'Include CUDA'
+        type: boolean
+        required: false
+        default: false
 
       mpi:
         description: 'MPI'
+        type: choice
         #required: true
         #default: openmpi
-        type: choice
         options:
-          - ''
           - openmpi
           - mpich
           - mpich3
+          - '<disabled>'
 
       mpi_version:
         description: 'MPI Version'
-        #required: true
         type: string
+        default: ''
+        #required: true
 
 jobs:
 
@@ -118,12 +121,13 @@ jobs:
           file: containers/devenv/Dockerfile
           build-args: |
             BASE_OS=${{ inputs.os }}
+            COMPILER_FAMILY=os-gcc
+            COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
             FINAL_TARGET=os-gcc
-            OS_GCC_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
 
       - name: Build BaseOS + Additional Compiler
-        if: ${{ inputs.compiler != '' }}
+        if: ${{ inputs.compiler != '<disabled>' }}
         uses: docker/build-push-action@v6
         with:
           push: false
@@ -133,9 +137,9 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             COMPILER_FAMILY=${{ inputs.compiler }}
-            FINAL_TARGET=${{ inputs.include_cuda && 'cuda' || inputs.compiler }}
-            GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
+            GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
+            FINAL_TARGET=${{ inputs.include_cuda && 'cuda' || inputs.compiler }}
           target: final
 
       # - name: Build BaseOS + Additional Compiler + MPI
