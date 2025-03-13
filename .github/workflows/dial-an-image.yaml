@@ -92,6 +92,8 @@ jobs:
           echo "inputs.compiler_version: " \'${{ inputs.compiler_version }}\'
           echo "inputs.mpi: " \'${{ inputs.mpi }}\'
           echo "inputs.mpi_version: " \'${{ inputs.mpi_version }}\'
+          echo "inputs.include_cuda: " \'${{ inputs.include_cuda }}\'
+          echo "inputs.include_conda: " \'${{ inputs.include_conda }}\'
 
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
@@ -129,10 +131,9 @@ jobs:
           file: containers/devenv/Dockerfile
           build-args: |
             BASE_OS=${{ inputs.os }}
-            FINAL_TARGET=${{ inputs.compiler }}
+            FINAL_TARGET=${{ inputs.include_cuda && 'cuda' || inputs.compiler }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
-            COMPILERS_PREREQ=${{ inputs.include_cuda && 'cuda' || inputs.include_conda && 'miniforge' || inputs.os }}
-            CUDA_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
+            COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
 
       # - name: Build BaseOS + Additional Compiler + MPI
