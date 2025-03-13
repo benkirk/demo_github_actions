@@ -145,7 +145,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
+          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:latest
           cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:buildcache-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
@@ -163,7 +163,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
+          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:latest
           cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:buildcache-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
