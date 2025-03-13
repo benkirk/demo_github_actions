@@ -589,8 +589,10 @@ RUN echo "Settiing ${COMPILER_FAMILY} compiler layer"
 # Cuda stages
 FROM ${CUDA_PREREQ} AS cuda
 #-------------------------------------------------------------------------------
-ARG CUDA_VERSION="12.6"
-ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run"
+#ARG CUDA_VERSION="12.6"
+#ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run"
+ARG CUDA_VERSION="12.8"
+ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
