@@ -91,13 +91,18 @@ jobs:
           env | sort
           df -h
           lscpu
-          echo "inputs.os: " \'${{ inputs.os }}\'
-          echo "inputs.compiler: " \'${{ inputs.compiler }}\'
-          echo "inputs.compiler_version: " \'${{ inputs.compiler_version }}\'
-          echo "inputs.mpi: " \'${{ inputs.mpi }}\'
-          echo "inputs.mpi_version: " \'${{ inputs.mpi_version }}\'
-          echo "inputs.include_cuda: " \'${{ inputs.include_cuda }}\'
-          echo "inputs.include_conda: " \'${{ inputs.include_conda }}\'
+          cat << EOF > build_inputs.txt
+          os: \'${{ inputs.os }}\'
+          compiler: \'${{ inputs.compiler }}\'
+          compiler_version: \'${{ inputs.compiler_version }}\'
+          mpi: \'${{ inputs.mpi }}\'
+          mpi_version: \'${{ inputs.mpi_version }}\'
+          include_cuda: \'${{ inputs.include_cuda }}\'
+          include_conda: \'${{ inputs.include_conda }}\'
+          EOF
+          cat build_inputs.txt
+          shasum build_inputs.txt > build_sha.txt
+          cat build_sha.txt
 
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
