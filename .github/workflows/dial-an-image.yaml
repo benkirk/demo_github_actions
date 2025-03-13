@@ -142,7 +142,6 @@ jobs:
           tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
           cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:buildcache
           cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:buildcache,mode=max
-          tags: demorepo/myimg:latest
           context: containers/devenv
           file: containers/devenv/Dockerfile
           build-args: |
