@@ -92,17 +92,18 @@ jobs:
           df -h
           lscpu
           cat << EOF > build_inputs.txt
-          os: \'${{ inputs.os }}\'
-          compiler: \'${{ inputs.compiler }}\'
-          compiler_version: \'${{ inputs.compiler_version }}\'
-          mpi: \'${{ inputs.mpi }}\'
-          mpi_version: \'${{ inputs.mpi_version }}\'
-          include_cuda: \'${{ inputs.include_cuda }}\'
-          include_conda: \'${{ inputs.include_conda }}\'
+          os: '${{ inputs.os }}'
+          compiler: '${{ inputs.compiler }}'
+          compiler_version: '${{ inputs.compiler_version }}'
+          mpi: '${{ inputs.mpi }}'
+          mpi_version: '${{ inputs.mpi_version }}'
+          include_cuda: '${{ inputs.include_cuda }}'
+          include_conda: '${{ inputs.include_conda }}'
           EOF
-          cat build_inputs.txt
-          shasum build_inputs.txt > build_sha.txt
-          cat build_sha.txt
+          echo && echo "Build Inputs:" && cat build_inputs.txt
+          shasum build_inputs.txt > inputs_sha.txt
+          cat inputs_sha.txt
+          echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
@@ -128,8 +129,8 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
-          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
           file: containers/devenv/Dockerfile
           build-args: |
@@ -145,8 +146,8 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
-          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:buildcache-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
           file: containers/devenv/Dockerfile
           build-args: |
@@ -163,8 +164,8 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
-          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:buildcache-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
           file: containers/devenv/Dockerfile
           build-args: |
