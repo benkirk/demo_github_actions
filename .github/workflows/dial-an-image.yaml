@@ -50,6 +50,7 @@ on:
         #default: openmpi
         type: choice
         options:
+          - ''
           - openmpi
           - mpich
           - mpich3
@@ -131,6 +132,7 @@ jobs:
           file: containers/devenv/Dockerfile
           build-args: |
             BASE_OS=${{ inputs.os }}
+            COMPILER_FAMILY=${{ inputs.compiler }}
             FINAL_TARGET=${{ inputs.include_cuda && 'cuda' || inputs.compiler }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
