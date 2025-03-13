@@ -80,11 +80,11 @@ jobs:
           env | sort
           df -h
           lscpu
-          echo "inputs.os: " ${{ inputs.os }}
-          echo "inputs.compiler: " ${{ inputs.compiler }}
-          echo "inputs.compiler_version: " ${{ inputs.compiler_version }}
-          echo "inputs.mpi: " ${{ inputs.mpi }}
-          echo "inputs.mpi_version: " ${{ inputs.mpi_version }}
+          echo "inputs.os: " \'${{ inputs.os }}\'
+          echo "inputs.compiler: " \'${{ inputs.compiler }}\'
+          echo "inputs.compiler_version: " \'${{ inputs.compiler_version }}\'
+          echo "inputs.mpi: " \'${{ inputs.mpi }}\'
+          echo "inputs.mpi_version: " \'${{ inputs.mpi_version }}\'
 
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
@@ -142,6 +142,8 @@ jobs:
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
             MPI_FAMILY=${{ inputs.mpi }}
-            MPICH_VERSION=${{ inputs.mpi == 'mpich' && inputs.mpi_version || 'none' }}
+            MPICH_VERSION=${{ (inputs.mpi == 'mpich' || inputs.mpi == 'mpich3') && inputs.mpi_version || 'none' }}
             OPENMPI_VERSION=${{ inputs.mpi == 'openmpi' && inputs.mpi_version || 'none' }}
+            if: ${{ inputs.mpi != ''}}
+            OTHER_VAR='mpi_detected'
           target: final
