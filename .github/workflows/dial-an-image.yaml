@@ -18,6 +18,13 @@ on:
       include_conda:
         description: 'Include Conda (Miniforge)'
         required: false
+        default: false
+        type: boolean
+
+      include_conda:
+        description: 'Include CUDA'
+        required: false
+        default: false
         type: boolean
 
       compiler:
@@ -40,7 +47,7 @@ on:
       mpi:
         description: 'MPI'
         required: true
-        default: openmpi
+        #default: openmpi
         type: choice
         options:
           - openmpi
@@ -124,7 +131,8 @@ jobs:
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=${{ inputs.compiler }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
-            COMPILERS_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
+            COMPILERS_PREREQ=${{ inputs_include_cuda && 'cuda' || inputs.include_conda && 'miniforge' || inputs.os }}
+            CUDA_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
 
       - name: Build BaseOS + Additional Compiler + MPI
@@ -144,6 +152,4 @@ jobs:
             MPI_FAMILY=${{ inputs.mpi }}
             MPICH_VERSION=${{ (inputs.mpi == 'mpich' || inputs.mpi == 'mpich3') && inputs.mpi_version || 'none' }}
             OPENMPI_VERSION=${{ inputs.mpi == 'openmpi' && inputs.mpi_version || 'none' }}
-            if: ${{ inputs.mpi != ''}}
-            OTHER_VAR='mpi_detected'
           target: final
