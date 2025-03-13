@@ -21,7 +21,7 @@ on:
         default: false
         type: boolean
 
-      include_conda:
+      include_cuda:
         description: 'Include CUDA'
         required: false
         default: false
@@ -131,7 +131,7 @@ jobs:
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=${{ inputs.compiler }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
-            COMPILERS_PREREQ=${{ inputs_include_cuda && 'cuda' || inputs.include_conda && 'miniforge' || inputs.os }}
+            COMPILERS_PREREQ=${{ inputs.include_cuda && 'cuda' || inputs.include_conda && 'miniforge' || inputs.os }}
             CUDA_PREREQ=${{ inputs.include_conda && 'miniforge' || inputs.os }}
           target: final
 
