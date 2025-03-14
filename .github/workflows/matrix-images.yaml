@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [oneapi, aocc, os-gcc, gcc12, gcc13]
-        mpi:      [openmpi, mpich]
+        mpi:      [openmpi, mpich, mpich3]
 
         include:
           # compiler build arg specifications
@@ -76,6 +76,11 @@ jobs:
             mpi_build_args: |
               MPI_FAMILY=mpich
               MPICH_VERSION=4.3.0
+
+          - mpi: mpich3
+            mpi_build_args: |
+              MPI_FAMILY=mpich3
+              MPICH_VERSION=3.4.3
 
     name: Build Container Images
     runs-on: ubuntu-latest
