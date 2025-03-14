@@ -33,9 +33,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        #compiler: [oneapi, aocc, os-gcc, gcc12, gcc13]
-        #mpi:      [openmpi, mpich]
-        compiler: [oneapi, aocc, os-gcc]
+        compiler: [oneapi, aocc, os-gcc, gcc12, gcc13]
         mpi:      [openmpi, mpich]
 
         include:
@@ -148,7 +146,7 @@ jobs:
             BASE_OS=${{ inputs.os }}
             COMPILER_FAMILY=os-gcc
             COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
-            FINAL_TARGET=os-gcc
+            FINAL_TARGET=compilers
           target: final
 
       - name: Additional Compiler - Cache SHA
