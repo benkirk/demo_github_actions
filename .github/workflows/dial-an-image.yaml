@@ -135,7 +135,7 @@ jobs:
             BASE_OS=${{ inputs.os }}
             COMPILER_FAMILY=os-gcc
             COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
-            FINAL_TARGET=os-gcc
+            FINAL_TARGET=compilers
           target: final
 
       - name: Additional Compiler - Cache SHA
@@ -165,7 +165,7 @@ jobs:
             COMPILER_FAMILY=${{ inputs.compiler }}
             COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
-            FINAL_TARGET=${{ inputs.cuda && 'cuda' || inputs.compiler }}
+            FINAL_TARGET=${{ inputs.cuda && 'cuda' || 'compilers' }}
           target: final
 
       - name: Add MPI - Cache SHA
@@ -195,7 +195,7 @@ jobs:
             COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
             GCC_VERSION=${{ inputs.compiler == 'gcc' && inputs.compiler_version || 'none' }}
             MPI_FAMILY=${{ inputs.mpi }}
-            MPI_PREREQ=${{ inputs.cuda && 'cuda' || inputs.compiler }}
+            MPI_PREREQ=${{ inputs.cuda && 'cuda' || 'compilers' }}
             MPICH_VERSION=${{ (inputs.mpi == 'mpich' || inputs.mpi == 'mpich3') && inputs.mpi_version || 'none' }}
             OPENMPI_VERSION=${{ inputs.mpi == 'openmpi' && inputs.mpi_version || 'none' }}
             FINAL_TARGET=fftlibs
