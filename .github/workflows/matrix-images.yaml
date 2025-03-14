@@ -39,6 +39,7 @@ jobs:
         mpi:      [openmpi, mpich]
 
         include:
+          # compiler build arg specifications
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
@@ -61,11 +62,11 @@ jobs:
               COMPILER_FAMILY=gcc
               GCC_VERSION=13.3.0
 
+          # mpi build arg specifications
           - mpi: openmpi
             mpi_build_args: |
               MPI_FAMILY=openmpi
               OPENMPI_VERSION=5.0.7
-            extra_mpiexec_args: '--allow-run-as-root'
 
           - mpi: openmpi
             compiler: aocc
@@ -176,7 +177,7 @@ jobs:
             BASE_OS=${{ inputs.os }}
             ${{ matrix.compiler_build_args }}
             COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
-            FINAL_TARGET=${{ inputs.cuda && 'cuda' || matrix.compiler }}
+            FINAL_TARGET=${{ inputs.cuda && 'cuda' || 'compilers' }}
           target: final
 
       - name: Add MPI - Cache SHA
@@ -204,6 +205,6 @@ jobs:
             BASE_OS=${{ inputs.os }}
             ${{ matrix.compiler_build_args }}
             ${{ matrix.mpi_build_args }}
-            MPI_PREREQ=${{ inputs.cuda && 'cuda' || matrix.compiler }}
+            MPI_PREREQ=${{ inputs.cuda && 'cuda' || 'compilers' }}
             FINAL_TARGET=fftlibs
           target: final
