@@ -50,12 +50,12 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
 
-          - compiler: gcc12
+          - compiler: gcc/12.4.0
             compiler_build_args: |
               COMPILER_FAMILY=gcc
               GCC_VERSION=12.4.0
 
-          - compiler: gcc13
+          - compiler: gcc/13.3.0
             compiler_build_args: |
               COMPILER_FAMILY=gcc
               GCC_VERSION=13.3.0
@@ -127,6 +127,11 @@ jobs:
           docker buildx inspect
           docker buildx du
 
+      - name: Build Environment Variables
+        run: |
+          echo "COMPILER_LABEL=${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler}}" >> $GITHUB_ENV
+          echo "MPI_LABEL=${{ matrix.mpi }}" >> $GITHUB_ENV
+
       - name: Base OS - Cache SHA
         run: |
           cat << EOF > build_inputs.txt
@@ -171,7 +176,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ matrix.compiler }}:latest
+          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ env.COMPILER_LABEL }}:latest
           cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
@@ -199,7 +204,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}:latest
+          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ env.COMPILER_LABEL }}-${{ env.MPI_LABEL }}:latest
           cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }},mode=max
           context: containers/devenv
