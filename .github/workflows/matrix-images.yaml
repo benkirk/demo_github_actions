@@ -50,12 +50,12 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
 
-          - compiler: gcc/12.4.0
+          - compiler: gcc12
             compiler_build_args: |
               COMPILER_FAMILY=gcc
               GCC_VERSION=12.4.0
 
-          - compiler: gcc/13.3.0
+          - compiler: gcc13
             compiler_build_args: |
               COMPILER_FAMILY=gcc
               GCC_VERSION=13.3.0
@@ -129,7 +129,7 @@ jobs:
 
       - name: Build Environment Variables
         run: |
-          echo "COMPILER_LABEL=${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler}}" >> $GITHUB_ENV
+          echo "COMPILER_LABEL=${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}" >> $GITHUB_ENV
           echo "MPI_LABEL=${{ matrix.mpi }}" >> $GITHUB_ENV
 
       - name: Base OS - Cache SHA
