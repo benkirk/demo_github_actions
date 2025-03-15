@@ -829,7 +829,6 @@ LABEL mpich="${MPICH_VERSION}"
 FROM ${MPI_PREREQ} AS openmpi
 #-------------------------------------------------------------------------------
 ARG OPENMPI_VERSION="5.0.7"
-#ARG OPENMPI_VERSION="4.1.7"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "building OpenMPI-${OPENMPI_VERSION}" \

@@ -39,51 +39,51 @@ jobs:
         mpi:      [ openmpi ]
         arch:     [ x86_64, arm64 ]
 
-        include:
-          # compiler build arg specifications
-          - compiler: oneapi
-            compiler_build_args: |
-              COMPILER_FAMILY=oneapi
+        # include:
+        #   # compiler build arg specifications
+        #   - compiler: oneapi
+        #     compiler_build_args: |
+        #       COMPILER_FAMILY=oneapi
 
-          - compiler: aocc
-            compiler_build_args: |
-              COMPILER_FAMILY=aocc
+        #   - compiler: aocc
+        #     compiler_build_args: |
+        #       COMPILER_FAMILY=aocc
 
-          - compiler: os-gcc
-            compiler_build_args: |
-              COMPILER_FAMILY=os-gcc
+        #   - compiler: os-gcc
+        #     compiler_build_args: |
+        #       COMPILER_FAMILY=os-gcc
 
-          - compiler: gcc12
-            compiler_build_args: |
-              COMPILER_FAMILY=gcc
-              GCC_VERSION=12.4.0
+        #   - compiler: gcc12
+        #     compiler_build_args: |
+        #       COMPILER_FAMILY=gcc
+        #       GCC_VERSION=12.4.0
 
-          - compiler: gcc13
-            compiler_build_args: |
-              COMPILER_FAMILY=gcc
-              GCC_VERSION=13.3.0
+        #   - compiler: gcc13
+        #     compiler_build_args: |
+        #       COMPILER_FAMILY=gcc
+        #       GCC_VERSION=13.3.0
 
-          # mpi build arg specifications
-          - mpi: openmpi
-            mpi_build_args: |
-              MPI_FAMILY=openmpi
-              OPENMPI_VERSION=5.0.7
+        #   # mpi build arg specifications
+        #   - mpi: openmpi
+        #     mpi_build_args: |
+        #       MPI_FAMILY=openmpi
+        #       OPENMPI_VERSION=5.0.7
 
-          - mpi: openmpi
-            compiler: aocc
-            mpi_build_args: |
-              MPI_FAMILY=openmpi
-              OPENMPI_VERSION=4.1.8
+        #   - mpi: openmpi
+        #     compiler: aocc
+        #     mpi_build_args: |
+        #       MPI_FAMILY=openmpi
+        #       OPENMPI_VERSION=4.1.8
 
-          - mpi: mpich
-            mpi_build_args: |
-              MPI_FAMILY=mpich
-              MPICH_VERSION=4.3.0
+        #   - mpi: mpich
+        #     mpi_build_args: |
+        #       MPI_FAMILY=mpich
+        #       MPICH_VERSION=4.3.0
 
-          - mpi: mpich3
-            mpi_build_args: |
-              MPI_FAMILY=mpich3
-              MPICH_VERSION=3.4.3
+        #   - mpi: mpich3
+        #     mpi_build_args: |
+        #       MPI_FAMILY=mpich3
+        #       MPICH_VERSION=3.4.3
 
         exclude:
           - compiler: oneapi
