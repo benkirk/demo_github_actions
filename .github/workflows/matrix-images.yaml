@@ -42,6 +42,9 @@ jobs:
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
+              ONEAPI_VERSION=2025.0.4
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/84c039b6-2b7d-4544-a745-3fcf8afd643f/intel-dpcpp-cpp-compiler-2025.0.4.20_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ad42ee3b-7a2f-41cb-b902-689f651920da/intel-fortran-compiler-2025.0.4.21_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
@@ -137,6 +140,7 @@ jobs:
       - name: Build Environment Variables
         run: |
           cat << EOF >> ${GITHUB_ENV}
+          BUILD_HOST_ARCH=$(uname -m)
           COMPILER_LABEL=${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}
           MPI_LABEL=${{ matrix.mpi }}
           IMAGE_PREFIX=gh-ci-$(uname -m)-${{ inputs.os }}
@@ -151,73 +155,19 @@ jobs:
           mpi: '${{ matrix.mpi }}'
           ${{ matrix.mpi_build_args }}
           EOF
+          sed -i '/^[[:space:]]*$/d' build_inputs.txt
           echo && echo "Build Inputs:" && cat build_inputs.txt
           shasum build_inputs.txt > inputs_sha.txt
           cat inputs_sha.txt
           echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> $GITHUB_ENV
 
-      # - name: Base OS
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     push: true
-      #     tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}:latest
-      #     cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }}
-      #     cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }},mode=max
-      #     context: containers/devenv
-      #     file: containers/devenv/Dockerfile
-      #     build-args: |
-      #       BASE_OS=${{ inputs.os }}
-      #       COMPILER_FAMILY=os-gcc
-      #       COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
-      #       FINAL_TARGET=compilers
-      #     target: final
-
-      # - name: Additional Compiler - Cache SHA
-      #   run: |
-      #     cat << EOF >> build_inputs.txt
-      #     compiler: '${{ matrix.compiler }}'
-      #     ${{ matrix.compiler_build_args }}
-      #     cuda: '${{ inputs.cuda }}'
-      #     EOF
-      #     echo && echo "Build Inputs:" && cat build_inputs.txt
-      #     shasum build_inputs.txt > inputs_sha.txt
-      #     cat inputs_sha.txt
-      #     echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> $GITHUB_ENV
-
-      - name: Base OS + Compiler
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-${{ env.COMPILER_LABEL }}:latest
-          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }}
-          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }},mode=max
-          context: containers/devenv
-          file: containers/devenv/Dockerfile
-          build-args: |
-            BASE_OS=${{ inputs.os }}
-            ${{ matrix.compiler_build_args }}
-            COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
-            FINAL_TARGET=${{ inputs.cuda && 'cuda' || 'compilers' }}
-          target: final
-
-      # - name: Add MPI - Cache SHA
-      #   run: |
-      #     cat << EOF >> build_inputs.txt
-      #     mpi: '${{ matrix.mpi }}'
-      #     ${{ matrix.mpi_build_args }}
-      #     EOF
-      #     echo && echo "Build Inputs:" && cat build_inputs.txt
-      #     shasum build_inputs.txt > inputs_sha.txt
-      #     cat inputs_sha.txt
-      #     echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> $GITHUB_ENV
-
-      - name: Add MPI
+      - name: Base OS + Compiler + MPI
         uses: docker/build-push-action@v6
         with:
           push: true
           tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-${{ env.COMPILER_LABEL }}-${{ env.MPI_LABEL }}:latest
-          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }}
-          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:buildcache-${{env.INPUTS_SHA }},mode=max
+          cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:cache-${{ env.BUILD_HOST_ARCH}}-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:cache-${{ env.BUILD_HOST_ARCH}}-${{ env.INPUTS_SHA }},mode=max
           context: containers/devenv
           file: containers/devenv/Dockerfile
           build-args: |
