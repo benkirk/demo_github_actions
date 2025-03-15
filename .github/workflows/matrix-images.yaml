@@ -92,7 +92,7 @@ jobs:
           - arch: arm64
             compiler: aocc
 
-    name: Build Container Images
+    name: Build Images
     runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
 
     steps:
