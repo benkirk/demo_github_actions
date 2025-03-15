@@ -33,8 +33,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        #compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13 ]
-        #mpi:      [ openmpi, mpich, mpich3 ]
         compiler: [ os-gcc ]
         mpi:      [ openmpi ]
         arch:     [ x86_64, arm64 ]
