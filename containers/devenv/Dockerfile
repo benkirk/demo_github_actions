@@ -524,7 +524,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
                 libxml2-devel libedit-devel \
                 ninja-build \
             ;; \
-        *"leap|"*) \
+        *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
                 cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
                 libxml2-devel libedit-devel \
@@ -534,7 +534,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
         *"|noble|"*) \
             ${PKG_INSTALL_CMD} \
                 cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
-                libxml2-dev libedit-dev \
+                libxml2-dev libedit2-dev \
                 ninja-build \
             ;; \
         *) \
@@ -567,8 +567,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && source /container/config_env.sh \
     && echo "export clang_CC=$(which clang) && export CC=\${clang_CC}" >> /container/config_env.sh \
     && echo "export clang_CXX=$(which clang++) && export CXX=\${clang_CXX}" >> /container/config_env.sh \
-    && echo "export clang_F77=$(which flang-new) && export F77=\${clang_F77}" >> /container/config_env.sh \
-    && echo "export clang_FC=$(which flang-new) && export FC=\${clang_FC}" >> /container/config_env.sh \
+    && echo "export clang_F77=$(which flang) && export F77=\${clang_F77}" >> /container/config_env.sh \
+    && echo "export clang_FC=$(which flang) && export FC=\${clang_FC}" >> /container/config_env.sh \
     && echo "${LLVM_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/llvm.conf \
     && ldconfig --verbose \
     && docker-clean
@@ -966,7 +966,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && cd /tmp && curl -sSL https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz | tar zx \
     && cd ./hdf5-${HDF5_VERSION} \
     && case "${COMPILER_FAMILY}" in \
-        "nvhpc"|"aocc") \
+        "nvhpc"|"aocc"|"clang") \
             extra_args="--disable-nonstandard-feature-float16 --disable-tests" \
             ;; \
         *) \
@@ -984,6 +984,9 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
             ${TOGGLE_ENABLE_PARALLEL} \
             --disable-dependency-tracking \
             || cat config.log) \
+    && case "${COMPILER_FAMILY}" in \
+        "clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
+       esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --no-print-directory install-strip \
     && make --silent --no-print-directory installcheck \
@@ -1043,7 +1046,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && case "${COMPILER_FAMILY}" in \
-        "aocc") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
+        "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --no-print-directory install-strip \
@@ -1093,12 +1096,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && source /container/config_env.sh \
     && echo "building ParallelIO-${PIO_VERSION}" \
     && case "${COMPILER_FAMILY}" in \
-        "nvhpc"|"aocc") \
-            export FCFLAGS="${FCFLAGS} -I/container/netcdf/include" \
-            ;; \
-        *) \
-            unset FCFLAGS \
-            ;; \
+        "nvhpc"|"aocc"|"clang") export FCFLAGS="${FCFLAGS} -I/container/netcdf/include" ;; \
+        *) unset FCFLAGS ;; \
        esac \
     && env \
     && PIO_INSTALL_PATH="/container/parallelio/${PIO_VERSION}" \
@@ -1114,7 +1113,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && case "${COMPILER_FAMILY}" in \
-        "aocc") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
+        "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --no-print-directory install-strip \
