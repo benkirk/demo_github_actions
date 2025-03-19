@@ -558,7 +558,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
            -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
            -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
            ../llvm-project/llvm \
-    && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 8 || ninja -C . -j 2) && ninja -C . install \
+    && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 4 || ninja -C . -j 2 || ninja -C . -j 2) && ninja -C . install \
     && echo -e "\n# LLVM clang compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=clang" >> /container/config_env.sh \
     && echo "export LLVM_VERSION=${LLVM_VERSION}"  >> /container/config_env.sh \

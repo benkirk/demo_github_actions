@@ -27,13 +27,18 @@ on:
         required: false
         default: false
 
+      publish:
+        description: 'Publish Image'
+        type: boolean
+        required: false
+        default: true
 jobs:
 
   build-matrix:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13 ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, clang ]
         mpi:      [ openmpi, mpich, mpich3 ]
         arch:     [ x86_64, arm64 ]
 
@@ -63,6 +68,11 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=gcc
               GCC_VERSION=13.3.0
+
+          - compiler: clang
+            compiler_build_args: |
+              COMPILER_FAMILY=clang
+              LLVM_VERSION=20.1.0
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -164,7 +174,7 @@ jobs:
       - name: Base OS + Compiler + MPI
         uses: docker/build-push-action@v6
         with:
-          push: true
+          push: ${{ inputs.publish }}
           tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-${{ env.COMPILER_LABEL }}-${{ env.MPI_LABEL }}:latest
           cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:cache-${{ env.BUILD_HOST_ARCH}}-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:cache-${{ env.BUILD_HOST_ARCH}}-${{ env.INPUTS_SHA }},mode=max
