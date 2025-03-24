@@ -2,12 +2,13 @@
 
 set -ex
 
+#----------------------------------------------------------------------------
+# environment
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
+#----------------------------------------------------------------------------
+
 export DART_VERSION="${DART_VERSION:-v11.8.8}"
-
-topdir="$(pwd)"
-INSTALL_ROOT="${INSTALL_ROOT:-/container}"
-STAGE_DIR="${STAGE_DIR:-/tmp}"
-
 DART_SRC="${STAGE_DIR}/DART-${DART_VERSION}"
 
 #--------------------------------------------------------------------------------

@@ -2,11 +2,13 @@
 
 set -ex
 
-export ESMF_VERSION="${ESMF_VERSION:-8.8.0}"
+#----------------------------------------------------------------------------
+# environment
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
+#----------------------------------------------------------------------------
 
-topdir="$(pwd)"
-INSTALL_ROOT="${INSTALL_ROOT:-/container}"
-STAGE_DIR="${STAGE_DIR:-/tmp}"
+export ESMF_VERSION="${ESMF_VERSION:-8.8.0}"
 
 cd ${STAGE_DIR}
 if [ ! -d ${STAGE_DIR}/esmf-v${ESMF_VERSION} ]; then
@@ -30,7 +32,7 @@ esac
 
 case "${MPI_FAMILY}" in
     "openmpi") export ESMF_COMM="openmpi";;
-    "mpich")   export ESMF_COMM="mpich3";;
+    "mpich"*)   export ESMF_COMM="mpich3";;
     *)
         echo "ERROR: Unknown MPI_FAMILY=${MPI_FAMILY}"
         exit 1

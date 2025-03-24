@@ -558,7 +558,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
            -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
            -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
            ../llvm-project/llvm \
-    && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 4 || ninja -C . -j 2 || ninja -C . -j 2) && ninja -C . install \
+    && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 8 || ninja -C . -j 2) && ninja -C . install \
     && echo -e "\n# LLVM clang compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=clang" >> /container/config_env.sh \
     && echo "export LLVM_VERSION=${LLVM_VERSION}"  >> /container/config_env.sh \
@@ -1241,7 +1241,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
     && 2>/dev/null du -hs /container/*/ /*/ | grep -v "K" | sort \
     && cat /container/config_env.sh
-ADD extras/Dockerfile.* extras/build*.sh extras/install*.sh extras/hello*.* /container/extras/
+ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
 
 # Local Variables:
 # mode: sh

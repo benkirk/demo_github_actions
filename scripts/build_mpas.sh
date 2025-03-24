@@ -2,11 +2,13 @@
 
 set -ex
 
-export MPAS_VERSION="${MPAS_VERSION:-8.2.2}"
+#----------------------------------------------------------------------------
+# environment
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
+#----------------------------------------------------------------------------
 
-topdir="$(pwd)"
-INSTALL_ROOT="${INSTALL_ROOT:-/container}"
-STAGE_DIR="${STAGE_DIR:-/tmp}"
+export MPAS_VERSION="${MPAS_VERSION:-8.2.2}"
 
 cd ${STAGE_DIR}
 rm -rf ${STAGE_DIR}/*
@@ -17,7 +19,7 @@ cd ./MPAS-Model-*/
 export PIO_ROOT=${PIO}
 
 case "${COMPILER_FAMILY}" in
-    "aocc")
+    "aocc"|"clang")
         compiler_target="llvm"
         ;;
     "gcc")

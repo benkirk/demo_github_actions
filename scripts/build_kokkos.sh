@@ -2,11 +2,13 @@
 
 set -ex
 
-export KOKKOS_VERSION="${KOKKOS_VERSION:-4.5.01}"
+#----------------------------------------------------------------------------
+# environment
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
+#----------------------------------------------------------------------------
 
-topdir="$(pwd)"
-INSTALL_ROOT="${INSTALL_ROOT:-/container}"
-STAGE_DIR="${STAGE_DIR:-/tmp}"
+export KOKKOS_VERSION="${KOKKOS_VERSION:-4.5.01}"
 
 KOKKOS_SRC="${STAGE_DIR}/kokkos-${KOKKOS_VERSION}"
 KOKKOS_BUILD_DIR="${KOKKOS_SRC}/BUILD"
@@ -76,6 +78,5 @@ cmake \
     --parallel ${MAKE_J_PROCS:-$(nproc)}
 
 OMP_PROC_BIND=spread ./build/example 4096
-
 
 exit 0

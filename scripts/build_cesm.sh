@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 set -ex
-
+#----------------------------------------------------------------------------
+# environment
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
+#----------------------------------------------------------------------------
 
 ${PKG_INSTALL_CMD} perl-English perl-FindBin perl-Math-BigInt perl-App-cpanminus perl-XML-LibXML
 
@@ -10,12 +14,7 @@ find /container/esmf -name esmf.mk \
 
 export ESMFMKFILE="$(find /container/esmf -name esmf.mk)"
 
-
 export CESM_VERSION="${CESM_VERSION:-3.0-alpha}"
-
-topdir="$(pwd)"
-INSTALL_ROOT="${INSTALL_ROOT:-/container}"
-STAGE_DIR="${STAGE_DIR:-/tmp}"
 
 CESM_SRC="${STAGE_DIR}/CESM-${CESM_VERSION}"
 CESM_BUILD_DIR="${CESM_SRC}/BUILD"

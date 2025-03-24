@@ -2,11 +2,14 @@
 
 set -ex
 
+#----------------------------------------------------------------------------
+# environment
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
+#----------------------------------------------------------------------------
+
 export PETSC_VERSION="${PETSC_VERSION:-3.21.5}"
 
-topdir="$(pwd)"
-INSTALL_ROOT="${INSTALL_ROOT:-/container}"
-STAGE_DIR="${STAGE_DIR:-/tmp}"
 
 petsc_cuda_args="--disable-cuda"
 case "|${CUDA_HOME}|${ROCM_HOME}|" in
