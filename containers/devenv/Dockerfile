@@ -512,7 +512,7 @@ LABEL nvhpc="${NVHPC_VERSION}"
 FROM ${COMPILERS_PREREQ} AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
-ARG LLVM_VERSION="20.1.0"
+ARG LLVM_VERSION="20.1.2"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -907,7 +907,7 @@ ARG SZIP_VERSION="2.1.1"
 ARG BLOSC_VERSION="1.21.5"
 ARG HDF5_VERSION="1.14.6"
 ARG NETCDF_C_VERSION="4.9.3"
-ARG NETCDF_FORTRAN_VERSION="4.6.1"
+ARG NETCDF_FORTRAN_VERSION="4.6.2"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "building IO libraries" \
     && echo "Installing additional compression libraries" \
