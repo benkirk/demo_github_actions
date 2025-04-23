@@ -512,7 +512,7 @@ LABEL nvhpc="${NVHPC_VERSION}"
 FROM ${COMPILERS_PREREQ} AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
-ARG LLVM_VERSION="20.1.2"
+ARG LLVM_VERSION="20.1.3"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
