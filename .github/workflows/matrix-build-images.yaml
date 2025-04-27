@@ -1,4 +1,4 @@
-name: Matrix HPC Development Container Image
+name: Matrix Build HPC Development Container Images
 
 on:
   workflow_dispatch:
