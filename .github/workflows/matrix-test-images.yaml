@@ -83,7 +83,7 @@ jobs:
         shell: bash -elo pipefail {0}
 
     container:
-      image: benjaminkirk/gh-ci-${{ matrix.arch }}-${{ inputs.os }}-${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}:latest
+      image: benjaminkirk/gh-ci-${{ matrix.arch }}-${{ inputs.os }}-${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}-${{ matrix.mpi }}:latest
 
     steps:
       - name: Interrogate Runtime Environment
