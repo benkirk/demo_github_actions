@@ -256,4 +256,4 @@ jobs:
 
       - name: Kokkos
         run: |
-          ./scripts/build_kokkos.sh
+          /container/extras/build_kokkos.sh
