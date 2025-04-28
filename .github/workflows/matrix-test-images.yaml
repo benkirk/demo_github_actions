@@ -1,10 +1,10 @@
 name: Test HPC Development Containers
 
 on:
-  workflow_run:
-    workflows: [ Build HPC Development Images ]
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: [ Build HPC Development Images ]
+  #   types:
+  #     - completed
 
   workflow_dispatch:
     inputs:
@@ -120,7 +120,7 @@ jobs:
         run: |
           pwd
           find * ! -type d
-
+un
       - name: Hello World
         run: |
           mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
