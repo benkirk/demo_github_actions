@@ -26,11 +26,6 @@ on:
       #   required: false
       #   default: true
 
-      hello_world:
-        description: 'Build Simple MPI Hello World'
-        type: boolean
-        default: true
-
       dart:
         description: 'Build Simple Dart Example'
         type: boolean
@@ -127,7 +122,6 @@ jobs:
           find * ! -type d
 
       - name: Hello World
-        if: ${{ inputs.hello_world }}
         run: |
           mpicxx -o ./hello_world_mpi src/hello_world_mpi.C -fopenmp
           ldd ./hello_world_mpi
