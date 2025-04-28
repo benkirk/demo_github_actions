@@ -44,7 +44,7 @@ on:
       kokkos:
         description: 'Build Simple Kokkos Example'
         type: boolean
-        default: false
+        default: true
       kokkos_version:
         description: 'Kokkos Release Version'
         required: true
