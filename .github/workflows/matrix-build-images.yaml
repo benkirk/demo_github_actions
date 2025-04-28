@@ -35,6 +35,7 @@ on:
 jobs:
 
   build-matrix:
+    name: Build
     strategy:
       fail-fast: false
       matrix:
@@ -102,7 +103,6 @@ jobs:
           - arch: arm64
             compiler: aocc
 
-    name: Build
     runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
 
     steps:
@@ -192,3 +192,60 @@ jobs:
         run: gh workflow run matrix-test-images.yaml -f os=${{ inputs.os}}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  test-matrix:
+    name: Test
+    needs: build-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13 ]
+        mpi:      [ openmpi, mpich, mpich3 ]
+        arch:     [ x86_64, arm64 ]
+
+        exclude:
+          - arch: arm64
+            compiler: oneapi
+          - arch: arm64
+            compiler: aocc
+
+    runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    container:
+      image: benjaminkirk/gh-ci-${{ matrix.arch == 'arm64' && 'aarch64' || matrix.arch }}-${{ inputs.os }}-${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}-${{ matrix.mpi }}:latest
+
+    steps:
+      - name: Interrogate Runtime Environment
+        run: |
+          pwd
+          ls
+          find -type d
+          env
+          cat /container/config_env.sh
+          df -h
+          ls -l /glade/ || echo "No /glade on this runner?!!"
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          lscpu
+          nvidia-smi 2>/dev/null || true
+          echo && echo && echo
+          echo '----------------------------------------------------------------'
+          echo && echo && echo
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
+          echo "FC=${FC}"
+          echo "F77=${F77}"
+          echo
+          echo "CFLAGS=${CFLAGS}"
+          echo "CPPFLAGS=${CPPFLAGS}"
+          echo "CXXFLAGS=${CXXFLAGS}"
+          echo "FCFLAGS=${FCFLAGS}"
+          echo "F77FLAGS=${F77FLAGS}"
+          export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
+          which mpicc
+          mpicc --version 2>/dev/null || true
