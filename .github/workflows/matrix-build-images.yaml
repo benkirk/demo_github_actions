@@ -190,13 +190,7 @@ jobs:
             FINAL_TARGET=fftlibs
           target: final
 
-    #------------------------------------------------
-    # test container image for this matrix instance
-    name: Test
-    needs: Build
-    runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-
-    steps:
-      - run: gh workflow run matrix-test-images.yaml -f os=${{ inputs.os}}
+      - name: Test Image
+        run: gh workflow run matrix-test-images.yaml -f os=${{ inputs.os}}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
