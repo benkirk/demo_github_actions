@@ -1,10 +1,6 @@
 name: Test HPC Development Containers
 
 on:
-  # workflow_run:
-  #   workflows: [ Build HPC Development Images ]
-  #   types:
-  #     - completed
 
   workflow_dispatch:
     inputs:
