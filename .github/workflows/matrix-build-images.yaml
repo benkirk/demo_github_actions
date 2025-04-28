@@ -191,6 +191,7 @@ jobs:
 
 
   test-matrix:
+    if: ${{ inputs.publish }}
     name: Test
     needs: build-matrix
     strategy:
@@ -245,3 +246,14 @@ jobs:
           export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
           which mpicc
           mpicc --version 2>/dev/null || true
+
+      - name: Hello World
+        run: |
+          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+          ldd ./hello_world_mpi
+          export OMP_NUM_THREADS=2
+          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
+
+      - name: Kokkos
+        run: |
+          ./scripts/build_kokkos.sh
