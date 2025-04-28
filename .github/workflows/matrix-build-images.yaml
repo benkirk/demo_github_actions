@@ -188,10 +188,6 @@ jobs:
             FINAL_TARGET=fftlibs
           target: final
 
-      - name: Test Image
-        run: gh workflow run matrix-test-images.yaml -f os=${{ inputs.os}}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
   test-matrix:
