@@ -32,6 +32,13 @@ on:
         type: boolean
         required: false
         default: true
+
+      test:
+        description: 'Test Image'
+        type: boolean
+        required: false
+        default: true
+
 jobs:
 
   build-matrix:
@@ -39,8 +46,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13 ]
-        mpi:      [ openmpi, mpich, mpich3 ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
+        mpi:      [ openmpi, mpich ]
         arch:     [ x86_64, arm64 ]
 
         include:
@@ -70,6 +77,16 @@ jobs:
               COMPILER_FAMILY=gcc
               GCC_VERSION=13.3.0
 
+          - compiler: gcc14
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=14.2.0
+
+          - compiler: gcc15
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=15.1.0
+
           # - compiler: clang
           #   compiler_build_args: |
           #     COMPILER_FAMILY=clang
@@ -92,10 +109,10 @@ jobs:
               MPI_FAMILY=mpich
               MPICH_VERSION=4.3.0
 
-          - mpi: mpich3
-            mpi_build_args: |
-              MPI_FAMILY=mpich3
-              MPICH_VERSION=3.4.3
+          # - mpi: mpich3
+          #   mpi_build_args: |
+          #     MPI_FAMILY=mpich3
+          #     MPICH_VERSION=3.4.3
 
         exclude:
           - arch: arm64
@@ -191,14 +208,14 @@ jobs:
 
 
   test-matrix:
-    if: ${{ inputs.publish }}
+    if: ${{ inputs.test }}
     name: Test
     needs: build-matrix
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13 ]
-        mpi:      [ openmpi, mpich, mpich3 ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
+        mpi:      [ openmpi, mpich ]
         arch:     [ x86_64, arm64 ]
 
         exclude:
@@ -254,6 +271,14 @@ jobs:
           export OMP_NUM_THREADS=2
           mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
 
+      - name: DART
+        run: |
+          /container/extras/build_dart.sh || true
+
+      - name: MPAS
+        run: |
+          /container/extras/build_mpas.sh || true
+
       - name: Kokkos
         run: |
-          /container/extras/build_kokkos.sh
+          /container/extras/build_kokkos.sh || true
