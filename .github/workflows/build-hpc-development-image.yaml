@@ -1,0 +1,168 @@
+name: Build HPC Development Image
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: 'Base OS'
+        required: false
+        default: almalinux9
+
+      arch:
+        description: 'CPU Architecture'
+        required: false
+        type: string
+        default: 'x86_64'
+
+      conda:
+        description: 'Include Conda (Miniforge)'
+        type: boolean
+        required: false
+        default: true
+
+      compiler:
+        description: 'Compiler'
+        type: string
+        required: falsee
+        default: 'os-gcc'
+
+      compiler_build_args:
+        description: 'Compiler Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      mpi:
+        description: 'MPI'
+        type: string
+        required: false
+        default: 'openmpi'
+
+      mpi_build_args:
+        description: 'MPI Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      gpu:
+        description: 'GPU / Accelerator framework'
+        type: string
+        required: false
+        default: 'nogpu'
+
+      gpu_build_args:
+        description: 'GPU Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      publish:
+        description: 'Publish Image'
+        type: boolean
+        required: false
+        default: false
+
+      test:
+        description: 'Test Image'
+        type: boolean
+        required: false
+        default: false
+
+    secrets:
+      dockerhub_username:
+        required: true
+      dockerhub_token:
+        required: true
+
+
+
+jobs:
+  build-image:
+    name: Build Image
+
+    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: Create containers/devenv/extras
+        run: |
+          sudo apt-get update
+          sudo apt-get install make
+          which make
+          pwd
+          ls
+          make -C containers/devenv extras
+
+      - name: Interrogate Environment
+        run: |
+          cat /etc/os-release
+          uname -a
+          env
+          df -h
+          lscpu
+
+      - name: Set up Docker BuildX
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.dockerhub_username }}
+          password: ${{ secrets.dockerhub_token }}
+
+      - name: Query Docker Environment
+        run: |
+          which docker
+          docker --version
+          docker buildx ls
+          docker buildx inspect
+          docker buildx du
+
+      - name: Build Environment Variables
+        run: |
+          cat << EOF >> ${GITHUB_ENV}
+          IMAGE_PREFIX=gh-ci-${{ inputs.arch }}-${{ inputs.os }}
+          COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
+          GPU_LABEL=-${{ inputs.gpu }}
+          MPI_LABEL=-${{ inputs.mpi }}
+          EOF
+          cat << EOF > build_inputs.txt
+          arch: '${{ inputs.arch }}'
+          os: '${{ inputs.os }}'
+          conda: '${{ inputs.conda }}'
+          compiler: '${{ inputs.compiler }}'
+          ${{ inputs.compiler_build_args }}
+          mpi: '${{ inputs.mpi }}'
+          ${{ inputs.mpi_build_args }}
+          gpu: '${{ inputs.gpu }}'
+          ${{ inputs.gpu_build_args }}
+          EOF
+          sed -i '/^[[:space:]]*$/d' build_inputs.txt
+          echo && echo "Build Inputs:" && cat build_inputs.txt
+          shasum build_inputs.txt > inputs_sha.txt
+          cat inputs_sha.txt
+          echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
+          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
+              echo "GPU_LABEL=" >> ${GITHUB_ENV}
+          fi
+
+      - name: Base OS + Compiler + MPI
+        uses: docker/build-push-action@v6
+        with:
+          push: ${{ inputs.publish }}
+          tags: ${{ secrets.dockerhub_username }}/${{ env.IMAGE_PREFIX }}${{ env.COMPILER_LABEL }}${{ env.MPI_LABEL }}${{ env.GPU_LABEL }}:latest
+          cache-from: type=registry,ref=${{ secrets.dockerhub_username }}/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=${{ secrets.dockerhub_username }}/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+          context: containers/devenv
+          file: containers/devenv/Dockerfile
+          build-args: |
+            BASE_OS=${{ inputs.os }}
+            ${{ inputs.compiler_build_args }}
+            ${{ inputs.gpu_build_args }}
+            ${{ inputs.mpi_build_args }}
+            MPI_PREREQ=${{ inputs.gpu == 'nogpu' && 'compilers' || inputs.gpu }}
+            FINAL_TARGET=fftlibs
+          target: final
