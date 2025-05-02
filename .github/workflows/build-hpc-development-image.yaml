@@ -67,6 +67,8 @@ on:
         default: false
 
     secrets:
+      dockerhub_username:
+        required: true
       dockerhub_token:
         required: true
 
@@ -109,7 +111,7 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: benjaminkirk
+          username: ${{ secrets.dockerhub_username }}
           password: ${{ secrets.dockerhub_token }}
 
       - name: Query Docker Environment
