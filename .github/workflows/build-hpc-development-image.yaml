@@ -6,6 +6,7 @@ on:
       os:
         description: 'Base OS'
         required: false
+        type: string
         default: almalinux9
 
       arch:
@@ -23,7 +24,7 @@ on:
       compiler:
         description: 'Compiler'
         type: string
-        required: falsee
+        required: false
         default: 'os-gcc'
 
       compiler_build_args:
