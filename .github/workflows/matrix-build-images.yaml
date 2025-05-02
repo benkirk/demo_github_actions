@@ -46,11 +46,11 @@ on:
 jobs:
 
   build-matrix:
-    name: Build
+    #name: Build
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14 ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, clang ]
         mpi:      [ openmpi, mpich ]
         arch:     [ x86_64, aarch64 ]
 
@@ -91,10 +91,10 @@ jobs:
           #     COMPILER_FAMILY=gcc
           #     GCC_VERSION=15.1.0
 
-          # - compiler: clang
-          #   compiler_build_args: |
-          #     COMPILER_FAMILY=clang
-          #     LLVM_VERSION=20.1.0
+          - compiler: clang
+            compiler_build_args: |
+              COMPILER_FAMILY=clang
+              LLVM_VERSION=20.1.4
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -139,168 +139,3 @@ jobs:
     secrets:
       dockerhub_username: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}
       dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
-
-
-  #----------------------------------------------------------------------------------
-  #   runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         submodules: 'true'
-  #         fetch-depth: 0
-
-  #     - name: Create containers/devenv/extras
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install make
-  #         which make
-  #         pwd
-  #         ls
-  #         make -C containers/devenv extras
-
-  #     - name: Interrogate Environment
-  #       run: |
-  #         cat /etc/os-release
-  #         uname -a
-  #         env | sort
-  #         df -h
-  #         lscpu
-
-  #     - name: Set up Docker BuildX
-  #       uses: docker/setup-buildx-action@v3
-  #       with:
-  #         platforms: ${{ matrix.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
-
-  #     - name: Login to DockerHub
-  #       uses: docker/login-action@v3
-  #       with:
-  #         username: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
-
-  #     - name: Query Docker Environment
-  #       run: |
-  #         which docker
-  #         docker --version
-  #         docker buildx ls
-  #         docker buildx inspect
-  #         docker buildx du
-
-  #     - name: Build Environment Variables
-  #       run: |
-  #         cat << EOF >> ${GITHUB_ENV}
-  #         BUILD_HOST_ARCH=$(uname -m)
-  #         COMPILER_LABEL=${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}
-  #         MPI_LABEL=${{ matrix.mpi }}
-  #         IMAGE_PREFIX=gh-ci-$(uname -m)-${{ inputs.os }}
-  #         EOF
-  #         cat << EOF > build_inputs.txt
-  #         arch: '${{ matrix.arch }}'
-  #         os: '${{ inputs.os }}'
-  #         conda: '${{ inputs.conda }}'
-  #         compiler: '${{ matrix.compiler }}'
-  #         ${{ matrix.compiler_build_args }}
-  #         cuda: '${{ inputs.cuda }}'
-  #         mpi: '${{ matrix.mpi }}'
-  #         ${{ matrix.mpi_build_args }}
-  #         EOF
-  #         sed -i '/^[[:space:]]*$/d' build_inputs.txt
-  #         echo && echo "Build Inputs:" && cat build_inputs.txt
-  #         shasum build_inputs.txt > inputs_sha.txt
-  #         cat inputs_sha.txt
-  #         echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> $GITHUB_ENV
-
-  #     - name: Base OS + Compiler + MPI
-  #       uses: docker/build-push-action@v6
-  #       with:
-  #         push: ${{ inputs.publish }}
-  #         tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/${{ env.IMAGE_PREFIX }}-${{ env.COMPILER_LABEL }}-${{ env.MPI_LABEL }}:latest
-  #         cache-from: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:cache-${{ env.BUILD_HOST_ARCH}}-${{env.INPUTS_SHA }}
-  #         cache-to: type=registry,ref=${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-cache-${{ inputs.os }}:cache-${{ env.BUILD_HOST_ARCH}}-${{ env.INPUTS_SHA }},mode=max
-  #         context: containers/devenv
-  #         file: containers/devenv/Dockerfile
-  #         build-args: |
-  #           BASE_OS=${{ inputs.os }}
-  #           ${{ matrix.compiler_build_args }}
-  #           ${{ matrix.mpi_build_args }}
-  #           MPI_PREREQ=${{ inputs.cuda && 'cuda' || 'compilers' }}
-  #           FINAL_TARGET=fftlibs
-  #         target: final
-
-
-
-  # test-matrix:
-  #   if: ${{ inputs.test }}
-  #   name: Test
-  #   needs: build-matrix
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14 ]
-  #       mpi:      [ openmpi, mpich ]
-  #       arch:     [ x86_64, arm64 ]
-
-  #       exclude:
-  #         - arch: arm64
-  #           compiler: oneapi
-  #         - arch: arm64
-  #           compiler: aocc
-
-  #   runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-
-  #   defaults:
-  #     run:
-  #       shell: bash -elo pipefail {0}
-
-  #   container:
-  #     image: benjaminkirk/gh-ci-${{ matrix.arch == 'arm64' && 'aarch64' || matrix.arch }}-${{ inputs.os }}-${{ matrix.compiler == 'os-gcc' && 'gcc' || matrix.compiler }}-${{ matrix.mpi }}:latest
-
-  #   steps:
-  #     - name: Interrogate Runtime Environment
-  #       run: |
-  #         pwd
-  #         ls
-  #         find -type d
-  #         env
-  #         cat /container/config_env.sh
-  #         df -h
-  #         ls -l /glade/ || echo "No /glade on this runner?!!"
-  #         cat /etc/os-release 2>/dev/null || true
-  #         uname -a
-  #         lscpu
-  #         nvidia-smi 2>/dev/null || true
-  #         echo && echo && echo
-  #         echo '----------------------------------------------------------------'
-  #         echo && echo && echo
-  #         echo "CC=${CC}"
-  #         echo "CXX=${CXX}"
-  #         echo "FC=${FC}"
-  #         echo "F77=${F77}"
-  #         echo
-  #         echo "CFLAGS=${CFLAGS}"
-  #         echo "CPPFLAGS=${CPPFLAGS}"
-  #         echo "CXXFLAGS=${CXXFLAGS}"
-  #         echo "FCFLAGS=${FCFLAGS}"
-  #         echo "F77FLAGS=${F77FLAGS}"
-  #         export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
-  #         which mpicc
-  #         mpicc --version 2>/dev/null || true
-
-  #     - name: Hello World
-  #       run: |
-  #         mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
-  #         ldd ./hello_world_mpi
-  #         export OMP_NUM_THREADS=2
-  #         mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
-
-  #     - name: DART
-  #       run: |
-  #         /container/extras/build_dart.sh || true
-
-  #     - name: MPAS
-  #       run: |
-  #         /container/extras/build_mpas.sh || true
-
-  #     - name: Kokkos
-  #       run: |
-  #         /container/extras/build_kokkos.sh || true
