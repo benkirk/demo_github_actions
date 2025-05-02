@@ -125,7 +125,7 @@ jobs:
       - name: Build Environment Variables
         run: |
           cat << EOF >> ${GITHUB_ENV}
-          IMAGE_PREFIX=gh-ci-${{ inputs.arch }}-${{ inputs.os }}
+          IMAGE_PREFIX=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}
           COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
           GPU_LABEL=-${{ inputs.gpu }}
           MPI_LABEL=-${{ inputs.mpi }}
@@ -152,7 +152,7 @@ jobs:
       - name: Set Image Tag
         run: |
           cat << EOF >> ${GITHUB_ENV}
-          IMAGE_TAG=${{ secrets.dockerhub_username }}/${IMAGE_PREFIX}-${$COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          IMAGE_TAG=${IMAGE_PREFIX}-${$COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           EOF
 
       - name: Base OS + Compiler + MPI
