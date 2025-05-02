@@ -21,11 +21,6 @@ jobs:
       image: ${{ inputs.tag }}
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-          fetch-depth: 0
-
       - name: Interrogate Runtime Environment
         run: |
           pwd
