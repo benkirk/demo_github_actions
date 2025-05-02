@@ -137,5 +137,4 @@ jobs:
       test: ${{ inputs.test }}
 
     secrets:
-      dockerhub_username: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}
       dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
