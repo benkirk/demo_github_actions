@@ -21,15 +21,15 @@ on:
         required: false
         default: true
 
-      gpu:
-        description: 'GPU / Accelerator framework'
-        type: choice
-        required: true
-        default: nogpu
-        options:
-          - nogpu
-          - cuda
-          - rocm
+      # gpu:
+      #   description: 'GPU / Accelerator framework'
+      #   type: choice
+      #   required: true
+      #   default: nogpu
+      #   options:
+      #     - nogpu
+      #     - cuda
+      #     - rocm
 
       test:
         description: 'Test Image'
@@ -133,8 +133,6 @@ jobs:
       compiler_build_args: ${{ matrix.compiler_build_args }}
       mpi: ${{ matrix.mpi }}
       mpi_build_args: ${{ matrix.mpi_build_args }}
-      gpu: ${{ matrix.gpu }}
-      gpu_build_args: ${{ matrix.gpu_build_args }}
       publish: ${{ inputs.publish }}
       test: ${{ inputs.test }}
 

@@ -147,6 +147,7 @@ jobs:
           cat inputs_sha.txt
           echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
           if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
+              echo "No GPU Support requested"
               echo "GPU_LABEL=" >> ${GITHUB_ENV}
           fi
 
