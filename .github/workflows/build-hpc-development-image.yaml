@@ -152,7 +152,7 @@ jobs:
       - name: Set Image Tag
         run: |
           cat << EOF >> ${GITHUB_ENV}
-          IMAGE_TAG=${IMAGE_PREFIX}-${$COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          IMAGE_TAG=${IMAGE_PREFIX}-${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           EOF
 
       - name: Base OS + Compiler + MPI
