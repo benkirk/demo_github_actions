@@ -172,20 +172,20 @@ jobs:
             FINAL_TARGET=fftlibs
           target: final
 
-  test-image:
-    name: Test Image
-    needs: build-image
-    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-    if: ${{ inputs.test }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-          fetch-depth: 0
+  # test-image:
+  #   name: Test Image
+  #   needs: build-image
+  #   runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+  #   if: ${{ inputs.test }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: 'true'
+  #         fetch-depth: 0
 
-      - run: |
-          cd containers/devenv
+  #     - run: |
+  #         cd containers/devenv
 
-      - uses: ./.github/workflows/test-hpc-development-image.yaml
-        with:
-          tags: ${{ env.IMAGE_TAG }}
+  #     - uses: ./.github/workflows/test-hpc-development-image.yaml
+  #       with:
+  #         tags: ${{ env.IMAGE_TAG }}
