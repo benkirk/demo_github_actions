@@ -184,7 +184,7 @@ jobs:
           fetch-depth: 0
 
       - run: |
-          cd containers/devenv/Dockerfile
+          cd containers/devenv
 
       - uses: ./.github/workflows/test-hpc-development-image.yaml
         with:
