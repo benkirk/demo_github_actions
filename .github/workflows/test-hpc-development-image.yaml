@@ -8,15 +8,8 @@ on:
         required: true
         type: string
 
-      test:
-        description: 'Test Image'
-        type: boolean
-        required: false
-        default: true
-
 jobs:
   test-image:
-    if: ${{ inputs.test }}
     name: Test Image
     runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
 

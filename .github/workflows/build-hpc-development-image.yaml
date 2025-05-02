@@ -54,14 +54,14 @@ on:
         type: string
         required: false
 
-      publish:
-        description: 'Publish Image'
+      test:
+        description: 'Test Image'
         type: boolean
         required: false
         default: false
 
-      test:
-        description: 'Test Image'
+      publish:
+        description: 'Publish Image'
         type: boolean
         required: false
         default: false
@@ -171,12 +171,12 @@ jobs:
             FINAL_TARGET=fftlibs
           target: final
 
-  # test-image:
-  #   name: Test Image
-  #   needs: build-image
-  #   runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-
-  #   uses: ./.github/workflows/test-hpc-development-image.yaml
-  #   with:
-  #     tags: ${{ env.IMAGE_TAG }}
-  #     test: ${{ inputs.test }}
+  test-image:
+    name: Test Image
+    needs: build-image
+    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    if: ${{ inputs.test }}
+    steps:
+      - uses: ./.github/workflows/test-hpc-development-image.yaml
+        with:
+          tags: ${{ env.IMAGE_TAG }}

@@ -46,7 +46,7 @@ on:
 jobs:
 
   build-matrix:
-    #name: Build
+    name: Build
     strategy:
       fail-fast: false
       matrix:
