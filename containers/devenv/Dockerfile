@@ -512,6 +512,7 @@ LABEL nvhpc="${NVHPC_VERSION}"
 FROM ${COMPILERS_PREREQ} AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
+# ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 ARG LLVM_VERSION="20.1.3"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
@@ -551,12 +552,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
            -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PATH} \
            -DCMAKE_CXX_STANDARD=17 \
            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+           -DCMAKE_CXX_LINK_FLAGS="-Wl,-rpath,$LD_LIBRARY_PATH" \
            -DFLANG_ENABLE_WERROR=ON \
            -DLLVM_ENABLE_ASSERTIONS=ON \
            -DLLVM_TARGETS_TO_BUILD=host \
            -DLLVM_LIT_ARGS=-v \
            -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
-           -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
            ../llvm-project/llvm \
     && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 8 || ninja -C . -j 2) && ninja -C . install \
     && echo -e "\n# LLVM clang compilers" >> /container/config_env.sh \

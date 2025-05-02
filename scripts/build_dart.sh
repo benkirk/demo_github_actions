@@ -29,7 +29,7 @@ EOF
 
 case "${COMPILER_FAMILY}" in
 
-    "aocc")
+    "aocc"|"clang")
         cat <<EOF >> ${DART_SRC}/build_templates/mkmf.template
 FC := flang
 LD := flang
