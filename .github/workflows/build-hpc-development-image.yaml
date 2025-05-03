@@ -198,7 +198,9 @@ jobs:
     if: ${{ inputs.test }}
     steps:
       - name: Interrogate Runtime Environment
+        id: tags
         run: |
+          echo "PUBLISH_IMAGE_TAG=${{ needs.build-image.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
           pwd
           ls
           find -type d
@@ -213,6 +215,9 @@ jobs:
           echo && echo && echo
           echo '----------------------------------------------------------------'
           echo && echo && echo
+          echo CI_IMAGE_TAG=${{ needs.build-image.outputs.CI_IMAGE_TAG }}
+          echo PUBLISH_IMAGE_TAG=${{ needs.build-image.outputs.PUBLISH_IMAGE_TAG }}
+          echo
           echo "CC=${CC}"
           echo "CXX=${CXX}"
           echo "FC=${FC}"
@@ -257,3 +262,6 @@ jobs:
       - name: Kokkos
         run: |
           /container/extras/build_kokkos.sh || { echo "Kokkos Build FAILED..."; true; }
+
+    outputs:
+      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
