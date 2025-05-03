@@ -159,12 +159,13 @@ jobs:
           cat << EOF >> ${GITHUB_OUTPUT}
           CI_IMAGE_TAG=${CI_IMAGE_TAG}
           PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
+          INPUTS_SHA=${INPUTS_SHA}
           EOF
 
       - name: Base OS + Compiler + MPI
         uses: docker/build-push-action@v6
         with:
-          push: ${{ inputs.publish }}
+          push: true
           tags: ${{ env.CI_IMAGE_TAG }}
           cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
@@ -181,7 +182,8 @@ jobs:
 
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
-      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
+      INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
 
   test-image:
     name: Test Image
@@ -201,6 +203,7 @@ jobs:
         id: tags
         run: |
           echo "PUBLISH_IMAGE_TAG=${{ needs.build-image.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
+          echo "INPUTS_SHA=${{ needs.build-image.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
           pwd
           ls
           find -type d
@@ -249,6 +252,7 @@ jobs:
 
       - name: WRF
         run: |
+          export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
           /container/extras/build_wrf.sh || { echo "WRF Build FAILED..."; true; }
 
       - name: MPAS
