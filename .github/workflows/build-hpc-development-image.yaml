@@ -314,7 +314,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-          pattern: *-${{ needs.build-image.outputs.INPUTS_SHA }}
+          pattern: *-${{ needs.test-image.outputs.INPUTS_SHA }}
           merge-multiple: true
 
       - name: Display structure of downloaded files
