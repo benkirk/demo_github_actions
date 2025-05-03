@@ -82,7 +82,7 @@ jobs:
   build-image:
     name: Build Image
 
-    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ inputs.runner }}
 
     steps:
       - uses: actions/checkout@v4
@@ -203,7 +203,7 @@ jobs:
   test-image:
     name: Test Image
     needs: build-image
-    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ inputs.runner }}
 
     defaults:
       run:
@@ -303,3 +303,29 @@ jobs:
     outputs:
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
       INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
+
+  # publish-image:
+  #   name: Publish Image
+  #   needs: test-image
+  #   runs-on: ${{ inputs.runner }}
+
+  #   if: ${{ inputs.publish }}
+  #   steps:
+  #     - name: No-Op
+  #       run: |
+  #         env | sort
+
+
+
+
+
+
+
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     pattern: artifact-*${{ needs.test-image.outputs.INPUTS_SHA }}
+
+      # - name: Display structure of downloaded files
+      #   run: |
+      #     ls -ld artifact-*/
+      #     cat artifact-*/*
