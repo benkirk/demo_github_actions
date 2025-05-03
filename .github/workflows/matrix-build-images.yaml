@@ -50,9 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        arch:     [ x86_64, aarch64 ]
         compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14 ]
         mpi:      [ openmpi, mpich ]
-        arch:     [ x86_64, aarch64 ]
 
         include:
           # compiler build arg specifications

@@ -95,10 +95,10 @@ jobs:
 
       - name: Interrogate Environment
         run: |
-          cat /etc/os-release
-          uname -a
-          env
-          df -h
+          env | sort && echo
+          cat /etc/os-release && echo
+          uname -a && echo
+          df -h && echo
           lscpu
 
       - name: Set up Docker BuildX
@@ -180,6 +180,15 @@ jobs:
             FINAL_TARGET=fftlibs
           target: final
 
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_config
+          path: |
+            build_inputs.txt
+            inputs_sha.txt
+          retention-days: 2
+
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
@@ -253,6 +262,7 @@ jobs:
       - name: WRF
         run: |
           export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
+          export MAKE_J_PROCS=2
           /container/extras/build_wrf.sh || true
 
       - name: MPAS
@@ -266,6 +276,13 @@ jobs:
       - name: Kokkos
         run: |
           /container/extras/build_kokkos.sh || true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: container_config
+          path: /container/config_env.sh
+          retention-days: 2
 
     outputs:
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
