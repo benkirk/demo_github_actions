@@ -183,7 +183,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build_config
+          name: build_config-${{ env.INPUTS_SHA }}
           path: |
             build_inputs.txt
             inputs_sha.txt
@@ -288,7 +288,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: container_config
+          name: container_config-${{ needs.build-image.outputs.INPUTS_SHA }}
           path: /container/config_env.sh
           retention-days: 2
 
