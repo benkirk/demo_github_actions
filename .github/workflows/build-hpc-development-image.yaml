@@ -189,7 +189,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build_config-${{ env.INPUTS_SHA }}
+          name: artifact-build_config-${{ env.INPUTS_SHA }}
           path: |
             build_inputs.txt
             inputs_sha.txt
@@ -296,7 +296,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: container_config-${{ needs.build-image.outputs.INPUTS_SHA }}
+          name: artifact-container_config-${{ needs.build-image.outputs.INPUTS_SHA }}
           path: /container/config_env.sh
           retention-days: 2
 
@@ -313,11 +313,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          artifact-ids: [ build_config-${{ needs.test-image.outputs.INPUTS_SHA }}, container_config-${{ needs.test-image.outputs.INPUTS_SHA }} ]
-          merge-multiple: true
+          pattern: artifact-*${{ needs.test-image.outputs.INPUTS_SHA }}
 
       - name: Display structure of downloaded files
         run: |
-          ls artifacts
-          cat artifacts/*
+          ls -ld artifact-*/
+          cat artifact-*/*
