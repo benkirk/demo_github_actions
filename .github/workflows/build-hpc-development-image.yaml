@@ -319,17 +319,12 @@ jobs:
         run: |
           env | sort
 
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifact-*-${{ needs.test-image.outputs.INPUTS_SHA }}
 
-
-
-
-
-
-      # - uses: actions/download-artifact@v4
-      #   with:
-      #     pattern: artifact-*${{ needs.test-image.outputs.INPUTS_SHA }}
-
-      # - name: Display structure of downloaded files
-      #   run: |
-      #     ls -ld artifact-*/
-      #     cat artifact-*/*
+      - name: Display structure of downloaded files
+        run: |
+          ls -ld artifact-*/
+          cat artifact-*/*
