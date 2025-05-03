@@ -297,7 +297,7 @@ jobs:
 
   publish-image:
     name: Publish Image
-    needs: build-image
+    needs: test-image
     runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
 
     if: ${{ inputs.publish }}
