@@ -304,16 +304,16 @@ jobs:
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
       INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
 
-  publish-image:
-    name: Publish Image
-    needs: test-image
-    runs-on: ${{ inputs.runner }}
+  # publish-image:
+  #   name: Publish Image
+  #   needs: test-image
+  #   runs-on: ${{ inputs.runner }}
 
-    if: ${{ inputs.publish }}
-    steps:
-      - name: No-Op
-        run: |
-          env | sort
+  #   if: ${{ inputs.publish }}
+  #   steps:
+  #     - name: No-Op
+  #       run: |
+  #         env | sort
 
 
 
