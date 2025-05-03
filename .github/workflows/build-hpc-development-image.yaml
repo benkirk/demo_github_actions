@@ -322,7 +322,7 @@ jobs:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: *-*-${{ needs.test-image.outputs.INPUTS_SHA }}
+          pattern: "*-*-${{ needs.test-image.outputs.INPUTS_SHA }}"
 
       - name: Display structure of downloaded files
         run: |
