@@ -123,7 +123,6 @@ jobs:
       - name: Build Environment Variables
         run: |
           cat << EOF >> ${GITHUB_ENV}
-          IMAGE_PREFIX=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}
           COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
           GPU_LABEL=-${{ inputs.gpu }}
           MPI_LABEL=-${{ inputs.mpi }}
@@ -149,16 +148,24 @@ jobs:
           fi
 
       - name: Set Image Tag
+        id: tags
         run: |
+          CI_IMAGE_TAG=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           cat << EOF >> ${GITHUB_ENV}
-          IMAGE_TAG=${IMAGE_PREFIX}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          CI_IMAGE_TAG=${CI_IMAGE_TAG}
+          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
+          EOF
+          cat << EOF >> ${GITHUB_OUTPUT}
+          CI_IMAGE_TAG=${CI_IMAGE_TAG}
+          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
           EOF
 
       - name: Base OS + Compiler + MPI
         uses: docker/build-push-action@v6
         with:
           push: ${{ inputs.publish }}
-          tags: ${{ env.IMAGE_TAG }}
+          tags: ${{ env.CI_IMAGE_TAG }}
           cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
           context: containers/devenv
@@ -172,20 +179,81 @@ jobs:
             FINAL_TARGET=fftlibs
           target: final
 
-  # test-image:
-  #   name: Test Image
-  #   needs: build-image
-  #   runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-  #   if: ${{ inputs.test }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         submodules: 'true'
-  #         fetch-depth: 0
+    outputs:
+      CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
 
-  #     - run: |
-  #         cd containers/devenv
+  test-image:
+    name: Test Image
+    needs: build-image
+    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
 
-  #     - uses: ./.github/workflows/test-hpc-development-image.yaml
-  #       with:
-  #         tags: ${{ env.IMAGE_TAG }}
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    container:
+      image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
+
+    if: ${{ inputs.test }}
+    steps:
+      - name: Interrogate Runtime Environment
+        run: |
+          pwd
+          ls
+          find -type d
+          env
+          cat /container/config_env.sh
+          df -h
+          ls -l /glade/ || echo "No /glade on this runner?!!"
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          lscpu
+          nvidia-smi 2>/dev/null || true
+          echo && echo && echo
+          echo '----------------------------------------------------------------'
+          echo && echo && echo
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
+          echo "FC=${FC}"
+          echo "F77=${F77}"
+          echo
+          echo "CFLAGS=${CFLAGS}"
+          echo "CPPFLAGS=${CPPFLAGS}"
+          echo "CXXFLAGS=${CXXFLAGS}"
+          echo "FCFLAGS=${FCFLAGS}"
+          echo "F77FLAGS=${F77FLAGS}"
+          export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
+          which mpicc
+          mpicc --version 2>/dev/null || true
+
+      - name: MPI+OpenMP Hello World
+        run: |
+          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+          ldd ./hello_world_mpi
+          export OMP_NUM_THREADS=2
+          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
+
+      - name: OSU MPI Benchmarks
+        run: |
+          /container/extras/build_osu-micro-benchmarks.sh
+
+      - name: DART
+        run: |
+          /container/extras/build_dart.sh || { echo "DART Build FAILED..."; true; }
+
+      - name: WRF
+        run: |
+          /container/extras/build_wrf.sh || { echo "WRF Build FAILED..."; true; }
+
+      - name: MPAS
+        run: |
+          /container/extras/build_mpas.sh || { echo "MPAS Build FAILED..."; true; }
+
+      - name: ESMF
+        run: |
+          /container/extras/build_esmf.sh || { echo "ESMF Build FAILED..."; true; }
+
+      - name: Kokkos
+        run: |
+          /container/extras/build_kokkos.sh || { echo "Kokkos Build FAILED..."; true; }
