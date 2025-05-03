@@ -200,6 +200,8 @@ jobs:
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
       INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
 
+
+
   test-image:
     name: Test Image
     needs: build-image
@@ -304,16 +306,18 @@ jobs:
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
       INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
 
-  # publish-image:
-  #   name: Publish Image
-  #   needs: test-image
-  #   runs-on: ${{ inputs.runner }}
 
-  #   if: ${{ inputs.publish }}
-  #   steps:
-  #     - name: No-Op
-  #       run: |
-  #         env | sort
+
+  publish-image:
+    name: Publish Image
+    needs: test-image
+    runs-on: ${{ inputs.runner }}
+
+    if: ${{ inputs.publish }}
+    steps:
+      - name: No-Op
+        run: |
+          env | sort
 
 
 
