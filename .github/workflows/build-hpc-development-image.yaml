@@ -15,6 +15,12 @@ on:
         type: string
         default: 'x86_64'
 
+      runner:
+        description: 'GitHub Runner Type'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
       conda:
         description: 'Include Conda (Miniforge)'
         type: boolean
@@ -76,7 +82,7 @@ jobs:
   build-image:
     name: Build Image
 
-    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ inputs.runner }}
 
     steps:
       - uses: actions/checkout@v4
@@ -197,7 +203,7 @@ jobs:
   test-image:
     name: Test Image
     needs: build-image
-    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ inputs.runner }}
 
     defaults:
       run:
@@ -258,6 +264,7 @@ jobs:
       - name: DART
         continue-on-error: true
         run: |
+          export DART_VERSION="v11.10.9"
           /container/extras/build_dart.sh
 
       - name: WRF
@@ -278,6 +285,7 @@ jobs:
       - name: ESMF
         continue-on-error: true
         run: |
+          export ESMF_VERSION="8.8.1"
           /container/extras/build_esmf.sh
 
       - name: Kokkos
@@ -293,18 +301,23 @@ jobs:
           retention-days: 2
 
     outputs:
-      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
+      INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
 
   publish-image:
     name: Publish Image
     needs: test-image
-    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ inputs.runner }}
 
     if: ${{ inputs.publish }}
     steps:
       - uses: actions/download-artifact@v4
         with:
+          path: artifacts
+          pattern: *-${{ needs.build-image.outputs.INPUTS_SHA }}
           merge-multiple: true
 
       - name: Display structure of downloaded files
-        run: ls
+        run: |
+          ls artifacts
+          cat artifacts/*
