@@ -11,6 +11,10 @@ source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build
 export WRF_VERSION="${WRF_VERSION:-4.6.1}"
 export WPS_VERSION="${WPS_VERSION:-4.6.0}"
 
+# default WRF & WPS-specific CMake args; set-if-unset
+WRF_CMAKE_ARGS=${WRF_CMAKE_ARGS:-"-DENABLE_CHEM=OFF -DENABLE_KPP=OFF"}
+WPS_CMAKE_ARGS=${WPS_CMAKE_ARGS:-""}
+
 source /etc/os-release
 id_tag="|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|"
 echo "${id_tag}"
@@ -53,7 +57,7 @@ cd ${STAGE_DIR} \
     && env \
     && sed -i 's/gcc/mpicc/g' arch/configure.defaults \
     && sed -i 's/gfortran/mpifort/g' arch/configure.defaults \
-    && ./configure_new -i ${INSTALL_ROOT}/wrf/${WRF_VERSION} -- "-DENABLE_CHEM=OFF -DENABLE_KPP=OFF" <<< $'0\n0\n1\n0\nY\nN\nN' \
+    && ./configure_new -i ${INSTALL_ROOT}/wrf/${WRF_VERSION} -- ${WRF_CMAKE_ARGS} ${EXTRA_CMAKE_ARGS} <<< $'0\n0\n1\n0\nY\nN\nN' \
     && ./compile_new --jobs ${MAKE_J_PROCS:-$(nproc)} \
     && docker-clean
 
@@ -65,6 +69,6 @@ cd ${STAGE_DIR} \
     && export WRF_ROOT=${INSTALL_ROOT}/wrf/${WRF_VERSION} \
     && export INCLUDE="/usr/include:" \
     && sed -i 's/Linux x86_64, gfortran/Linux x86_64 aarch64, gfortran/g' arch/configure.defaults \
-    && ./configure_new -i ${INSTALL_ROOT}/wps/${WPS_VERSION} <<< $'0\nN\nY\nY' \
+    && ./configure_new -i ${INSTALL_ROOT}/wps/${WPS_VERSION} -- ${WPS_CMAKE_ARGS} ${EXTRA_CMAKE_ARGS} <<< $'0\nN\nY\nY' \
     && ./compile_new --jobs ${MAKE_J_PROCS:-$(nproc)} \
     && docker-clean
