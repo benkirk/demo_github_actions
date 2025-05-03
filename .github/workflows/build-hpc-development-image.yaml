@@ -256,26 +256,34 @@ jobs:
           /container/extras/build_osu-micro-benchmarks.sh
 
       - name: DART
+        continue-on-error: true
         run: |
-          /container/extras/build_dart.sh || true
+          /container/extras/build_dart.sh
 
       - name: WRF
+        continue-on-error: true
         run: |
+          export WRF_VERSION="4.7.0"
           export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
           export MAKE_J_PROCS=2
-          /container/extras/build_wrf.sh || true
+          /container/extras/build_wrf.sh
 
       - name: MPAS
+        continue-on-error: true
         run: |
-          /container/extras/build_mpas.sh || true
+          export MPAS_VERSION="8.2.2"
+          export DEBUG=true
+          /container/extras/build_mpas.sh
 
       - name: ESMF
+        continue-on-error: true
         run: |
-          /container/extras/build_esmf.sh || true
+          /container/extras/build_esmf.sh
 
       - name: Kokkos
+        continue-on-error: true
         run: |
-          /container/extras/build_kokkos.sh || true
+          /container/extras/build_kokkos.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -286,3 +294,17 @@ jobs:
 
     outputs:
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+
+  publish-image:
+    name: Publish Image
+    needs: build-image
+    runs-on: ${{ inputs.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+
+    if: ${{ inputs.publish }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Display structure of downloaded files
+        run: ls
