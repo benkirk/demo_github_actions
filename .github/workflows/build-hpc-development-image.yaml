@@ -311,11 +311,15 @@ jobs:
 
     if: ${{ inputs.publish }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: artifact-*${{ needs.test-image.outputs.INPUTS_SHA }}
-
-      - name: Display structure of downloaded files
+      - name: No-Op
         run: |
-          ls -ld artifact-*/
-          cat artifact-*/*
+          env | sort
+
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     pattern: artifact-*${{ needs.test-image.outputs.INPUTS_SHA }}
+
+      # - name: Display structure of downloaded files
+      #   run: |
+      #     ls -ld artifact-*/
+      #     cat artifact-*/*
