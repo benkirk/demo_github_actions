@@ -361,7 +361,7 @@ jobs:
       - name: Publish Image
         uses: docker/build-push-action@v6
         with:
-          push: false
+          push: true
           tags: ${{ env.PUBLISH_IMAGE_TAG }}
           cache-from: type=registry,ref=ncarcisl/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=ncarcisl/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
