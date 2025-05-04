@@ -122,7 +122,7 @@ jobs:
         with:
           platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
           driver: ${{ inputs.buildx_driver }}
-          if ${{ inputs.buildx_endpoint }}
+          if: ${{ inputs.buildx_endpoint }}
           endpoint: ${{ inputs.buildx_endpoint }}
 
 
