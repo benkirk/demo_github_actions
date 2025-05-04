@@ -24,11 +24,13 @@ on:
       buildx_driver:
         description: 'Docker setup-buildx-action driver type'
         required: false
+        type: string
         default: 'docker-container'
 
       buildx_endpoint:
         description: 'Docker setup-buildx-action endpoint'
         required: false
+        type: string
         default: ''
 
       conda:
@@ -117,13 +119,19 @@ jobs:
           df -h && echo
           lscpu
 
-      - name: Set up Docker BuildX
+      - name: Set up Docker BuildX (local)
+        if: ${{ inputs.buildx_endpoint == '' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+
+      - name: Set up Docker BuildX (remote)
+        if: ${{ inputs.buildx_endpoint != '' }}
         uses: docker/setup-buildx-action@v3
         with:
           platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
           driver: ${{ inputs.buildx_driver }}
           endpoint: ${{ inputs.buildx_endpoint }}
-
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
