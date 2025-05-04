@@ -166,8 +166,8 @@ jobs:
           CI_IMAGE_TAG=${CI_IMAGE_TAG}
           PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
           INPUTS_SHA=${INPUTS_SHA}
-          cat tags.sh >> ${GITHUB_OUTPUT}
           EOF
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Base OS + Compiler + MPI
         uses: docker/build-push-action@v6
@@ -226,7 +226,7 @@ jobs:
           pwd
           ls
           find -type d
-          env
+          env | sort
           cat /container/config_env.sh
           df -h
           ls -l /glade/ || echo "No /glade on this runner?!!"
