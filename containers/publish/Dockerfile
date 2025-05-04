@@ -16,7 +16,7 @@ RUN echo "Publishing Production Image from ${BASE_IMAGE} ..." \
          [ -x "${script}" ] \
              && echo "Executing Deployment Script ${script} ..." \
              && "${script}" \
-             && echo "# ${script} run on $(date) and included in image." >> /container/config_env.sh \
+             && echo "# --> ${script} run on $(date) and included in image." >> /container/config_env.sh \
              || echo "${script} not executable or does not exist??" \
        done \
     && echo "# ${PUBLISH_IMAGE_TAG} created on $(date)" >> /container/config_env.sh \
