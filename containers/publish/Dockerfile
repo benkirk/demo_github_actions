@@ -3,7 +3,6 @@ ARG BASE_IMAGE="invalid"
 #-------------------------------------------------------------------------------
 FROM ${BASE_IMAGE} AS base-image
 #-------------------------------------------------------------------------------
-RUN cat /etc/os-release /container/config_env.sh
 
 # a colon ':' separated list of scripts to execute; including their result in the final image
 ARG DEPLOYMENT_SCRIPTS="/container/extras/build_osu-micro-benchmarks.sh"
@@ -12,6 +11,7 @@ ARG DEPLOYMENT_SCRIPTS="/container/extras/build_osu-micro-benchmarks.sh"
 FROM base-image AS final
 #-------------------------------------------------------------------------------
 RUN echo "Publishing Production Image from ${BASE_IMAGE} ..." \
+    && source /container/config_env.sh \
     && SCRIPTS="${DEPLOYMENT_SCRIPTS}" \
     && for script in ${SCRIPTS//:/ }; do \
          [ -x "${script}" ] \
