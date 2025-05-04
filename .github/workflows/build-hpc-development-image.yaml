@@ -317,16 +317,31 @@ jobs:
 
     if: ${{ inputs.publish }}
     steps:
-      - name: No-Op
-        run: |
-          env | sort
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: "*-*-${{ needs.test-image.outputs.INPUTS_SHA }}"
 
-      - name: Display structure of downloaded files
+      - name: Augment Environment with Artifact Results
         run: |
+          env | sort && echo
+          cat /etc/os-release && echo
+          uname -a && echo
+          df -h && echo
+          lscpu && echo
           ls -ld artifact-*/
           cat artifact-*/*
+          cat artifact-*/*/*.sh >> ${GITHUB_ENV}
+
+      - name: Interrogate Environment
+        run: |
+          env | sort && echo
+          cat /etc/os-release && echo
+          uname -a && echo
+          df -h && echo
+          lscpu
