@@ -162,10 +162,11 @@ jobs:
           CI_IMAGE_TAG=${CI_IMAGE_TAG}
           PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
           EOF
-          cat << EOF >> ${GITHUB_OUTPUT}
+          cat << EOF >> tags.sh
           CI_IMAGE_TAG=${CI_IMAGE_TAG}
           PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
           INPUTS_SHA=${INPUTS_SHA}
+          cat tags.sh >> ${GITHUB_OUTPUT}
           EOF
 
       - name: Base OS + Compiler + MPI
@@ -193,6 +194,7 @@ jobs:
           path: |
             build_inputs.txt
             inputs_sha.txt
+            tags.sh
           retention-days: 2
 
     outputs:
