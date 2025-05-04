@@ -12,12 +12,13 @@ ARG DEPLOYMENT_SCRIPTS="/container/extras/build_osu-micro-benchmarks.sh"
 FROM base-image AS final
 #-------------------------------------------------------------------------------
 RUN echo "Publishing Production Image from ${BASE_IMAGE} ..." \
-    && for script in ${DEPLOYMENT_SCRIPTS//:/ }; do \
+    && SCRIPTS="${DEPLOYMENT_SCRIPTS}" \
+    && for script in ${SCRIPTS//:/ }; do \
          [ -x "${script}" ] \
              && echo "Executing Deployment Script ${script} ..." \
              && "${script}" \
              && echo "# --> ${script} run on $(date) and included in image." >> /container/config_env.sh \
-             || echo "${script} not executable or does not exist??" \
+             || echo "${script} not executable or does not exist??" ; \
        done \
     && echo "# ${PUBLISH_IMAGE_TAG} created on $(date)" >> /container/config_env.sh \
     && docker-clean
