@@ -1,4 +1,4 @@
-name: Build HPC Development Image
+name: Build, Test, and Deploy a HPC Development Image
 
 on:
   workflow_call:
