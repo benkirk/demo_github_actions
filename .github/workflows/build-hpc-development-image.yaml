@@ -336,7 +336,7 @@ jobs:
           lscpu && echo
           ls -ld artifact-*/
           cat artifact-*/*
-          cat artifact-*/*/*.sh >> ${GITHUB_ENV}
+          cat artifact-*/tags.sh >> ${GITHUB_ENV}
 
       - name: Interrogate Environment
         run: |
