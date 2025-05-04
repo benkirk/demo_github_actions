@@ -21,6 +21,16 @@ on:
         type: string
         default: 'ubuntu-latest'
 
+      buildx_driver:
+        description: 'Docker setup-buildx-action driver type'
+        required: false
+        default: 'docker-container'
+
+      buildx_endpoint:
+        description: 'Docker setup-buildx-action endpoint'
+        required: false
+        default: ''
+
       conda:
         description: 'Include Conda (Miniforge)'
         type: boolean
@@ -111,6 +121,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+          driver: ${{ inputs.buildx_driver }}
+          if ${{ inputs.buildx_endpoint }}
+          endpoint: ${{ inputs.buildx_endpoint }}
+
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
