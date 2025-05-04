@@ -119,6 +119,8 @@ jobs:
           #     MPICH_VERSION=3.4.3
 
         exclude:
+          - mpi: mpich3
+            compiler: aocc
           - arch: aarch64
             compiler: oneapi
           - arch: aarch64
