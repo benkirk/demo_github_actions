@@ -10,8 +10,8 @@ ARG DEPLOYMENT_SCRIPTS="/container/extras/build_osu-micro-benchmarks.sh"
 #-------------------------------------------------------------------------------
 FROM base-image AS final
 #-------------------------------------------------------------------------------
+SHELL ["/bin/bash", "--login", "-c"]
 RUN echo "Publishing Production Image from ${BASE_IMAGE} ..." \
-    && source /container/config_env.sh \
     && SCRIPTS="${DEPLOYMENT_SCRIPTS}" \
     && for script in ${SCRIPTS//:/ }; do \
          [ -x "${script}" ] \
