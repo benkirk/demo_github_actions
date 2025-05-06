@@ -242,6 +242,7 @@ jobs:
       - name: Interrogate Runtime Environment
         id: tags
         run: |
+          echo "CI_IMAGE_TAG=${{ needs.build-image.outputs.CI_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
           echo "PUBLISH_IMAGE_TAG=${{ needs.build-image.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
           echo "INPUTS_SHA=${{ needs.build-image.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
           pwd
@@ -326,6 +327,7 @@ jobs:
           retention-days: 2
 
     outputs:
+      CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
       INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
 
@@ -333,7 +335,7 @@ jobs:
 
   publish-image:
     name: Publish Image
-    needs: test-image
+    needs: ${{ inputs.test && test-image || build-image }}
     runs-on: ${{ inputs.runner }}
 
     if: ${{ inputs.publish }}
@@ -346,7 +348,7 @@ jobs:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-*-${{ needs.test-image.outputs.INPUTS_SHA }}"
+          pattern: "*-*-${{ needs.${{ inputs.test && test-image || build-image }}.outputs.INPUTS_SHA }}"
 
       - name: Augment Environment with Artifact Results
         run: |
@@ -358,6 +360,9 @@ jobs:
           ls -ld artifact-*/
           cat artifact-*/*
           cat artifact-*/tags.sh >> ${GITHUB_ENV}
+          echo "CI_IMAGE_TAG=${{ needs.${{ inputs.test && test-image || build-image }}.outputs.CI_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
+          echo "PUBLISH_IMAGE_TAG=${{ needs.${{ inputs.test && test-image || build-image }}.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
+          echo "INPUTS_SHA=${{ needs.${{ inputs.test && test-image || build-image }}.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
 
       - name: Set up Docker BuildX (local)
         if: ${{ inputs.buildx_endpoint == '' }}
@@ -401,3 +406,6 @@ jobs:
             BASE_IMAGE=${{ env.CI_IMAGE_TAG }}
             DEPLOYMENT_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
           target: final
+
+    outputs:
+      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
