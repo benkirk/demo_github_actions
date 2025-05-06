@@ -38,6 +38,7 @@ on:
           - oneapi
           - aocc
           - nvhpc
+          - clang
 
       cuda:
         description: 'Include CUDA'
