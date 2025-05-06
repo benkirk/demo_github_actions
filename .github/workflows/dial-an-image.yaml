@@ -17,7 +17,6 @@ on:
 
       arch:
         description: 'CPU Architecture'
-        required: false
         type: choice
         required: true
         default: x86_64
