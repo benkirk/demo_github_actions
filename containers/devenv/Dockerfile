@@ -348,7 +348,7 @@ LABEL gcc="os-gcc"
 #   g++: fatal error: unknown spec function ‘dumps’
 FROM ${COMPILERS_PREREQ} AS gcc
 #-------------------------------------------------------------------------------
-ARG GCC_VERSION="12.4.0"
+ARG GCC_VERSION="13.3.0"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
     && echo "Building gcc-${GCC_VERSION}" \
     && unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH \
@@ -395,12 +395,13 @@ FROM ${COMPILERS_PREREQ} AS oneapi
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/intel-oneapi-compilers/package.py
 # Intel compilers do not -rpath their own libraries, relying instead on LD_LIBRARY_PATH
 # We'd rather not need that, so add to the system search path
-ARG ONEAPI_VERSION="2024.2.1"
-ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/74587994-3c83-48fd-b963-b707521a63f4/l_dpcpp-cpp-compiler_p_2024.2.1.79_offline.sh"
-ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5e7b0f1c-6f25-4cc8-94d7-3a527e596739/l_fortran-compiler_p_2024.2.1.80_offline.sh"
+ARG ONEAPI_VERSION="2025.1.0"
+ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd63be99-88b0-4981-bea1-2034fe17f5cf/intel-dpcpp-cpp-compiler-2025.1.0.573_offline.sh"
+ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/577ebc28-d0f6-492b-9a43-b04354ce99da/intel-fortran-compiler-2025.1.0.601_offline.sh"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
     && ${PKG_INSTALL_CMD} procps \
     && echo "Installing Intel-OneAPI" \
+    && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
     && ONEAPI_INSTALL_PATH="/container/intel-oneapi" \
     && mkdir -p /tmp/intel_installers && cd /tmp/intel_installers \
     && curl -sO ${ONEAPI_CC_URL} \
@@ -436,6 +437,7 @@ ARG AOCC_VERSION="5.0.0"
 ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-0/aocc-compiler-5.0.0.tar"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/aocc.log) \
     && echo "Installing AMD AOCC-${AOCC_VERSION}" \
+    && echo "AMD AOCC: https://www.amd.com/en/developer/aocc/aocc-compiler/eula.html" >> /container/EULAs.txt \
     && AOCC_INSTALL_PATH="/container/aocc/${AOCC_VERSION}" \
     && mkdir -p ${AOCC_INSTALL_PATH} && cd ${AOCC_INSTALL_PATH} \
     && curl -sSL ${AOCC_URL} | tar Jx \
@@ -466,11 +468,11 @@ FROM ${COMPILERS_PREREQ} AS nvhpc
 #ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/24.5/nvhpc_2024_245_Linux_x86_64_cuda_12.4.tar.gz"
 #ARG NVHPC_VERSION="24.9"
 #ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/24.9/nvhpc_2024_249_Linux_x86_64_cuda_12.6.tar.gz"
-ARG NVHPC_VERSION="24.11"
-ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/24.11/nvhpc_2024_2411_Linux_x86_64_cuda_12.6.tar.gz"
-#     && curl -vsSL ${NVHPC_URL} | tar zx \
+ARG NVHPC_VERSION="25.1"
+ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "Installing NVida HPC Toolkit ${NVHPC_VERSION}" \
+    && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
     && cd /tmp \
     && echo "downloading ${NVHPC_URL}" \
     && curl -sO ${NVHPC_URL} && tar zxf nvhpc*.tar.gz \
@@ -599,6 +601,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && cd /tmp \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
+    && echo "CUDA: https://docs.nvidia.com/cuda/eula/index.html" >> /container/EULAs.txt \
     && mkdir -p ${CUDA_HOME} \
     && curl -sO ${CUDA_INSTALLER_URL} \
     && bash ./cuda_*_linux*.run \
@@ -635,6 +638,8 @@ ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
 ENV ROCM_HOME="${ROCM_HOME}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
     && echo "Rocm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
+    && echo "ROCm: https://rocm.docs.amd.com/en/latest/about/license.html" >> /container/EULAs.txt
+
     && source /etc/os-release \
     && cd /tmp \
     && env \
