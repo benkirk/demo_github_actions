@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         arch:     [ x86_64, aarch64 ]
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, clang ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14 ]
         mpi:      [ openmpi, mpich, mpich3 ]
 
         include:
@@ -91,10 +91,10 @@ jobs:
           #     COMPILER_FAMILY=gcc
           #     GCC_VERSION=15.1.0
 
-          - compiler: clang
-            compiler_build_args: |
-              COMPILER_FAMILY=clang
-              LLVM_VERSION=20.1.4
+          # - compiler: clang
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=clang
+          #     LLVM_VERSION=20.1.4
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -136,8 +136,8 @@ jobs:
       compiler_build_args: ${{ matrix.compiler_build_args }}
       mpi: ${{ matrix.mpi }}
       mpi_build_args: ${{ matrix.mpi_build_args }}
-      publish: ${{ inputs.publish }}
       test: ${{ inputs.test }}
+      publish: ${{ inputs.publish }}
 
     secrets:
       dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
