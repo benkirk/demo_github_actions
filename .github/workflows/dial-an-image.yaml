@@ -1,4 +1,4 @@
-name: Select HPC Development Container Image
+name: Select a HPC Development Container Image to Build, Test, and Deploy
 
 on:
   workflow_dispatch:
