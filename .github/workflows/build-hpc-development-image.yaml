@@ -72,6 +72,11 @@ on:
         type: string
         required: false
 
+      extra_build_args:
+        description: 'Miscellaneous Docker BUILD_ARGS'
+        type: string
+        required: false
+
       test:
         description: 'Test Image'
         type: boolean
@@ -164,6 +169,7 @@ jobs:
           ${{ inputs.mpi_build_args }}
           gpu: '${{ inputs.gpu }}'
           ${{ inputs.gpu_build_args }}
+          ${{ inputs.extra_build_args }}
           EOF
           sed -i '/^[[:space:]]*$/d' build_inputs.txt
           echo && echo "Build Inputs:" && cat build_inputs.txt
@@ -206,6 +212,7 @@ jobs:
             ${{ inputs.mpi_build_args }}
             MPI_PREREQ=${{ inputs.gpu == 'nogpu' && 'compilers' || inputs.gpu }}
             FINAL_TARGET=fftlibs
+            ${{ inputs.extra_build_args }}
           target: final
 
       - name: Upload Artifact

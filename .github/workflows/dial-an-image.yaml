@@ -84,6 +84,14 @@ jobs:
       mpi: ${{ inputs.mpi }}
       test: ${{ inputs.test }}
       publish: ${{ inputs.publish }}
+      extra_build_args: |
+        BASE_OS=${{ inputs.os }}
+        COMPILER_FAMILY=${{ inputs.compiler }}
+        COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
+        MPI_FAMILY=${{ inputs.mpi }}
+        MPI_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'compilers' }}
+        FINAL_TARGET=fftlibs
+
 
     secrets:
       dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
