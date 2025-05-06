@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         arch:     [ x86_64, aarch64 ]
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14 ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, clang ]
         mpi:      [ openmpi, mpich, mpich3 ]
 
         include:
@@ -91,10 +91,10 @@ jobs:
           #     COMPILER_FAMILY=gcc
           #     GCC_VERSION=15.1.0
 
-          # - compiler: clang
-          #   compiler_build_args: |
-          #     COMPILER_FAMILY=clang
-          #     LLVM_VERSION=20.1.4
+          - compiler: clang
+            compiler_build_args: |
+              COMPILER_FAMILY=clang
+              LLVM_VERSION=20.1.4
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -121,6 +121,7 @@ jobs:
         exclude:
           - mpi: mpich3
             compiler: aocc
+            compiler: clang
           - arch: aarch64
             compiler: oneapi
           - arch: aarch64
