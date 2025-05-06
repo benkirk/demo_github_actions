@@ -335,7 +335,7 @@ jobs:
 
   publish-image:
     name: Publish Image
-    needs: ${{ inputs.test && 'test-image' || 'build-image' }}
+    needs: test-image
     runs-on: ${{ inputs.runner }}
 
     if: ${{ inputs.publish }}
@@ -348,7 +348,7 @@ jobs:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-*-${{ needs.${{ inputs.test && 'test-image' || 'build-image' }}.outputs.INPUTS_SHA }}"
+          pattern: "*-*-${{ needs.test-image.outputs.INPUTS_SHA }}"
 
       - name: Augment Environment with Artifact Results
         run: |
@@ -360,9 +360,9 @@ jobs:
           ls -ld artifact-*/
           cat artifact-*/*
           cat artifact-*/tags.sh >> ${GITHUB_ENV}
-          echo "CI_IMAGE_TAG=${{ needs.${{ inputs.test && 'test-image' || 'build-image' }}.outputs.CI_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
-          echo "PUBLISH_IMAGE_TAG=${{ needs.${{ inputs.test && 'test-image' || 'build-image' }}.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
-          echo "INPUTS_SHA=${{ needs.${{ inputs.test && 'test-image' || 'build-image' }}.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
+          echo "CI_IMAGE_TAG=${{ needs.test-image.outputs.CI_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
+          echo "PUBLISH_IMAGE_TAG=${{ needs.test-image.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
+          echo "INPUTS_SHA=${{ needs.test-image.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
 
       - name: Set up Docker BuildX (local)
         if: ${{ inputs.buildx_endpoint == '' }}
