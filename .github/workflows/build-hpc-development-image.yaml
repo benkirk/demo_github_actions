@@ -399,5 +399,5 @@ jobs:
           file: containers/publish/Dockerfile
           build-args: |
             BASE_IMAGE=${{ env.CI_IMAGE_TAG }}
-            DEPLOYMENT_SCRIPTS="/container/extras/build_osu-micro-benchmarks.sh"
+            DEPLOYMENT_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
           target: final
