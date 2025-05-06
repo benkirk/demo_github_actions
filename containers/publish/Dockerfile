@@ -12,6 +12,7 @@ FROM base-image AS final
 #-------------------------------------------------------------------------------
 SHELL ["/bin/bash", "--login", "-c"]
 RUN echo "Publishing Production Image from ${BASE_IMAGE} ..." \
+    && ls /container/extras/*.sh \
     && SCRIPTS="${DEPLOYMENT_SCRIPTS}" \
     && for script in ${SCRIPTS//:/ }; do \
          [ -x "${script}" ] \
