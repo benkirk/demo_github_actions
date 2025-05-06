@@ -120,8 +120,7 @@ jobs:
 
         exclude:
           - mpi: mpich3
-            compiler: aocc
-            compiler: clang
+            compiler: [ aocc, clang ]
           - arch: aarch64
             compiler: oneapi
           - arch: aarch64
