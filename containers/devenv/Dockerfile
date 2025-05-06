@@ -638,8 +638,7 @@ ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
 ENV ROCM_HOME="${ROCM_HOME}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
     && echo "Rocm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
-    && echo "ROCm: https://rocm.docs.amd.com/en/latest/about/license.html" >> /container/EULAs.txt
-
+    && echo "ROCm: https://rocm.docs.amd.com/en/latest/about/license.html" >> /container/EULAs.txt \
     && source /etc/os-release \
     && cd /tmp \
     && env \
