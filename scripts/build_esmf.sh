@@ -24,6 +24,7 @@ case "${COMPILER_FAMILY}" in
     "gcc")    export ESMF_COMPILER="gfortran";;
     "oneapi") export ESMF_COMPILER="intel";;
     "nvhpc")  export ESMF_COMPILER="nvhpc";;
+    "clang")  export ESMF_COMPILER="llvm";;
     *)
         echo "ERROR: Unknown COMPILER_FAMILY=${COMPILER_FAMILY}"
         exit 1
