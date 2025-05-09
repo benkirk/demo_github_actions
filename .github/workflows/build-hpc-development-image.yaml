@@ -77,11 +77,11 @@ on:
         type: string
         required: false
 
-      build:
-        description: 'Build Image'
-        type: boolean
-        required: false
-        default: true
+      # build:
+      #   description: 'Build Image'
+      #   type: boolean
+      #   required: false
+      #   default: true
 
       test:
         description: 'Test Image'
