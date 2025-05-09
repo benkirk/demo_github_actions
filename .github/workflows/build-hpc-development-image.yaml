@@ -147,17 +147,13 @@ jobs:
       - name: Image Tags
         id: tags
         run: |
+          cat << EOF > tags.sh
           CI_IMAGE_TAG=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-          cat << EOF >> ${GITHUB_ENV}
-          CI_IMAGE_TAG=${CI_IMAGE_TAG}
-          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
+          PUBLISH_IMAGE_TAG_YYMM=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:$(date +"%y.%m")
           EOF
-          cat << EOF >> tags.sh
-          CI_IMAGE_TAG=${CI_IMAGE_TAG}
-          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
-          INPUTS_SHA=${INPUTS_SHA}
-          EOF
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -380,19 +376,12 @@ jobs:
 
 
 
-  # ref: https://samanpavel.medium.com/github-actions-conditional-job-execution-e6aa363d2867
-  # for weird if: construct allowing skipped testing
   publish-image:
     name: Publish Image
-    needs:
-      - build-image
-      - test-image
+    needs: build-image
     runs-on: ${{ inputs.runner }}
 
-    if: |
-      !cancelled() && ${{ inputs.publish }} &&
-      needs.build-image.result == 'success' &&
-      ( needs.test-image.result == 'success' || !${{ inputs.test }} )
+    if: ${{ inputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -453,7 +442,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ env.PUBLISH_IMAGE_TAG }}
+          tags: ${{ env.PUBLISH_IMAGE_TAG }},${{ env.PUBLISH_IMAGE_TAG_YYMM }}
           cache-from: type=registry,ref=ncarcisl/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=ncarcisl/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
           context: containers/publish
