@@ -379,7 +379,7 @@ jobs:
 
   publish-image:
     name: Publish Image
-    needs: build-image
+    needs: test-image
     runs-on: ${{ inputs.runner }}
 
     if: ${{ inputs.publish }}
