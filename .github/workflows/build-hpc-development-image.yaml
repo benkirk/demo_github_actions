@@ -179,6 +179,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+          merge-multiple: true
 
       - name: Augment Environment with Artifact Results
         id: tags
@@ -280,6 +281,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+          merge-multiple: true
 
       - name: Augment Environment with Artifact Results
         id: tags
@@ -393,6 +395,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
+          merge-multiple: true
 
       - name: Augment Environment with Artifact Results
         id: tags
@@ -406,9 +409,8 @@ jobs:
           cat /etc/os-release && echo
           uname -a && echo
           df -h && echo
+          free -g && echo
           lscpu && echo
-          ls -ld *-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}/
-          ls *-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}/*
 
       - name: Set up Docker BuildX (local)
         if: ${{ inputs.buildx_endpoint == '' }}
