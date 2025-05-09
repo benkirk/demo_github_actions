@@ -183,8 +183,8 @@ jobs:
       - name: Augment Environment with Artifact Results
         id: tags
         run: |
-          cat image-metadata-*/tags.sh >> ${GITHUB_ENV}
-          cat image-metadata-*/tags.sh >> ${GITHUB_OUTPUT}
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - uses: actions/checkout@v4
         with:
@@ -284,8 +284,8 @@ jobs:
       - name: Augment Environment with Artifact Results
         id: tags
         run: |
-          cat image-metadata-*/tags.sh >> ${GITHUB_ENV}
-          cat image-metadata-*/tags.sh >> ${GITHUB_OUTPUT}
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Interrogate Runtime Environment
         run: |
@@ -397,8 +397,8 @@ jobs:
       - name: Augment Environment with Artifact Results
         id: tags
         run: |
-          cat image-metadata-*/tags.sh >> ${GITHUB_ENV}
-          cat image-metadata-*/tags.sh >> ${GITHUB_OUTPUT}
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Build Environment Variables
         run: |
