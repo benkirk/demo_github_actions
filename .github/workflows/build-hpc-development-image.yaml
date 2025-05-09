@@ -380,12 +380,20 @@ jobs:
 
 
 
+  # ref: https://samanpavel.medium.com/github-actions-conditional-job-execution-e6aa363d2867
+  # for weird if: construct allowing skipped testing
   publish-image:
     name: Publish Image
-    needs: test-image
+    needs:
+      - build-image
+      - test-image
     runs-on: ${{ inputs.runner }}
 
-    if: ${{ inputs.publish }}
+    if: |
+      !cancelled() &&
+      ${{ inputs.publish }} &&
+      needs.build-image.result == 'success' &&
+      (needs.test-image.result == 'success' || needs.test-image.result == 'skipped')
     steps:
       - uses: actions/checkout@v4
         with:
