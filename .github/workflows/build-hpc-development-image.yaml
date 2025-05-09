@@ -77,6 +77,12 @@ on:
         type: string
         required: false
 
+      build:
+        description: 'Build Image'
+        type: boolean
+        required: false
+        default: true
+
       test:
         description: 'Test Image'
         type: boolean
@@ -96,12 +102,90 @@ on:
 
 
 jobs:
-  build-image:
-    name: Build Image
+  create-image-metadata:
+    name: Metadata
 
     runs-on: ${{ inputs.runner }}
 
+      - name: Interrogate Environment
+        run: |
+          env | sort && echo
+          cat /etc/os-release && echo
+          uname -a && echo
+          df -h && echo
+          free -g && echo
+          lscpu
+
+      - name: Build Environment Variables
+        run: |
+          cat << EOF >> ${GITHUB_ENV}
+          COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
+          GPU_LABEL=-${{ inputs.gpu }}
+          MPI_LABEL=-${{ inputs.mpi }}
+          EOF
+          cat << EOF > build_inputs.txt
+          arch: '${{ inputs.arch }}'
+          os: '${{ inputs.os }}'
+          conda: '${{ inputs.conda }}'
+          compiler: '${{ inputs.compiler }}'
+          ${{ inputs.compiler_build_args }}
+          mpi: '${{ inputs.mpi }}'
+          ${{ inputs.mpi_build_args }}
+          gpu: '${{ inputs.gpu }}'
+          ${{ inputs.gpu_build_args }}
+          ${{ inputs.extra_build_args }}
+          EOF
+          sed -i '/^[[:space:]]*$/d' build_inputs.txt
+          echo && echo "Build Inputs:" && cat build_inputs.txt
+          shasum build_inputs.txt > inputs_sha.txt
+          cat inputs_sha.txt
+          echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
+          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
+              echo "GPU_LABEL=" >> ${GITHUB_ENV}
+          fi
+
+      - name: Image Tags
+        id: tags
+        run: |
+          CI_IMAGE_TAG=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          cat << EOF >> ${GITHUB_ENV}
+          CI_IMAGE_TAG=${CI_IMAGE_TAG}
+          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
+          EOF
+          cat << EOF >> tags.sh
+          CI_IMAGE_TAG=${CI_IMAGE_TAG}
+          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
+          INPUTS_SHA=${INPUTS_SHA}
+          EOF
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+          path: |
+            build_inputs.txt
+            inputs_sha.txt
+            tags.sh
+          retention-days: 1
+
+  build-image:
+    name: Build Image
+    needs: create-image-metadata
+    runs-on: ${{ inputs.runner }}
+
     steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+
+      - name: Augment Environment with Artifact Results
+        id: tags
+        run: |
+          cat image-metadata-*/tags.sh >> ${GITHUB_ENV}
+          cat image-metadata-*/tags.sh >> ${GITHUB_OUTPUT}
+
       - uses: actions/checkout@v4
         with:
           submodules: 'true'
@@ -152,50 +236,6 @@ jobs:
           docker buildx inspect
           docker buildx du
 
-      - name: Build Environment Variables
-        run: |
-          cat << EOF >> ${GITHUB_ENV}
-          COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
-          GPU_LABEL=-${{ inputs.gpu }}
-          MPI_LABEL=-${{ inputs.mpi }}
-          EOF
-          cat << EOF > build_inputs.txt
-          arch: '${{ inputs.arch }}'
-          os: '${{ inputs.os }}'
-          conda: '${{ inputs.conda }}'
-          compiler: '${{ inputs.compiler }}'
-          ${{ inputs.compiler_build_args }}
-          mpi: '${{ inputs.mpi }}'
-          ${{ inputs.mpi_build_args }}
-          gpu: '${{ inputs.gpu }}'
-          ${{ inputs.gpu_build_args }}
-          ${{ inputs.extra_build_args }}
-          EOF
-          sed -i '/^[[:space:]]*$/d' build_inputs.txt
-          echo && echo "Build Inputs:" && cat build_inputs.txt
-          shasum build_inputs.txt > inputs_sha.txt
-          cat inputs_sha.txt
-          echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
-          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
-              echo "GPU_LABEL=" >> ${GITHUB_ENV}
-          fi
-
-      - name: Set Image Tag
-        id: tags
-        run: |
-          CI_IMAGE_TAG=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-          PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-          cat << EOF >> ${GITHUB_ENV}
-          CI_IMAGE_TAG=${CI_IMAGE_TAG}
-          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
-          EOF
-          cat << EOF >> tags.sh
-          CI_IMAGE_TAG=${CI_IMAGE_TAG}
-          PUBLISH_IMAGE_TAG=${PUBLISH_IMAGE_TAG}
-          INPUTS_SHA=${INPUTS_SHA}
-          EOF
-          cat tags.sh >> ${GITHUB_OUTPUT}
-
       - name: Base OS + Compiler + MPI
         uses: docker/build-push-action@v6
         with:
@@ -214,16 +254,6 @@ jobs:
             FINAL_TARGET=fftlibs
             ${{ inputs.extra_build_args }}
           target: final
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact-build_config-${{ env.INPUTS_SHA }}
-          path: |
-            build_inputs.txt
-            inputs_sha.txt
-            tags.sh
-          retention-days: 2
 
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
@@ -246,12 +276,19 @@ jobs:
 
     if: ${{ inputs.test }}
     steps:
-      - name: Interrogate Runtime Environment
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+
+      - name: Augment Environment with Artifact Results
         id: tags
         run: |
-          echo "CI_IMAGE_TAG=${{ needs.build-image.outputs.CI_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
-          echo "PUBLISH_IMAGE_TAG=${{ needs.build-image.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
-          echo "INPUTS_SHA=${{ needs.build-image.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
+          cat image-metadata-*/tags.sh >> ${GITHUB_ENV}
+          cat image-metadata-*/tags.sh >> ${GITHUB_OUTPUT}
+
+      - name: Interrogate Runtime Environment
+        run: |
           pwd
           ls
           find -type d
@@ -266,8 +303,9 @@ jobs:
           echo && echo && echo
           echo '----------------------------------------------------------------'
           echo && echo && echo
-          echo CI_IMAGE_TAG=${{ needs.build-image.outputs.CI_IMAGE_TAG }}
-          echo PUBLISH_IMAGE_TAG=${{ needs.build-image.outputs.PUBLISH_IMAGE_TAG }}
+          echo CI_IMAGE_TAG=${{ env.CI_IMAGE_TAG }}
+          echo PUBLISH_IMAGE_TAG=${{ env.PUBLISH_IMAGE_TAG }}
+          echo INPUTS_SHA=${{ env.INPUTS_SHA }}
           echo
           echo "CC=${CC}"
           echo "CXX=${CXX}"
@@ -328,7 +366,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-container_config-${{ needs.build-image.outputs.INPUTS_SHA }}
+          name: container_config-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
           path: /container/config_env.sh
           retention-days: 2
 
@@ -354,21 +392,23 @@ jobs:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-*-${{ needs.test-image.outputs.INPUTS_SHA }}"
+          pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
 
       - name: Augment Environment with Artifact Results
+        id: tags
+        run: |
+          cat image-metadata-*/tags.sh >> ${GITHUB_ENV}
+          cat image-metadata-*/tags.sh >> ${GITHUB_OUTPUT}
+
+      - name: Build Environment Variables
         run: |
           env | sort && echo
           cat /etc/os-release && echo
           uname -a && echo
           df -h && echo
           lscpu && echo
-          ls -ld artifact-*/
-          cat artifact-*/*
-          cat artifact-*/tags.sh >> ${GITHUB_ENV}
-          echo "CI_IMAGE_TAG=${{ needs.test-image.outputs.CI_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
-          echo "PUBLISH_IMAGE_TAG=${{ needs.test-image.outputs.PUBLISH_IMAGE_TAG }}" >> ${GITHUB_OUTPUT}
-          echo "INPUTS_SHA=${{ needs.test-image.outputs.INPUTS_SHA }}" >> ${GITHUB_OUTPUT}
+          ls -ld *-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}/
+          ls *-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}/*
 
       - name: Set up Docker BuildX (local)
         if: ${{ inputs.buildx_endpoint == '' }}
@@ -414,4 +454,6 @@ jobs:
           target: final
 
     outputs:
+      CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
+      INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
