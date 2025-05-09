@@ -298,33 +298,32 @@ jobs:
         continue-on-error: true
         run: |
           export DART_VERSION="v11.10.9"
-          /container/extras/build_dart.sh
+          timeout 25m /container/extras/build_dart.sh
 
       - name: WRF
         continue-on-error: true
         run: |
           export WRF_VERSION="4.7.0"
           export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
-          export MAKE_J_PROCS=2
-          /container/extras/build_wrf.sh
+          timeout 25m /container/extras/build_wrf.sh
 
       - name: MPAS
         continue-on-error: true
         run: |
           export MPAS_VERSION="8.2.2"
           export DEBUG=true
-          /container/extras/build_mpas.sh
+          timeout 25m /container/extras/build_mpas.sh
 
       - name: ESMF
         continue-on-error: true
         run: |
           export ESMF_VERSION="8.8.1"
-          /container/extras/build_esmf.sh
+          timeout 25m /container/extras/build_esmf.sh
 
       - name: Kokkos
         continue-on-error: true
         run: |
-          /container/extras/build_kokkos.sh
+          timeout 25m /container/extras/build_kokkos.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
