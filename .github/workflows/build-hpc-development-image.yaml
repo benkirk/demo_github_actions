@@ -384,7 +384,7 @@ jobs:
   # for weird if: construct allowing skipped testing
   publish-image:
     name: Publish Image
-    needs: ${{ inputs.test && test-image || build-image }}
+    needs: ${{ inputs.test && 'test-image' || 'build-image' }}
     runs-on: ${{ inputs.runner }}
 
     if: ${{ inputs.publish }}
