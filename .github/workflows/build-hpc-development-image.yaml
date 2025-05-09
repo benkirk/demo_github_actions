@@ -384,16 +384,10 @@ jobs:
   # for weird if: construct allowing skipped testing
   publish-image:
     name: Publish Image
-    needs:
-      - build-image
-      - test-image
+    needs: ${{ inputs.test && test-image || build-image }}
     runs-on: ${{ inputs.runner }}
 
-    if: |
-      !cancelled() &&
-      ${{ inputs.publish }} &&
-      needs.build-image.result == 'success' &&
-      (needs.test-image.result == 'success' || needs.test-image.result == 'skipped')
+    if: ${{ inputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
