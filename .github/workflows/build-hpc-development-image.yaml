@@ -345,6 +345,7 @@ jobs:
         run: |
           export WRF_VERSION="4.7.0"
           export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
+          export MAKE_J_PROCS=2
           timeout 25m /container/extras/build_wrf.sh
 
       - name: MPAS
