@@ -104,9 +104,9 @@ on:
 jobs:
   create-image-metadata:
     name: Metadata
-
     runs-on: ${{ inputs.runner }}
 
+    steps:
       - name: Interrogate Environment
         run: |
           env | sort && echo
