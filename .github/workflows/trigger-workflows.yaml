@@ -1,0 +1,29 @@
+name: Trigger Workflows
+
+on:
+  workflow_dispatch:
+  schedule:
+    # run at 2:42 UTC every Saturday
+    # ref: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onschedule
+    - cron: '42 2 * * 6'
+
+
+jobs:
+  trigger-workflows:
+    name: Trigger Workflows
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - uses: actions4gh/setup-gh@v1
+        - run: gh status
+          env:
+            GH_REPO: ${{ github.repository }}
+            BODY: Hello world!
