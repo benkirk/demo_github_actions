@@ -23,6 +23,11 @@ jobs:
           fetch-depth: 0
 
       - uses: actions4gh/setup-gh@v1.0.2
+        with:
+          gh-version: latest
+          cli-token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
+          token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
+          github-server-url: https://github.com
       - run: gh status
         env:
           GH_REPO: ${{ github.repository }}
