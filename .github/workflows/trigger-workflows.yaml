@@ -22,7 +22,7 @@ jobs:
           submodules: 'true'
           fetch-depth: 0
 
-      - uses: actions4gh/setup-gh@v1
+      - uses: actions4gh/setup-gh@v1.0.2
       - run: gh status
         env:
           GH_REPO: ${{ github.repository }}
