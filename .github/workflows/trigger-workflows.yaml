@@ -5,7 +5,7 @@ on:
   schedule:
     # run at 3:43 UTC 15th of each month
     # ref: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onschedule
-    - cron: '43 3 7 * *'
+    - cron: '43 3 15 * *'
 
 
 jobs:
@@ -27,7 +27,11 @@ jobs:
           gh-version: latest
           token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
           github-server-url: https://github.com
-      - run: gh status
-        env:
-          GH_REPO: ${{ github.repository }}
-          BODY: Hello world!
+
+      - name: Almalinux9
+        run: |
+          gh workflow run matrix-build-images.yaml -f os=almalinux9 -f test=true -f publish=true
+
+      - name: Leap
+        run: |
+          gh workflow run matrix-build-images.yaml -f os=leap -f test=true -f publish=true
