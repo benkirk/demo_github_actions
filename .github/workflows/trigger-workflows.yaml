@@ -3,9 +3,9 @@ name: Trigger Workflows
 on:
   workflow_dispatch:
   schedule:
-    # run at 2:42 UTC every Saturday
+    # run at 3:43 UTC 15th of each month
     # ref: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onschedule
-    - cron: '42 2 * * 6'
+    - cron: '43 3 7 * *'
 
 
 jobs:
