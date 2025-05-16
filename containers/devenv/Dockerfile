@@ -1071,8 +1071,8 @@ LABEL netcdf-fortran="${NETCDF_FORTRAN_VERSION}"
 FROM ${MPIIOLIBS_PREREQ} AS mpi-iolibs
 #-------------------------------------------------------------------------------
 ARG PNETCDF_VERSION="1.14.0"
-ARG PIO_VERSION="2.6.5"
-ARG PIO_TAG="pio2_6_5"
+ARG PIO_VERSION="2.6.6"
+ARG PIO_TAG="pio2_6_6"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && echo "building parallel IO libraries" \
     && echo "building pnetcdf-${PNETCDF_VERSION}" \
