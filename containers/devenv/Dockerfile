@@ -1080,6 +1080,11 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && PNETCDF_INSTALL_PATH="/container/pnetcdf/${PNETCDF_VERSION}" \
     && cd /tmp && curl -sSL https://parallel-netcdf.github.io/Release/pnetcdf-${PNETCDF_VERSION}.tar.gz | tar zx \
     && cd ./pnetcdf-${PNETCDF_VERSION} \
+    && case "${COMPILER_FAMILY}" in \
+        "gcc") \
+            export CFLAGS="-std=c17 ${CFLAGS}" \
+            ;; \
+       esac \
     && ./configure --help \
     && (./configure \
             --prefix=${PNETCDF_INSTALL_PATH} \

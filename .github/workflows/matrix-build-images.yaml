@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         arch:     [ x86_64, aarch64 ]
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14 ]
+        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
         mpi:      [ openmpi, mpich, mpich3 ]
 
         include:
@@ -84,12 +84,12 @@ jobs:
           - compiler: gcc14
             compiler_build_args: |
               COMPILER_FAMILY=gcc
-              GCC_VERSION=14.2.0
+              GCC_VERSION=14.3.0
 
-          # - compiler: gcc15
-          #   compiler_build_args: |
-          #     COMPILER_FAMILY=gcc
-          #     GCC_VERSION=15.1.0
+          - compiler: gcc15
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=15.1.0
 
           # - compiler: clang
           #   compiler_build_args: |
