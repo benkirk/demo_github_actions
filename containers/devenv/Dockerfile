@@ -948,11 +948,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && BLOSC_INSTALL_PATH="/container/c-blosc/${BLOSC_VERSION}" \
     && cd /tmp && curl -sSL https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.tar.gz | tar zx \
     && cd ./c-blosc-${BLOSC_VERSION} \
-    && case "${COMPILER_FAMILY}" in \
-        "gcc") \
-            export CFLAGS="-std=c17 ${CFLAGS}" \
-            ;; \
-       esac \
     && cmake \
            -DCMAKE_INSTALL_PREFIX=${BLOSC_INSTALL_PATH} \
            -DCMAKE_INSTALL_DO_STRIP=1 \
