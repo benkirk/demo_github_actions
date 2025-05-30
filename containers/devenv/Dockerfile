@@ -909,7 +909,7 @@ FROM ${IOLIBS_PREREQ} AS iolibs
 # (ref: https://github.com/Unidata/netcdf-fortran/issues/309 for aocc libtool fix)
 #-------------------------------------------------------------------------------
 ARG SZIP_VERSION="2.1.1"
-ARG BLOSC_VERSION="1.21.6"
+ARG BLOSC_VERSION="1.21.5"
 ARG HDF5_VERSION="1.14.6"
 ARG NETCDF_C_VERSION="4.9.3"
 ARG NETCDF_FORTRAN_VERSION="4.6.2"
