@@ -354,7 +354,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
     && unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH \
     && env \
     && GCC_INSTALL_PATH="/container/gcc/${GCC_VERSION}" \
-    && cd /tmp && curl -sSL https://ftpmirror.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://ftpmirror.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
     && cd ./gcc-${GCC_VERSION} \
     && mkdir -p /container/logs/ \
     && ./configure --help \
@@ -404,8 +404,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
     && ONEAPI_INSTALL_PATH="/container/intel-oneapi" \
     && mkdir -p /tmp/intel_installers && cd /tmp/intel_installers \
-    && curl -sO ${ONEAPI_CC_URL} \
-    && curl -sO ${ONEAPI_FC_URL} \
+    && curl --retry 3 --retry-delay 5 -sO ${ONEAPI_CC_URL} \
+    && curl --retry 3 --retry-delay 5 -sO ${ONEAPI_FC_URL} \
     && ls -ltrh \
     && for installer in  *${ONEAPI_VERSION}*.sh; do chmod +x ${installer} && ./${installer} -a -s --eula accept --install-dir ${ONEAPI_INSTALL_PATH} --ignore-errors; done \
     && cd ${ONEAPI_INSTALL_PATH} \
@@ -440,7 +440,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/aocc.log) \
     && echo "AMD AOCC: https://www.amd.com/en/developer/aocc/aocc-compiler/eula.html" >> /container/EULAs.txt \
     && AOCC_INSTALL_PATH="/container/aocc/${AOCC_VERSION}" \
     && mkdir -p ${AOCC_INSTALL_PATH} && cd ${AOCC_INSTALL_PATH} \
-    && curl -sSL ${AOCC_URL} | tar Jx \
+    && curl --retry 3 --retry-delay 5 -sSL ${AOCC_URL} | tar Jx \
     && mv aocc-compiler-${AOCC_VERSION}/* . && rmdir aocc-compiler-${AOCC_VERSION} \
     && ls -ltrh \
     && ./install.sh && mv ../setenv_AOCC.sh . \
@@ -475,7 +475,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
     && cd /tmp \
     && echo "downloading ${NVHPC_URL}" \
-    && curl -sO ${NVHPC_URL} && tar zxf nvhpc*.tar.gz \
+    && curl --retry 3 --retry-delay 5 -sO ${NVHPC_URL} && tar zxf nvhpc*.tar.gz \
     && rm -f nvhpc*.tar.gz \
     && export NVHPC_SILENT="true" \
     && export NVHPC_INSTALL_DIR="/container/nvhpc" \
@@ -603,7 +603,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
     && echo "CUDA: https://docs.nvidia.com/cuda/eula/index.html" >> /container/EULAs.txt \
     && mkdir -p ${CUDA_HOME} \
-    && curl -sO ${CUDA_INSTALLER_URL} \
+    && curl --retry 3 --retry-delay 5 -sO ${CUDA_INSTALLER_URL} \
     && bash ./cuda_*_linux*.run \
             --silent \
             --toolkit \
@@ -656,7 +656,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
             && zypper --gpg-auto-import-keys --no-gpg-checks --non-interactive update \
             ;; \
         *"|noble|"*) \
-            curl -sO https://repo.radeon.com/amdgpu-install/${ROCM_VERSION}/ubuntu/noble/amdgpu-install_6.2.60203-1_all.deb \
+            curl --retry 3 --retry-delay 5 -sO https://repo.radeon.com/amdgpu-install/${ROCM_VERSION}/ubuntu/noble/amdgpu-install_6.2.60203-1_all.deb \
             && ${PKG_INSTALL_CMD} ./amdgpu-install*.deb \
             ;; \
         *) \
@@ -719,7 +719,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
             || (apt-get update && ${PKG_INSTALL_CMD} libc-dev linux-libc-dev libc6-dev file pkg-config patch) \
             || false) \
     && MPICH_INSTALL_PATH="/container/mpich/${MPICH_VERSION}" \
-    && cd /tmp && curl -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
     && mkdir -p /container/logs/ \
     && case "${COMPILER_FAMILY}" in \
@@ -791,7 +791,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
             || (apt-get update && ${PKG_INSTALL_CMD} libc-dev linux-libc-dev libc6-dev file pkg-config) \
             || false) \
     && MPICH_INSTALL_PATH="/container/mpich/${MPICH_VERSION}" \
-    && cd /tmp && curl -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
     && mkdir -p /container/logs/ \
     && ./configure --help \
@@ -843,7 +843,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
             || false) \
     && env \
     && OPENMPI_INSTALL_PATH="/container/openmpi/${OPENMPI_VERSION}" \
-    && cd /tmp && curl -sSL https://download.open-mpi.org/release/open-mpi/v$(echo ${OPENMPI_VERSION} | cut -d . -f -2)/openmpi-${OPENMPI_VERSION}.tar.bz2 | tar xj \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://download.open-mpi.org/release/open-mpi/v$(echo ${OPENMPI_VERSION} | cut -d . -f -2)/openmpi-${OPENMPI_VERSION}.tar.bz2 | tar xj \
     && cd ./openmpi-${OPENMPI_VERSION} \
     && mkdir -p /container/logs/ \
     && ./configure --help \
@@ -923,7 +923,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "building libszip-${SZIP_VERSION}" \
     && env \
     && SZIP_INSTALL_PATH="/container/szip/${SZIP_VERSION}" \
-    && cd /tmp && curl -sSL https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/src/szip-${SZIP_VERSION}.tar.gz | tar zx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/src/szip-${SZIP_VERSION}.tar.gz | tar zx \
     && cd ./szip-${SZIP_VERSION} \
     && ./configure --help \
     && (./configure \
@@ -946,7 +946,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "building libblosc-${BLOSC_VERSION}" \
     && env \
     && BLOSC_INSTALL_PATH="/container/c-blosc/${BLOSC_VERSION}" \
-    && cd /tmp && curl -sSL https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.tar.gz | tar zx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.tar.gz | tar zx \
     && cd ./c-blosc-${BLOSC_VERSION} \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
         "gcc:15."*) \
@@ -973,7 +973,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "building HDF5-${HDF5_VERSION}" \
     && env \
     && HDF5_INSTALL_PATH="/container/hdf5/${HDF5_VERSION}" \
-    && cd /tmp && curl -sSL https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz | tar zx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz | tar zx \
     && cd ./hdf5-${HDF5_VERSION} \
     && case "${COMPILER_FAMILY}" in \
         "nvhpc"|"aocc"|"clang") \
@@ -1017,8 +1017,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && NETCDF_INSTALL_PATH="/container/netcdf" \
     && HDF5_PLUGIN_PATH="${NETCDF_INSTALL_PATH}/lib/plugins" \
     && cd /tmp \
-    && curl -sSL https://github.com/Unidata/netcdf-c/archive/v${NETCDF_C_VERSION}.tar.gz | tar zx \
-    && curl -sSL https://github.com/Unidata/netcdf-fortran/archive/v${NETCDF_FORTRAN_VERSION}.tar.gz | tar zx \
+    && curl --retry 3 --retry-delay 5 -sSL https://github.com/Unidata/netcdf-c/archive/v${NETCDF_C_VERSION}.tar.gz | tar zx \
+    && curl --retry 3 --retry-delay 5 -sSL https://github.com/Unidata/netcdf-fortran/archive/v${NETCDF_FORTRAN_VERSION}.tar.gz | tar zx \
     && cd /tmp/netcdf-c-${NETCDF_C_VERSION} \
     && ./configure --help \
     && (./configure \
@@ -1083,7 +1083,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && echo "building pnetcdf-${PNETCDF_VERSION}" \
     && env \
     && PNETCDF_INSTALL_PATH="/container/pnetcdf/${PNETCDF_VERSION}" \
-    && cd /tmp && curl -sSL https://parallel-netcdf.github.io/Release/pnetcdf-${PNETCDF_VERSION}.tar.gz | tar zx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://parallel-netcdf.github.io/Release/pnetcdf-${PNETCDF_VERSION}.tar.gz | tar zx \
     && cd ./pnetcdf-${PNETCDF_VERSION} \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
         "gcc:15."*) \
@@ -1116,7 +1116,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
        esac \
     && env \
     && PIO_INSTALL_PATH="/container/parallelio/${PIO_VERSION}" \
-    && cd /tmp && curl -sSL https://github.com/NCAR/ParallelIO/archive/refs/tags/${PIO_TAG}.tar.gz | tar zx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/NCAR/ParallelIO/archive/refs/tags/${PIO_TAG}.tar.gz | tar zx \
     && cd ./*${PIO_TAG}/ \
     && autoreconf -iv --force \
     && ./configure --help \
@@ -1157,7 +1157,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && echo "building fftw-${FFTW_VERSION}" \
     && env \
     && FFTW_INSTALL_PATH="/container/fftw/${FFTW_VERSION}" \
-    && cd /tmp && curl -sSL ftp://fftw.org/pub/fftw/fftw-${FFTW_VERSION}.tar.gz | tar zx \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL ftp://fftw.org/pub/fftw/fftw-${FFTW_VERSION}.tar.gz | tar zx \
     && cd ./fftw-${FFTW_VERSION} \
     && ./configure --help \
     && (./configure \
