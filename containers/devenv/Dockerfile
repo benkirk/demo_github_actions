@@ -794,6 +794,11 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
     && mkdir -p /container/logs/ \
+    && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
+        "gcc:15."*) \
+            export CFLAGS="-std=gnu17 -Wno-incompatible-pointer-types ${CFLAGS}" \
+            ;; \
+       esac \
     && ./configure --help \
     && (./configure \
            --prefix=${MPICH_INSTALL_PATH} \
