@@ -84,7 +84,7 @@ jobs:
           - compiler: gcc14
             compiler_build_args: |
               COMPILER_FAMILY=gcc
-              GCC_VERSION=14.2.0
+              GCC_VERSION=14.3.0
 
           - compiler: gcc15
             compiler_build_args: |
