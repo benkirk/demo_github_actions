@@ -100,7 +100,7 @@ jobs:
           - mpi: openmpi
             mpi_build_args: |
               MPI_FAMILY=openmpi
-              OPENMPI_VERSION=5.0.7
+              OPENMPI_VERSION=5.0.8
 
           - mpi: openmpi
             compiler: aocc
