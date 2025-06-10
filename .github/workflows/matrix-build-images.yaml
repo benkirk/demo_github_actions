@@ -79,7 +79,7 @@ jobs:
           - compiler: gcc13
             compiler_build_args: |
               COMPILER_FAMILY=gcc
-              GCC_VERSION=13.3.0
+              GCC_VERSION=13.4.0
 
           - compiler: gcc14
             compiler_build_args: |
