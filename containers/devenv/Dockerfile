@@ -515,7 +515,7 @@ FROM ${COMPILERS_PREREQ} AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
-ARG LLVM_VERSION="20.1.4"
+ARG LLVM_VERSION="20.1.7"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -545,7 +545,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
             ;; \
        esac \
     && cd /tmp \
-    && git clone  --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git \
+    && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git \
     && mkdir -p /tmp/BUILD_ALL && cd /tmp/BUILD_ALL \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
@@ -779,7 +779,7 @@ LABEL mpich="${MPICH_VERSION}"
 # MPICH
 FROM ${MPI_PREREQ} AS mpich
 #-------------------------------------------------------------------------------
-ARG MPICH_VERSION="4.3.0"
+ARG MPICH_VERSION="4.3.1"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
 ARG MPICH_DEVICE="ch4:ucx"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
@@ -837,7 +837,7 @@ LABEL mpich="${MPICH_VERSION}"
 # OpenMPI
 FROM ${MPI_PREREQ} AS openmpi
 #-------------------------------------------------------------------------------
-ARG OPENMPI_VERSION="5.0.7"
+ARG OPENMPI_VERSION="5.0.8"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "building OpenMPI-${OPENMPI_VERSION}" \
@@ -1157,7 +1157,7 @@ LABEL pio="${PIO_VERSION}"
 FROM ${FFTLIBS_PREREQ} AS fftlibs
 #-------------------------------------------------------------------------------
 ARG FFTW_VERSION="3.3.10"
-ARG HEFFTE_VERSION="github-main"
+ARG HEFFTE_VERSION="2.4.1"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && echo "building fftw-${FFTW_VERSION}" \
     && env \
@@ -1196,7 +1196,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && source /container/config_env.sh \
     && echo "building heffte=${HEFFTE_VERSION} with CPU support" \
     && env \
-    && cd /tmp && git clone https://github.com/af-ayala/heffte.git \
+    && cd /tmp && git clone --branch v${HEFFTE_VERSION} --depth 1 https://github.com/icl-utk-edu/heffte \
     && cd /tmp/heffte && git clean -xdf . && mkdir -p build && cd build \
     && export HEFFTE_INSTALL_PATH="/container/heffte/${HEFFTE_VERSION}-cpu" \
     && cmake \
@@ -1218,6 +1218,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
             cd /tmp/heffte && git clean -xdf . && mkdir -p build && cd build \
                 && echo "building heffte=${HEFFTE_VERSION} with CUDA support" \
                 && export HEFFTE_INSTALL_PATH="/container/heffte/${HEFFTE_VERSION}-cuda" \
+                && export CPATH="$(realpath $(dirname $(which ${CXX}))/../include):${CPATH}" \
                 && cmake \
                        -DCMAKE_BUILD_TYPE=Release \
                        -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
@@ -1227,8 +1228,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
                        -DFFTW_ROOT=${FFTW_INSTALL_PATH} \
                        -DHeffte_ENABLE_CUDA=ON \
                        -DHeffte_ENABLE_ROCM=OFF \
-                       -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_HOME} \
-                       -DCUDA_NVCC_FLAGS="-I$(realpath $(dirname $(which ${CXX}))/../include)" \
+                       -DCUDAToolkit_ROOT=${CUDA_HOME} \
+                       -DCMAKE_CUDA_ARCHITECTURES="80;90" \
                        -DCMAKE_CXX_COMPILER=${CXX} \
                        -DMPI_CXX_COMPILER=${CXX} \
                        .. \
@@ -1241,8 +1242,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && echo "export HEFFTE_ROOT=${HEFFTE_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export PATH=${HEFFTE_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${HEFFTE_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
-    && echo "export LIBRARY_PATH=${HEFFTE_INSTALL_PATH}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${HEFFTE_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
+    && echo "export LIBRARY_PATH=${HEFFTE_INSTALL_PATH}/lib64:\${LIBRARY_PATH}" >> /container/config_env.sh \
+    && echo "#export LD_LIBRARY_PATH=${HEFFTE_INSTALL_PATH}/lib64:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${HEFFTE_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/heffte.conf \
     && ldconfig --verbose \
     && docker-clean
