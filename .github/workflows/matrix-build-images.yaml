@@ -59,9 +59,9 @@ jobs:
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
-              ONEAPI_VERSION=2025.1.1
-              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/c4d2aef3-3123-475e-800c-7d66fd8da2a5/intel-dpcpp-cpp-compiler-2025.1.1.9_offline.sh
-              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0e4735b3-8721-422b-b204-00eefe413bfd/intel-fortran-compiler-2025.1.1.10_offline.sh
+              ONEAPI_VERSION=2025.2.0
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
