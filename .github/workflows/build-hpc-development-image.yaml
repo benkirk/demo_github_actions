@@ -245,6 +245,7 @@ jobs:
           file: containers/devenv/Dockerfile
           build-args: |
             BASE_OS=${{ inputs.os }}
+            COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
             ${{ inputs.compiler_build_args }}
             ${{ inputs.gpu_build_args }}
             ${{ inputs.mpi_build_args }}

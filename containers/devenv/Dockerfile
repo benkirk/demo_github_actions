@@ -122,7 +122,7 @@ SHELL ["/bin/bash", "--login", "-c"]
 
 #-------------------------------------------------------------------------------
 # AlmaLinux v10 base stage: OS + os packages
-FROM docker.io/almalinux:10-kitten AS almalinux10
+FROM docker.io/almalinux:10 AS almalinux10
 #-------------------------------------------------------------------------------
 RUN cat <<EOF > /usr/bin/docker-clean
 #!/bin/bash
@@ -521,7 +521,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && source /etc/os-release \
     && id_tag="|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" \
     && case "${id_tag}" in \
-        *"|platform:el8|"*|*"|platform:el9|"*) \
+        *"almalinux"*) \
             dnf -y --enablerepo crb install \
                 cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
                 libxml2-devel libedit-devel \
@@ -573,6 +573,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "export clang_F77=$(which flang) && export F77=\${clang_F77}" >> /container/config_env.sh \
     && echo "export clang_FC=$(which flang) && export FC=\${clang_FC}" >> /container/config_env.sh \
     && echo "${LLVM_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/llvm.conf \
+    && ls -d ${LLVM_INSTALL_PATH}/lib/$(uname -m)-*  >> /etc/ld.so.conf.d/llvm.conf \
     && ldconfig --verbose \
     && docker-clean
 LABEL compiler="clang"
