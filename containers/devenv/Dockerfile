@@ -330,6 +330,7 @@ FROM ${COMPILERS_PREREQ} AS os-gcc
 RUN echo "Selecting base OS gcc compilers" \
     && echo -e "\n# GCC compilers libraries (base OS)" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \
+    && echo "export GCC_VERSION=$(gcc -dumpfullversion)" >> /container/config_env.sh \
     && echo "export gcc_CC=$(which gcc) && export CC=\${gcc_CC}" >> /container/config_env.sh \
     && echo "export gcc_CXX=$(which g++) && export CXX=\${gcc_CXX}" >> /container/config_env.sh \
     && echo "export gcc_F77=$(which gfortran) && export F77=\${gcc_F77}" >> /container/config_env.sh \
@@ -373,10 +374,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \
     && echo "export GCC_VERSION=${GCC_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=/container/gcc/${GCC_VERSION}/bin:\${PATH}" >> /container/config_env.sh \
-    && echo "export LD_LIBRARY_PATH=/container/gcc/${GCC_VERSION}/lib64:/container/gcc/${GCC_VERSION}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "${GCC_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/gcc-${GCC_VERSION}.conf \
-    && echo "${GCC_INSTALL_PATH}/lib64" >> /etc/ld.so.conf.d/gcc-${GCC_VERSION}.conf \
-    && ldconfig --verbose \
+    && if [ "$(${GCC_INSTALL_PATH}/bin/gcc -dumpfullversion | cut -d'.' -f1)" -gt "$(gcc -dumpfullversion | cut -d'.' -f1) " ]; then \
+         echo "export LD_LIBRARY_PATH=/container/gcc/${GCC_VERSION}/lib64:/container/gcc/${GCC_VERSION}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh ;\
+         echo "${GCC_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/gcc-${GCC_VERSION}.conf ;\
+         echo "${GCC_INSTALL_PATH}/lib64" >> /etc/ld.so.conf.d/gcc-${GCC_VERSION}.conf ;\
+         ldconfig --verbose ;\
+       fi \
     && source /container/config_env.sh \
     && echo "export gcc_CC=$(which gcc) && export CC=\${gcc_CC}" >> /container/config_env.sh \
     && echo "export gcc_CXX=$(which g++) && export CXX=\${gcc_CXX}" >> /container/config_env.sh \
