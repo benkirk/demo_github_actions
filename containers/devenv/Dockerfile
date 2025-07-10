@@ -473,6 +473,7 @@ FROM ${COMPILERS_PREREQ} AS nvhpc
 #ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/24.9/nvhpc_2024_249_Linux_x86_64_cuda_12.6.tar.gz"
 ARG NVHPC_VERSION="25.1"
 ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
+ARG MARCH_FLAGS=""
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "Installing NVida HPC Toolkit ${NVHPC_VERSION}" \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
@@ -483,6 +484,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && export NVHPC_SILENT="true" \
     && export NVHPC_INSTALL_DIR="/container/nvhpc" \
     && export NVHPC_INSTALL_TYPE="single" \
+    && export MARCH_FLAGS=${MARCH_FLAGS} \
     && ./nvhpc_*/install \
     && echo -e "\n# NVHPC version ${NVHPC_VERSION}" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=nvhpc" >> /container/config_env.sh \
@@ -490,6 +492,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export NVCOMPILERS=${NVHPC_INSTALL_DIR}" >> /container/config_env.sh \
     && echo "export MANPATH=\${MANPATH}:\${NVCOMPILERS}/\${NVARCH}/${NVHPC_VERSION}/compilers/man" >> /container/config_env.sh \
     && echo "export PATH=\${NVCOMPILERS}/\${NVARCH}/${NVHPC_VERSION}/compilers/bin:\$PATH" >> /container/config_env.sh \
+    && echo "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && cd ${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION} \
     && rm_paths="comm_libs profilers math_libs" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
@@ -501,10 +504,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export nvhpc_CXX=\"$(which nvc++)\" && export CXX=\"\${nvhpc_CXX}\"" >> /container/config_env.sh \
     && echo "export nvhpc_F77=\"$(which nvfortran)\" && export F77=\"\${nvhpc_F77}\"" >> /container/config_env.sh \
     && echo "export nvhpc_FC=\"$(which nvfortran)\" && export FC=\"\${nvhpc_FC}\"" >> /container/config_env.sh \
-    && echo "export CFLAGS=\"-fPIC\"" >> /container/config_env.sh \
-    && echo "export CXXFLAGS=\"-fPIC\"" >> /container/config_env.sh \
-    && echo "export F77FLAGS=\"-fPIC\"" >> /container/config_env.sh \
-    && echo "export FCFLAGS=\"-fPIC\"" >> /container/config_env.sh \
+    && echo "export CFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
+    && echo "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
+    && echo "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
+    && echo "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && docker-clean
 # rm_paths="comm_libs cuda math_libs profilers" \
 LABEL compiler="nvhpc"
@@ -735,10 +738,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
             && ./autogen.sh \
             && export CC="/usr/bin/gcc" \
             && export CXX="/usr/bin/g++" \
-            && export CXXFLAGS="-fPIC" \
-            && export CFLAGS="-fPIC" \
-            && export FFLAGS="-fPIC" \
-            && export FCFLAGS="-fPIC" \
+            && export CXXFLAGS="-fPIC ${MARCH_FLAGS}" \
+            && export CFLAGS="-fPIC ${MARCH_FLAGS}" \
+            && export FFLAGS="-fPIC ${MARCH_FLAGS}" \
+            && export FCFLAGS="-fPIC ${MARCH_FLAGS}" \
             ;; \
        esac \
     && ./configure --help \
@@ -1121,7 +1124,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && echo "building ParallelIO-${PIO_VERSION}" \
     && case "${COMPILER_FAMILY}" in \
         "nvhpc"|"aocc"|"clang") export FCFLAGS="${FCFLAGS} -I/container/netcdf/include" ;; \
-        *) unset FCFLAGS ;; \
+        *) ;; \
        esac \
     && env \
     && PIO_INSTALL_PATH="/container/parallelio/${PIO_VERSION}" \
@@ -1170,7 +1173,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && cd ./fftw-${FFTW_VERSION} \
     && ./configure --help \
     && (./configure \
-            CFLAGS="-O3" \
+            CFLAGS="-O3 ${CFLAGS}" \
             --prefix=${FFTW_INSTALL_PATH} \
             --disable-static --enable-shared --enable-float \
             --enable-mpi --enable-threads \
@@ -1180,7 +1183,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && make --no-print-directory install-strip \
     && make --no-print-directory distclean \
     && (./configure \
-            CFLAGS="-O3" \
+            CFLAGS="-O3 ${CFLAGS}" \
             --prefix=${FFTW_INSTALL_PATH} \
             --disable-static --enable-shared \
             --enable-mpi --enable-threads \
@@ -1205,7 +1208,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && export HEFFTE_INSTALL_PATH="/container/heffte/${HEFFTE_VERSION}-cpu" \
     && cmake \
            -DCMAKE_BUILD_TYPE=Release \
-           -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
+           -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG ${CXXFLAGS}" \
            -DBUILD_SHARED_LIBS=ON \
            -DCMAKE_INSTALL_PREFIX=${HEFFTE_INSTALL_PATH} \
            -DHeffte_ENABLE_FFTW=ON \
@@ -1225,7 +1228,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
                 && export CPATH="$(realpath $(dirname $(which ${CXX}))/../include):${CPATH}" \
                 && cmake \
                        -DCMAKE_BUILD_TYPE=Release \
-                       -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
+                       -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG ${CXXFLAGS}" \
                        -DBUILD_SHARED_LIBS=ON \
                        -DCMAKE_INSTALL_PREFIX=${HEFFTE_INSTALL_PATH} \
                        -DHeffte_ENABLE_FFTW=ON \
