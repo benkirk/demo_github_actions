@@ -1,0 +1,128 @@
+name: Build NCAR Applications Inside HPC Development Containers
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Base OS'
+        type: choice
+        required: true
+        default: almalinux9
+        options:
+          - almalinux8
+          - almalinux9
+          - almalinux10
+          - leap
+          - tumbleweed
+          - noble
+
+jobs:
+
+  run-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc13, gcc14, clang ]
+        mpi:      [ openmpi, mpich, mpich3 ]
+        gpu:      [ nogpu, cuda ]
+        arch:     [ x86_64 ]
+
+        include:
+          - compiler: oneapi
+            extra_stream_args: 'CC=icx CFLAGS="-O3 -qopenmp -mcmodel=medium"'
+            extra_osu_args: 'CFLAGS="-qopenmp"'
+            extra_hpcg_args: 'CXXFLAGS="-O3 -qopenmp"'
+          - compiler: clang
+            extra_stream_args: 'CFLAGS="-O3 -fopenmp -mcmodel=medium"'
+
+        exclude:
+          - arch: arm64
+            compiler: oneapi
+          - arch: arm64
+            compiler: aocc
+          - compiler: clang
+            mpi: mpich3
+
+    name: Build Apps
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    container:
+      image: ncarcisl/cisldev-${{ matrix.arch }}-${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}:latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: Interrogate Runtime Environment
+        run: |
+          pwd
+          ls
+          find -type d
+          env
+          cat /container/config_env.sh
+          df -h
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          lscpu
+          nvidia-smi 2>/dev/null || true
+          echo && echo && echo
+          echo '----------------------------------------------------------------'
+          echo && echo && echo
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
+          echo "FC=${FC}"
+          echo "F77=${F77}"
+          echo
+          echo "CFLAGS=${CFLAGS}"
+          echo "CPPFLAGS=${CPPFLAGS}"
+          echo "CXXFLAGS=${CXXFLAGS}"
+          echo "FCFLAGS=${FCFLAGS}"
+          echo "F77FLAGS=${F77FLAGS}"
+          export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
+          which conda 2>/dev/null && conda --version || echo " --> no conda in this container"
+          which mpicc
+          mpicc --version 2>/dev/null || true
+
+      - name: MPI+OpenMP Hello World
+        run: |
+          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+          ldd ./hello_world_mpi
+          export OMP_NUM_THREADS=2
+          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
+
+      - name: DART
+        continue-on-error: true
+        run: |
+          export DART_VERSION="v11.10.9"
+          timeout 25m /container/extras/build_dart.sh
+
+      - name: WRF
+        continue-on-error: true
+        run: |
+          export WRF_VERSION="4.7.0"
+          export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
+          export MAKE_J_PROCS=2
+          timeout 25m /container/extras/build_wrf.sh
+
+      - name: MPAS
+        continue-on-error: true
+        run: |
+          export MPAS_VERSION="8.2.2"
+          export DEBUG=true
+          timeout 25m /container/extras/build_mpas.sh
+
+      - name: ESMF
+        continue-on-error: true
+        run: |
+          export ESMF_VERSION="8.8.1"
+          timeout 25m /container/extras/build_esmf.sh
+
+      - name: Kokkos
+        continue-on-error: true
+        run: |
+          timeout 25m /container/extras/build_kokkos.sh
