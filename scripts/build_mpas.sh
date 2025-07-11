@@ -13,7 +13,7 @@ export MPAS_VERSION="${MPAS_VERSION:-8.2.2}"
 cd ${STAGE_DIR}
 rm -rf ${STAGE_DIR}/*
 
-curl -sSL https://github.com/MPAS-Dev/MPAS-Model/archive/refs/tags/v${MPAS_VERSION}.tar.gz | tar xz
+curl --retry 3 --retry-delay 5 -sSL https://github.com/MPAS-Dev/MPAS-Model/archive/refs/tags/v${MPAS_VERSION}.tar.gz | tar xz
 cd ./MPAS-Model-*/
 
 export PIO_ROOT=${PIO}

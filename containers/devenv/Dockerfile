@@ -521,7 +521,7 @@ FROM ${COMPILERS_PREREQ} AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
-ARG LLVM_VERSION="20.1.7"
+ARG LLVM_VERSION="20.1.8"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -707,6 +707,8 @@ FROM ${MPI_PREREQ} AS mpich3
 #    mpich-3.4.3 and nvfortran misunderstand each other regarding real*16, avoid false positive.
 #    so we take the rather drastic step of modyfying configure.ac to prevent building the f08 interface,
 #    no matter what configure *thinks* it finds...
+#   CLANG:
+#    ditto f08 interface
 #   GCC:
 #    modern versions require -fallow-argument-mismatch. Setting FFLAGS and FCFLAGS at configure time
 #    will use these flags for both compiling the library and within the resulting wrappers
@@ -742,6 +744,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
             && export CFLAGS="-fPIC ${MARCH_FLAGS}" \
             && export FFLAGS="-fPIC ${MARCH_FLAGS}" \
             && export FCFLAGS="-fPIC ${MARCH_FLAGS}" \
+            ;; \
+        "clang") \
+            sed -i 's/f08_works=yes/f08_works=no/g' configure.ac \
+            && ./autogen.sh \
             ;; \
        esac \
     && ./configure --help \
@@ -843,6 +849,10 @@ LABEL mpich="${MPICH_VERSION}"
 #-------------------------------------------------------------------------------
 # OpenMPI
 FROM ${MPI_PREREQ} AS openmpi
+# Notes:
+#   AOCC:
+#     problem with half-precision floats; revisit with newer versions (>5.0.8)
+#     https://github.com/open-mpi/ompi/issues/13181
 #-------------------------------------------------------------------------------
 ARG OPENMPI_VERSION="5.0.8"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
@@ -858,9 +868,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://download.open-mpi.org/release/open-mpi/v$(echo ${OPENMPI_VERSION} | cut -d . -f -2)/openmpi-${OPENMPI_VERSION}.tar.bz2 | tar xj \
     && cd ./openmpi-${OPENMPI_VERSION} \
     && mkdir -p /container/logs/ \
+    && case "${COMPILER_FAMILY}" in \
+        "aocc") extra_config_args="--disable-alt-short-float" ;; \
+       esac \
     && ./configure --help \
     && (./configure \
-           --prefix=${OPENMPI_INSTALL_PATH} \
+           --prefix=${OPENMPI_INSTALL_PATH} ${extra_config_args} \
            ${TOGGLE_WITH_CUDA} \
            ${TOGGLE_WITH_ROCM} \
            --disable-static --enable-shared \

@@ -36,7 +36,7 @@ esac
 
 rm -rf ${STAGE_DIR}/*
 cd ${STAGE_DIR}/
-curl -sSL https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-${OMB_VERSION}.tar.gz | tar xz \
+curl --retry 3 --retry-delay 5 -sSL https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-${OMB_VERSION}.tar.gz | tar xz \
     &&  cd osu-micro-benchmarks-${OMB_VERSION} \
     && ./configure --help \
     && set -x \

@@ -40,8 +40,6 @@ jobs:
             compiler: oneapi
           - arch: arm64
             compiler: aocc
-          - compiler: clang
-            mpi: mpich3
 
     name: Build Apps
     runs-on: ubuntu-latest

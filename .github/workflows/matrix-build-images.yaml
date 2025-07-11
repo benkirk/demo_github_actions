@@ -74,7 +74,7 @@ jobs:
           - compiler: gcc12
             compiler_build_args: |
               COMPILER_FAMILY=gcc
-              GCC_VERSION=12.4.0
+              GCC_VERSION=12.5.0
 
           - compiler: gcc13
             compiler_build_args: |
@@ -101,12 +101,6 @@ jobs:
             mpi_build_args: |
               MPI_FAMILY=openmpi
               OPENMPI_VERSION=5.0.8
-
-          - mpi: openmpi
-            compiler: aocc
-            mpi_build_args: |
-              MPI_FAMILY=openmpi
-              OPENMPI_VERSION=4.1.8
 
           - mpi: mpich
             mpi_build_args: |

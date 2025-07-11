@@ -31,7 +31,7 @@ esac
 
 cd ${STAGE_DIR}
 rm -rf ${STAGE_DIR}/petsc*
-curl -sSL  https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-${PETSC_VERSION}.tar.gz | tar xz
+curl --retry 3 --retry-delay 5 -sSL  https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-${PETSC_VERSION}.tar.gz | tar xz
 cd ./petsc-${PETSC_VERSION}
 
 #BLAS_LAPACK="-L${NCAR_ROOT_MKL}/lib -Wl,-rpath,${NCAR_ROOT_MKL}/lib -lmkl_intel_lp64 -lmkl_sequential -lmkl_core"

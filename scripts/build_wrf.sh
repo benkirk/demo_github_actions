@@ -52,7 +52,7 @@ cd ${STAGE_DIR}
 rm -rf ${STAGE_DIR}/*
 
 cd ${STAGE_DIR} \
-    && curl -sSL https://github.com/wrf-model/WRF/releases/download/v${WRF_VERSION}/v${WRF_VERSION}.tar.gz | tar xz \
+    && curl --retry 3 --retry-delay 5 -sSL https://github.com/wrf-model/WRF/releases/download/v${WRF_VERSION}/v${WRF_VERSION}.tar.gz | tar xz \
     && cd WRFV${WRF_VERSION} \
     && env \
     && sed -i 's/gcc/mpicc/g' arch/configure.defaults \
@@ -64,7 +64,7 @@ cd ${STAGE_DIR} \
 # CONFIGURE & COMPILE WPS ${WPS_VERSION}
 # (WPS does not yet recogize Linux aarch64 gfortran, but the conf is the same as x86_64)
 cd ${STAGE_DIR} \
-    && curl -sSL https://github.com/wrf-model/WPS/archive/refs/tags/v${WPS_VERSION}.tar.gz | tar xz \
+    && curl --retry 3 --retry-delay 5 -sSL https://github.com/wrf-model/WPS/archive/refs/tags/v${WPS_VERSION}.tar.gz | tar xz \
     && cd WPS-${WPS_VERSION} \
     && export WRF_ROOT=${INSTALL_ROOT}/wrf/${WRF_VERSION} \
     && export INCLUDE="/usr/include:" \
