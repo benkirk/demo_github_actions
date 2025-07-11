@@ -113,14 +113,12 @@ jobs:
               MPI_FAMILY=mpich
               MPICH_VERSION=4.3.1
 
-          # - mpi: mpich3
-          #   mpi_build_args: |
-          #     MPI_FAMILY=mpich3
-          #     MPICH_VERSION=3.4.3
+          - mpi: mpich3
+            mpi_build_args: |
+              MPI_FAMILY=mpich3
+              MPICH_VERSION=3.4.3
 
         exclude:
-          - mpi: mpich3
-            compiler: aocc
           - arch: aarch64
             compiler: oneapi
           - arch: aarch64
