@@ -34,6 +34,8 @@ jobs:
             extra_hpcg_args: 'CXXFLAGS="-O3 -qopenmp"'
           - compiler: clang
             extra_stream_args: 'CFLAGS="-O3 -fopenmp -mcmodel=medium"'
+          - mpi: openmpi
+            extra_mpiexec_args: '--allow-run-as-root'
 
         exclude:
           - arch: arm64
@@ -91,7 +93,7 @@ jobs:
           mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
           ldd ./hello_world_mpi
           export OMP_NUM_THREADS=2
-          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
+          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi
 
       - name: DART
         continue-on-error: true
