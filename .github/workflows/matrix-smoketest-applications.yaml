@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc13, gcc14, clang ]
-        mpi:      [ openmpi, mpich, mpich3 ]
+        mpi:      [ openmpi, mpich ]
         gpu:      [ nogpu, cuda ]
         arch:     [ x86_64 ]
 
