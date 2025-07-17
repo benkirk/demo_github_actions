@@ -46,7 +46,7 @@ on:
 jobs:
 
   build-matrix:
-    name: Build ${{ inputs.os }}
+    name: Build
     strategy:
       fail-fast: false
       matrix:
