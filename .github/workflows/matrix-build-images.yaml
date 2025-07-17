@@ -51,11 +51,25 @@ jobs:
       fail-fast: false
       matrix:
         arch:     [ x86_64, aarch64 ]
-        compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
+        compiler: [ nvhpc, oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
         mpi:      [ openmpi, mpich, mpich3 ]
 
         include:
           # compiler build arg specifications
+          - compiler: nvhpc
+            arch: x86_64
+            compiler_build_args: |
+              COMPILER_FAMILY=nvhpc
+              NVHPC_VERSION=25.5
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.5/nvhpc_2025_255_Linux_x86_64_cuda_12.9.tar.gz
+
+          - compiler: nvhpc
+            arch: aarch64
+            compiler_build_args: |
+              COMPILER_FAMILY=nvhpc
+              NVHPC_VERSION=25.5
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.5/nvhpc_2025_255_Linux_aarch64_cuda_12.9.tar.gz
+
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
