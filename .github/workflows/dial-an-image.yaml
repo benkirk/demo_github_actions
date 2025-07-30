@@ -11,6 +11,7 @@ on:
         options:
           - almalinux8
           - almalinux9
+          - almalinux10
           - leap
           - tumbleweed
           - noble

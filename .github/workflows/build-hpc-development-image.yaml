@@ -319,7 +319,7 @@ jobs:
           echo "FCFLAGS=${FCFLAGS}"
           echo "F77FLAGS=${F77FLAGS}"
           export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
-          which conda 2>/dev/null && conda --version || echo " --> no conda in this container"
+          conda --version 2>/dev/null || echo " --> no conda in this container"
           which mpicc
           mpicc --version 2>/dev/null || true
 
