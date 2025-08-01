@@ -850,6 +850,9 @@ FROM ${MPI_PREREQ} AS openmpi
 #   AOCC:
 #     problem with half-precision floats; revisit with newer versions (>5.0.8)
 #     https://github.com/open-mpi/ompi/issues/13181
+#
+#   PRTE_ALLOW_RUN_AS_ROOT: distasteful; but unless we want to deal with multiple UIDs in the build/test process we'll allow
+#     https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#the-allow-run-as-root-option
 #-------------------------------------------------------------------------------
 ARG OPENMPI_VERSION="5.0.8"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
@@ -887,6 +890,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "export MPI_ROOT=${OPENMPI_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export OPENMPI_VERSION=${OPENMPI_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${OPENMPI_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
+    && echo "export PRTE_ALLOW_RUN_AS_ROOT=1" >>  /container/config_env.sh \
+    && echo "export PRTE_ALLOW_RUN_AS_ROOT_CONFIRM=1" >>  /container/config_env.sh \
     && echo "${OPENMPI_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/openmpi-${OPENMPI_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
