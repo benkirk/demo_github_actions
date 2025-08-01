@@ -259,7 +259,7 @@ SHELL ["/bin/bash", "--login", "-c"]
 
 #-------------------------------------------------------------------------------
 # Ubuntu 24.04 LTS (Noble Numbat) base stage: OS + os packages
-FROM  ubuntu:noble AS noble
+FROM ubuntu:noble AS noble
 #-------------------------------------------------------------------------------
 ARG DEBIAN_FRONTEND=noninteractive
 RUN cat <<EOF > /usr/bin/docker-clean
@@ -398,9 +398,9 @@ FROM ${COMPILERS_PREREQ} AS oneapi
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/intel-oneapi-compilers/package.py
 # Intel compilers do not -rpath their own libraries, relying instead on LD_LIBRARY_PATH
 # We'd rather not need that, so add to the system search path
-ARG ONEAPI_VERSION="2025.1.0"
-ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd63be99-88b0-4981-bea1-2034fe17f5cf/intel-dpcpp-cpp-compiler-2025.1.0.573_offline.sh"
-ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/577ebc28-d0f6-492b-9a43-b04354ce99da/intel-fortran-compiler-2025.1.0.601_offline.sh"
+ARG ONEAPI_VERSION="2025.2.0"
+ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh"
+ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
     && ${PKG_INSTALL_CMD} procps \
     && echo "Installing Intel-OneAPI" \
@@ -600,8 +600,8 @@ FROM ${CUDA_PREREQ} AS cuda
 #-------------------------------------------------------------------------------
 #ARG CUDA_VERSION="12.6"
 #ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run"
-ARG CUDA_VERSION="12.8"
-ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda_12.8.1_570.124.06_linux.run"
+ARG CUDA_VERSION="12.9"
+ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
@@ -624,9 +624,9 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && echo "export CUDA_HOME=${CUDA_HOME}" >> /container/config_env.sh \
     && echo "export PATH=${CUDA_HOME}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${CUDA_HOME}/include:\${CPATH}" >> /container/config_env.sh \
-    && echo "export LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/targets/$(uname -m)-linux/lib/stubs:\${LIBRARY_PATH}" >> /container/config_env.sh \
+    && echo "export CUDA_STUBDIR=${CUDA_HOME}/targets/$(uname -m)-linux/lib/stubs" >> /container/config_env.sh \
+    && echo "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export NVCC_PREPEND_FLAGS=-allow-unsupported-compiler" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${CUDA_HOME}/targets/$(uname -m)-linux/lib/stubs:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "$(find /container/cuda -type d -name stubs)" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
@@ -679,7 +679,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
     && echo "export PATH=${ROCM_HOME}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${ROCM_HOME}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${ROCM_HOME}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${ROCM_HOME}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${ROCM_HOME}/lib" >> /etc/ld.so.conf.d/rocm-${ROCM_VERSION}.conf \
     && ldconfig --verbose \
     && docker-clean
@@ -769,7 +768,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && echo "export MPI_ROOT=${MPICH_INSTALL_PATH}"  >> /container/config_env.sh \
     && echo "export MPICH_VERSION=${MPICH_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${MPICH_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${MPICH_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${MPICH_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/mpich-${MPICH_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -831,7 +829,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && echo "export MPI_ROOT=${MPICH_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export MPICH_VERSION=${MPICH_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${MPICH_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${MPICH_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${MPICH_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/mpich-${MPICH_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -890,7 +887,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "export MPI_ROOT=${OPENMPI_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export OPENMPI_VERSION=${OPENMPI_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${OPENMPI_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${OPENMPI_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${OPENMPI_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/openmpi-${OPENMPI_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -964,7 +960,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "export PATH=${SZIP_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${SZIP_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${SZIP_INSTALL_PATH}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${SZIP_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${SZIP_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/szip.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -991,7 +986,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "export PATH=${BLOSC_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${BLOSC_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${BLOSC_INSTALL_PATH}/lib64:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${BLOSC_INSTALL_PATH}/lib64:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${BLOSC_INSTALL_PATH}/lib64" >> /etc/ld.so.conf.d/blosc.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -1030,7 +1024,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "export PATH=${HDF5_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${HDF5_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${HDF5_INSTALL_PATH}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${HDF5_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${HDF5_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/hdf5.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -1064,7 +1057,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "export CPATH=${NETCDF_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${NETCDF_INSTALL_PATH}/lib:${HDF5_PLUGIN_PATH}\${LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export HDF5_PLUGIN_PATH=${HDF5_PLUGIN_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${NETCDF_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${NETCDF_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/netcdf.conf \
     && echo "${HDF5_PLUGIN_PATH}" >> /etc/ld.so.conf.d/netcdf.conf \
     && ldconfig --verbose \
@@ -1130,7 +1122,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && echo "export PATH=${PNETCDF_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${PNETCDF_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${PNETCDF_INSTALL_PATH}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${PNETCDF_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${PNETCDF_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/pnetcdf.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -1163,7 +1154,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && echo "export PATH=${PIO_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${PIO_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${PIO_INSTALL_PATH}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${PIO_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${PIO_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/parallelio.conf \
     && ldconfig --verbose \
     && docker-clean
@@ -1210,7 +1200,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && echo "export PATH=${FFTW_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${FFTW_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${FFTW_INSTALL_PATH}/lib:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${FFTW_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${FFTW_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/fftw.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -1263,7 +1252,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
     && echo "export PATH=${HEFFTE_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${HEFFTE_INSTALL_PATH}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${HEFFTE_INSTALL_PATH}/lib64:\${LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "#export LD_LIBRARY_PATH=${HEFFTE_INSTALL_PATH}/lib64:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "${HEFFTE_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/heffte.conf \
     && ldconfig --verbose \
     && docker-clean

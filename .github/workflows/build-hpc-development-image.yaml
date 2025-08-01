@@ -300,7 +300,9 @@ jobs:
           cat /etc/os-release 2>/dev/null || true
           uname -a
           lscpu
-          nvidia-smi 2>/dev/null || true
+          find /usr /container -name "libcuda.so.*" -o -name "nvidia-smi" -o -name "libnvidia-ml.so*"
+          [ -d "${CUDA_STUBDIR}" ] && rm -rf ${CUDA_STUBDIR}
+          which nvidia-smi 2>/dev/null && nvidia-smi 2>/dev/null || echo "nvidia-smi not found."
           echo && echo && echo
           echo '----------------------------------------------------------------'
           echo && echo && echo
