@@ -36,14 +36,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        #compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
         compiler: [ os-gcc, gcc12 ]
         mpi:      [ openmpi ]
         arch:     [ x86_64, aarch64 ]
         gpu:      [ cuda ]
 
         include:
-
           # gpu architecture-dependent build arg specifications
           - arch: x86_64
             gpu: cuda
