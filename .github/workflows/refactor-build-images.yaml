@@ -3,6 +3,20 @@ name: Updated - Build HPC Development Images
 on:
   workflow_dispatch:
     inputs:
+      os:
+        description: 'Base OS'
+        type: choice
+        required: true
+        default: almalinux10
+        options:
+          - almalinux8
+          - almalinux9
+          - almalinux10
+          - jammy
+          - noble
+          - leap
+          - tumbleweed
+
       test:
         description: 'Test Image'
         type: boolean
@@ -18,16 +32,15 @@ on:
 jobs:
 
   build-matrix:
-    name: Build
+    name: ${{ inputs.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:       [ almalinux10 ]
-        arch:     [ x86_64, aarch64 ]
-        gpu:      [ nogpu, cuda ]
         #compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
         compiler: [ os-gcc, gcc12 ]
         mpi:      [ openmpi ]
+        arch:     [ x86_64, aarch64 ]
+        gpu:      [ cuda ]
 
         include:
 
@@ -63,7 +76,7 @@ jobs:
 
     uses: ./.github/workflows/refactor-hpc-development-image.yaml
     with:
-      os: ${{ matrix.os }}
+      os: ${{ inputs.os }}
       arch: ${{ matrix.arch }}
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
       conda: true

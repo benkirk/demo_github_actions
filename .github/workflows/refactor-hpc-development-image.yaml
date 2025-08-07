@@ -230,24 +230,24 @@ jobs:
           docker buildx inspect
           docker buildx du
 
-      - name: Base OS + Toolkits
-        uses: docker/build-push-action@v6
-        with:
-          push: false
-          tags: ${{ env.CI_IMAGE_TAG }}
-          cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
-          cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
-          context: containers/refactor
-          file: containers/refactor/Dockerfile
-          build-args: |
-            BASE_OS=${{ inputs.os }}
-            FINAL_TARGET=toolkits
-            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
-            ${{ inputs.extra_build_args }}
-            ${{ inputs.gpu_build_args }}
-          target: final
+      # - name: Base OS + Toolkits
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     push: false
+      #     tags: ${{ env.CI_IMAGE_TAG }}
+      #     cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
+      #     cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+      #     context: containers/refactor
+      #     file: containers/refactor/Dockerfile
+      #     build-args: |
+      #       BASE_OS=${{ inputs.os }}
+      #       FINAL_TARGET=toolkits
+      #       MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+      #       ${{ inputs.extra_build_args }}
+      #       ${{ inputs.gpu_build_args }}
+      #     target: final
 
-      - name: Compiler + MPI
+      - name: BaseOS + Toolkits + Compiler + MPI
         uses: docker/build-push-action@v6
         with:
           push: false
