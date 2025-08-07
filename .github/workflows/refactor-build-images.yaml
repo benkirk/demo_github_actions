@@ -18,7 +18,6 @@ on:
 jobs:
 
   build-matrix:
-    name: Build
     strategy:
       fail-fast: false
       matrix:
