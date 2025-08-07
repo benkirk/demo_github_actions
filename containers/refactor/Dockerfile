@@ -141,6 +141,8 @@ FROM base_os AS cuda
 #-------------------------------------------------------------------------------
 #ARG CUDA_VERSION="12.6"
 #ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run"
+
+
 ARG CUDA_VERSION="12.9"
 ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
@@ -157,6 +159,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
             --toolkit \
             --toolkitpath=${CUDA_HOME} \
             --no-man-page \
+    && rm -f ./cuda_*_linux*.run \
     && cd ${CUDA_HOME} \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
