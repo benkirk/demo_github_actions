@@ -24,7 +24,7 @@ jobs:
       matrix:
         os:       [ almalinux10 ]
         arch:     [ x86_64, aarch64 ]
-        gpu:      [ nogpu ]
+        gpu:      [ nogpu, cuda ]
         #compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
         #mpi:      [ openmpi, mpich, mpich3 ]
 
