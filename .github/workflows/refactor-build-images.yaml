@@ -3,12 +3,6 @@ name: Updated - Build HPC Development Images
 on:
   workflow_dispatch:
     inputs:
-      conda:
-        description: 'Include Conda (Miniforge)'
-        type: boolean
-        required: false
-        default: true
-
       test:
         description: 'Test Image'
         type: boolean
@@ -41,7 +35,7 @@ jobs:
       arch: ${{ matrix.arch }}
       gpu: ${{ matrix.gpu }}
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-      conda: ${{ inputs.conda }}
+      conda: true
 
       # compiler: ${{ matrix.compiler }}
       # compiler_build_args: ${{ matrix.compiler_build_args }}

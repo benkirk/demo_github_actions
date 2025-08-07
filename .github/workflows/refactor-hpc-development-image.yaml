@@ -126,7 +126,6 @@ jobs:
           cat << EOF > build_inputs.txt
           arch: '${{ inputs.arch }}'
           os: '${{ inputs.os }}'
-          conda: '${{ inputs.conda }}'
           compiler: '${{ inputs.compiler }}'
           ${{ inputs.compiler_build_args }}
           mpi: '${{ inputs.mpi }}'
@@ -244,7 +243,6 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             MINIFORGE_PREREQ=${ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
-            TOOLKITS_PREREQ=${{ inputs.conda && 'miniforge' || ${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }} }}
             FINAL_TARGET=toolkits
             ${{ inputs.extra_build_args }}
           target: final
