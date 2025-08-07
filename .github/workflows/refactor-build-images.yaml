@@ -36,7 +36,6 @@ jobs:
             gpu_build_args: |
               CUDA_VERSION=12.9
               CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
-          - gpu: cuda
             arch: aarch64
             gpu_build_args: |
               CUDA_VERSION=12.9
