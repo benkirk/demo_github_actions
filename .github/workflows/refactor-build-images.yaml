@@ -49,7 +49,6 @@ jobs:
     with:
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
-      gpu: ${{ matrix.gpu }}
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
       conda: true
       gpu: ${{ matrix.gpu }}
