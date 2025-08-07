@@ -8,14 +8,10 @@ ARG FINAL_TARGET="fftlibs"
 #ARG FINAL_TARGET="iolibs"
 
 ARG MINIFORGE_PREREQ="base_os"
-ARG CUDA_PREREQ="miniforge"
-ARG ROCM_PREREQ="miniforge"
-ARG COMPILERS_PREREQ="miniforge"
 
-ARG MPI_PREREQ="compilers"
+ARG TOOLKITS_PREREQ="miniforge"
 
 ARG IOLIBS_PREREQ="mpi"
-ARG MPIIOLIBS_PREREQ="iolibs"
 
 ARG FFTLIBS_PREREQ="mpi-iolibs"
 
@@ -32,7 +28,6 @@ FROM docker.io/almalinux:8 AS almalinux8
 FROM docker.io/almalinux:9 AS almalinux9
 FROM docker.io/almalinux:10 AS almalinux10
 FROM docker.io/opensuse/leap AS leap
-FROM docker.io/opensuse/slowroll AS slowroll
 FROM docker.io/opensuse/tumbleweed AS tumbleweed
 FROM ubuntu:jammy AS jammy
 FROM ubuntu:noble AS noble
@@ -135,29 +130,14 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/base-os.log) \
     && docker-clean
 
 
-################################################################################
-# Part 2: Toolkits and 3rd party libraries that do not need to be compiled
-################################################################################
 
-#-------------------------------------------------------------------------------
-# miniforge stage
-FROM base_os AS miniforge
-#-------------------------------------------------------------------------------
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
-    && mkdir -p /container/miniforge \
-    && env \
-    && cd /tmp && wget --quiet "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" \
-    && bash ./Miniforge3-$(uname)-$(uname -m).sh -b -u -p /container/miniforge \
-    && ln -sf /container/miniforge/etc/profile.d/conda.sh /container/init-conda.sh \
-    && echo -e "\n# Miniforge" >> /container/config_env.sh \
-    && echo "source /container/miniforge/etc/profile.d/conda.sh" >> /container/config_env.sh \
-    && source /container/init-conda.sh \
-    && conda --version \
-    && docker-clean
+################################################################################
+# Part 2: Toolkits and 3rd party libraries that do not need to be compiled.
+################################################################################
 
 #-------------------------------------------------------------------------------
 # Cuda stages
-FROM ${CUDA_PREREQ} AS cuda
+FROM base_os AS cuda
 #-------------------------------------------------------------------------------
 #ARG CUDA_VERSION="12.6"
 #ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run"
@@ -185,10 +165,11 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && echo "export CUDA_HOME=${CUDA_HOME}" >> /container/config_env.sh \
     && echo "export PATH=${CUDA_HOME}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${CUDA_HOME}/include:\${CPATH}" >> /container/config_env.sh \
-    && echo "export CUDA_STUBDIR=${CUDA_HOME}/targets/$(uname -m)-linux/lib/stubs" >> /container/config_env.sh \
+    && echo "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export NVCC_PREPEND_FLAGS=-allow-unsupported-compiler" >> /container/config_env.sh \
-    && echo "$(find /container/cuda -type d -name stubs)" >> /etc/ld.so.conf.d/cuda*.conf \
+    && source /container/config_env.sh \
+    && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
 
@@ -199,7 +180,7 @@ LABEL cuda="${CUDA_VERSION}"
 
 #-------------------------------------------------------------------------------
 # ROCm stages
-FROM ${ROCM_PREREQ} AS rocm
+FROM base_os AS rocm
 #-------------------------------------------------------------------------------
 ARG ROCM_VERSION="6.2.3"
 ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
@@ -249,13 +230,38 @@ LABEL rocm="${ROCM_VERSION}"
 
 
 
+#-------------------------------------------------------------------------------
+# miniforge stage
+FROM ${MINIFORGE_PREREQ} AS miniforge
+#-------------------------------------------------------------------------------
+RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
+    && mkdir -p /container/miniforge \
+    && env \
+    && cd /tmp && wget --quiet "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" \
+    && bash ./Miniforge3-$(uname)-$(uname -m).sh -b -u -p /container/miniforge \
+    && ln -sf /container/miniforge/etc/profile.d/conda.sh /container/init-conda.sh \
+    && echo -e "\n# Miniforge" >> /container/config_env.sh \
+    && echo "source /container/miniforge/etc/profile.d/conda.sh" >> /container/config_env.sh \
+    && source /container/init-conda.sh \
+    && conda --version \
+    && docker-clean
+
+
+
+#-------------------------------------------------------------------------------
+FROM ${TOOLKITS_PREREQ} AS toolkits
+RUN echo "Settiing the third-party toolkits layer"
+#-------------------------------------------------------------------------------
+
+
+
 # ################################################################################
 # # Part 3: Compilers
 # ################################################################################
 
 #-------------------------------------------------------------------------------
 # GCC compilers stage (from base OS)
-FROM ${COMPILERS_PREREQ} AS os-gcc
+FROM toolkits AS os-gcc
 RUN echo "Selecting base OS gcc compilers" \
     && echo -e "\n# GCC compilers libraries (base OS)" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \
@@ -277,7 +283,7 @@ LABEL gcc="os-gcc"
 # ("unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH" fixes this on AWS/docker:)
 #   g++: error: spec failure: unrecognized spec option ‘@’
 #   g++: fatal error: unknown spec function ‘dumps’
-FROM ${COMPILERS_PREREQ} AS gcc
+FROM toolkits AS gcc
 #-------------------------------------------------------------------------------
 ARG GCC_VERSION="13.3.0"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
@@ -323,7 +329,7 @@ LABEL gcc="${GCC_VERSION}"
 
 #-------------------------------------------------------------------------------
 # Intel OneAPI stage
-FROM ${COMPILERS_PREREQ} AS oneapi
+FROM toolkits AS oneapi
 #-------------------------------------------------------------------------------
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/intel-oneapi-compilers/package.py
 # Intel compilers do not -rpath their own libraries, relying instead on LD_LIBRARY_PATH
@@ -363,7 +369,7 @@ LABEL oneapi="${ONEAPI_VERSION}"
 
 #-------------------------------------------------------------------------------
 # AMD AOCC stage
-FROM ${COMPILERS_PREREQ} AS aocc
+FROM toolkits AS aocc
 #-------------------------------------------------------------------------------
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/aocc/package.py
 ARG AOCC_VERSION="5.0.0"
@@ -395,12 +401,8 @@ LABEL aocc="${AOCC_VERSION}"
 
 #-------------------------------------------------------------------------------
 # NVHPC stage
-FROM ${COMPILERS_PREREQ} AS nvhpc
+FROM toolkits AS nvhpc
 #-------------------------------------------------------------------------------
-#ARG NVHPC_VERSION="24.5"
-#ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/24.5/nvhpc_2024_245_Linux_x86_64_cuda_12.4.tar.gz"
-#ARG NVHPC_VERSION="24.9"
-#ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/24.9/nvhpc_2024_249_Linux_x86_64_cuda_12.6.tar.gz"
 ARG NVHPC_VERSION="25.1"
 ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
 ARG MARCH_FLAGS=""
@@ -447,7 +449,7 @@ LABEL nvhpc="${NVHPC_VERSION}"
 
 #-------------------------------------------------------------------------------
 # LLVM (clang) stage
-FROM ${COMPILERS_PREREQ} AS clang
+FROM toolkits AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
@@ -536,7 +538,7 @@ RUN echo "Settiing ${COMPILER_FAMILY} compiler layer"
 
 #-------------------------------------------------------------------------------
 # MPICH 3.4.x; compatible with Derecho
-FROM ${MPI_PREREQ} AS mpich3
+FROM compilers AS mpich3
 # Notes:
 #   NVHPC:
 #    mpich-3.4.3 does not build with nvhpc's C/C++ compilers, so we will use the system gccs to
@@ -626,7 +628,7 @@ LABEL mpich="${MPICH_VERSION}"
 
 #-------------------------------------------------------------------------------
 # MPICH
-FROM ${MPI_PREREQ} AS mpich
+FROM compilers AS mpich
 #-------------------------------------------------------------------------------
 ARG MPICH_VERSION="4.3.1"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
@@ -683,7 +685,7 @@ LABEL mpich="${MPICH_VERSION}"
 
 #-------------------------------------------------------------------------------
 # OpenMPI
-FROM ${MPI_PREREQ} AS openmpi
+FROM compilers AS openmpi
 # Notes:
 #   AOCC:
 #     problem with half-precision floats; revisit with newer versions (>5.0.8)
@@ -933,7 +935,7 @@ LABEL netcdf-fortran="${NETCDF_FORTRAN_VERSION}"
 
 #-------------------------------------------------------------------------------
 # PNetCDF & ParalleIO
-FROM ${MPIIOLIBS_PREREQ} AS mpi-iolibs
+FROM iolibs AS mpi-iolibs
 #-------------------------------------------------------------------------------
 ARG PNETCDF_VERSION="1.14.0"
 ARG PIO_VERSION="2.6.6"
