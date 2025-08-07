@@ -31,10 +31,17 @@ jobs:
         include:
 
           # gpu build arg specifications -
-          - gpu: cuda
+          - arch: x86_64
+            gpu: cuda
             gpu_build_args: |
               CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux${{ matrix.arch == 'aarch64' && '_sbsa' || '' }}.run
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
+
+          - arch: aarch64
+            gpu: cuda
+            gpu_build_args: |
+              CUDA_VERSION=12.9
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
 
 
