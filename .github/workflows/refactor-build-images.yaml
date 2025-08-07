@@ -53,8 +53,7 @@ jobs:
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
       conda: true
       gpu: ${{ matrix.gpu }}
-      gpu_build_args: |
-
+      gpu_build_args: ${{ matrix.gpu_build_args }}
       # compiler: ${{ matrix.compiler }}
       # compiler_build_args: ${{ matrix.compiler_build_args }}
       # mpi: ${{ matrix.mpi }}
