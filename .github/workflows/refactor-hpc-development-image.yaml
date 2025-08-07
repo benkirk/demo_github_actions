@@ -237,12 +237,12 @@ jobs:
           push: false
           tags: ${{ env.CI_IMAGE_TAG }},${{ env.CI_IMAGE_TAG_DEVEL }}
           cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
-          cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-$${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+          cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
           context: containers/refactor
           file: containers/refactor/Dockerfile
           build-args: |
             BASE_OS=${{ inputs.os }}
-            MINIFORGE_PREREQ=${ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
             FINAL_TARGET=toolkits
             ${{ inputs.extra_build_args }}
           target: final
