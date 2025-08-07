@@ -1,0 +1,478 @@
+name: Updated - Build, Test, and Deploy a HPC Development Image
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: 'Base OS'
+        required: false
+        type: string
+        default: almalinux9
+
+      arch:
+        description: 'CPU Architecture'
+        required: false
+        type: string
+        default: 'x86_64'
+
+      runner:
+        description: 'GitHub Runner Type'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
+      buildx_driver:
+        description: 'Docker setup-buildx-action driver type'
+        required: false
+        type: string
+        default: 'docker-container'
+
+      buildx_endpoint:
+        description: 'Docker setup-buildx-action endpoint'
+        required: false
+        type: string
+        default: ''
+
+      conda:
+        description: 'Include Conda (Miniforge)'
+        type: boolean
+        required: false
+        default: true
+
+      compiler:
+        description: 'Compiler'
+        type: string
+        required: false
+        default: 'os-gcc'
+
+      compiler_build_args:
+        description: 'Compiler Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      mpi:
+        description: 'MPI'
+        type: string
+        required: false
+        default: 'openmpi'
+
+      mpi_build_args:
+        description: 'MPI Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      gpu:
+        description: 'GPU / Accelerator framework'
+        type: string
+        required: false
+        default: 'nogpu'
+
+      gpu_build_args:
+        description: 'GPU Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      extra_build_args:
+        description: 'Miscellaneous Docker BUILD_ARGS'
+        type: string
+        required: false
+
+      # build:
+      #   description: 'Build Image'
+      #   type: boolean
+      #   required: false
+      #   default: true
+
+      test:
+        description: 'Test Image'
+        type: boolean
+        required: false
+        default: false
+
+      publish:
+        description: 'Publish Image'
+        type: boolean
+        required: false
+        default: false
+
+    secrets:
+      dockerhub_token:
+        required: true
+
+
+
+jobs:
+  create-image-metadata:
+    name: Metadata
+    runs-on: ${{ inputs.runner }}
+
+    steps:
+      - name: Interrogate Environment
+        run: |
+          env | sort && echo
+          cat /etc/os-release && echo
+          uname -a && echo
+          df -h && echo
+          free -g && echo
+          lscpu
+
+      - name: Build Environment Variables
+        run: |
+          cat << EOF >> ${GITHUB_ENV}
+          COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
+          GPU_LABEL=-${{ inputs.gpu }}
+          MPI_LABEL=-${{ inputs.mpi }}
+          EOF
+          cat << EOF > build_inputs.txt
+          arch: '${{ inputs.arch }}'
+          os: '${{ inputs.os }}'
+          conda: '${{ inputs.conda }}'
+          compiler: '${{ inputs.compiler }}'
+          ${{ inputs.compiler_build_args }}
+          mpi: '${{ inputs.mpi }}'
+          ${{ inputs.mpi_build_args }}
+          gpu: '${{ inputs.gpu }}'
+          ${{ inputs.gpu_build_args }}
+          ${{ inputs.extra_build_args }}
+          EOF
+          sed -i '/^[[:space:]]*$/d' build_inputs.txt
+          echo && echo "Build Inputs:" && cat build_inputs.txt
+          shasum build_inputs.txt > inputs_sha.txt
+          cat inputs_sha.txt
+          echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
+          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
+              echo "GPU_LABEL=" >> ${GITHUB_ENV}
+          fi
+
+      - name: Image Tags
+        id: tags
+        run: |
+          cat << EOF > tags.sh
+          INPUTS_SHA=${INPUTS_SHA}
+          CI_IMAGE_TAG=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          CI_IMAGE_TAG_DEVEL=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:devel
+          PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          PUBLISH_IMAGE_TAG_YYMM=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:$(date +"%y.%m")
+          EOF
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+          path: |
+            build_inputs.txt
+            inputs_sha.txt
+            tags.sh
+          retention-days: 3
+
+  build-image:
+    name: Build Image
+    needs: create-image-metadata
+    runs-on: ${{ inputs.runner }}
+
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+          merge-multiple: true
+
+      - name: Augment Environment with Artifact Results
+        id: tags
+        run: |
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: Create containers/refactor/extras
+        run: |
+          sudo apt-get update
+          sudo apt-get install make
+          make -C containers/refactor extras
+
+      - name: Interrogate Environment
+        run: |
+          env | sort && echo
+          cat /etc/os-release && echo
+          uname -a && echo
+          df -h && echo
+          lscpu
+
+      - name: Set up Docker BuildX (local)
+        if: ${{ inputs.buildx_endpoint == '' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+
+      - name: Set up Docker BuildX (remote)
+        if: ${{ inputs.buildx_endpoint != '' }}
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+          driver: ${{ inputs.buildx_driver }}
+          endpoint: ${{ inputs.buildx_endpoint }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: benjaminkirk
+          password: ${{ secrets.dockerhub_token }}
+
+      - name: Query Docker Environment
+        run: |
+          which docker
+          docker --version
+          docker buildx ls
+          docker buildx inspect
+          docker buildx du
+
+      - name: Base OS + Toolkits
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: ${{ env.CI_IMAGE_TAG }},${{ env.CI_IMAGE_TAG_DEVEL }}
+          cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-$${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+          context: containers/refactor
+          file: containers/refactor/Dockerfile
+          build-args: |
+            BASE_OS=${{ inputs.os }}
+            MINIFORGE_PREREQ=${ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+            TOOLKITS_PREREQ=${{ inputs.conda && 'miniforge' || 'base_os' }}
+            FINAL_TARGET=toolkits
+            ${{ inputs.extra_build_args }}
+          target: final
+
+      # - name: Base OS + Compiler + MPI
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     push: true
+      #     tags: ${{ env.CI_IMAGE_TAG }},${{ env.CI_IMAGE_TAG_DEVEL }}
+      #     cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
+      #     cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+      #     context: containers/refactor
+      #     file: containers/refactor/Dockerfile
+      #     build-args: |
+      #       BASE_OS=${{ inputs.os }}
+      #       COMPILERS_PREREQ=${{ inputs.conda && 'miniforge' || inputs.os }}
+      #       ${{ inputs.compiler_build_args }}
+      #       ${{ inputs.gpu_build_args }}
+      #       ${{ inputs.mpi_build_args }}
+      #       MPI_PREREQ=${{ inputs.gpu == 'nogpu' && 'compilers' || inputs.gpu }}
+      #       FINAL_TARGET=fftlibs
+      #       ${{ inputs.extra_build_args }}
+      #     target: final
+
+    outputs:
+      CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+      PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
+      INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
+
+
+
+  # test-image:
+  #   name: Test Image
+  #   needs: build-image
+  #   runs-on: ${{ inputs.runner }}
+
+  #   defaults:
+  #     run:
+  #       shell: bash -elo pipefail {0}
+
+  #   container:
+  #     image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
+
+  #   if: ${{ inputs.test }}
+  #   steps:
+  #     - name: Download Build Artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+  #         merge-multiple: true
+
+  #     - name: Augment Environment with Artifact Results
+  #       id: tags
+  #       run: |
+  #         cat tags.sh >> ${GITHUB_ENV}
+  #         cat tags.sh >> ${GITHUB_OUTPUT}
+
+  #     - name: Interrogate Runtime Environment
+  #       run: |
+  #         pwd
+  #         ls
+  #         find -type d
+  #         env | sort
+  #         cat /container/config_env.sh
+  #         df -h
+  #         ls -l /glade/ || echo "No /glade on this runner?!!"
+  #         cat /etc/os-release 2>/dev/null || true
+  #         uname -a
+  #         lscpu
+  #         find /usr /container -name "libcuda.so.*" -o -name "nvidia-smi" -o -name "libnvidia-ml.so*"
+  #         [ -d "${CUDA_STUBDIR}" ] && rm -rf ${CUDA_STUBDIR}
+  #         which nvidia-smi 2>/dev/null && nvidia-smi 2>/dev/null || echo "nvidia-smi not found."
+  #         echo && echo && echo
+  #         echo '----------------------------------------------------------------'
+  #         echo && echo && echo
+  #         echo CI_IMAGE_TAG=${{ env.CI_IMAGE_TAG }}
+  #         echo PUBLISH_IMAGE_TAG=${{ env.PUBLISH_IMAGE_TAG }}
+  #         echo INPUTS_SHA=${{ env.INPUTS_SHA }}
+  #         echo
+  #         echo "CC=${CC}"
+  #         echo "CXX=${CXX}"
+  #         echo "FC=${FC}"
+  #         echo "F77=${F77}"
+  #         echo
+  #         echo "CFLAGS=${CFLAGS}"
+  #         echo "CPPFLAGS=${CPPFLAGS}"
+  #         echo "CXXFLAGS=${CXXFLAGS}"
+  #         echo "FCFLAGS=${FCFLAGS}"
+  #         echo "F77FLAGS=${F77FLAGS}"
+  #         export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
+  #         conda --version 2>/dev/null || echo " --> no conda in this container"
+  #         which mpicc
+  #         mpicc --version 2>/dev/null || true
+
+  #     - name: MPI+OpenMP Hello World
+  #       run: |
+  #         mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+  #         ldd ./hello_world_mpi
+  #         export OMP_NUM_THREADS=2
+  #         mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
+
+  #     - name: OSU MPI Benchmarks
+  #       run: |
+  #         /container/extras/build_osu-micro-benchmarks.sh
+
+  #     - name: DART
+  #       continue-on-error: true
+  #       run: |
+  #         export DART_VERSION="v11.10.9"
+  #         timeout 25m /container/extras/build_dart.sh
+
+  #     - name: WRF
+  #       continue-on-error: true
+  #       run: |
+  #         export WRF_VERSION="4.7.0"
+  #         export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
+  #         export MAKE_J_PROCS=2
+  #         timeout 25m /container/extras/build_wrf.sh
+
+  #     - name: MPAS
+  #       continue-on-error: true
+  #       run: |
+  #         export MPAS_VERSION="8.2.3"
+  #         export DEBUG=true
+  #         timeout 25m /container/extras/build_mpas.sh
+
+  #     - name: ESMF
+  #       continue-on-error: true
+  #       run: |
+  #         export ESMF_VERSION="8.8.1"
+  #         timeout 25m /container/extras/build_esmf.sh
+
+  #     - name: Kokkos
+  #       continue-on-error: true
+  #       run: |
+  #         timeout 25m /container/extras/build_kokkos.sh
+
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: container_config-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
+  #         path: /container/config_env.sh
+  #         retention-days: 3
+
+  #   outputs:
+  #     CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+  #     PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
+  #     INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}
+
+
+
+  # publish-image:
+  #   name: Publish Image
+  #   needs: test-image
+  #   runs-on: ${{ inputs.runner }}
+
+  #   if: ${{ inputs.publish }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: 'true'
+  #         fetch-depth: 0
+
+  #     - name: Download Build Artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
+  #         merge-multiple: true
+
+  #     - name: Augment Environment with Artifact Results
+  #       id: tags
+  #       run: |
+  #         cat tags.sh >> ${GITHUB_ENV}
+  #         cat tags.sh >> ${GITHUB_OUTPUT}
+
+  #     - name: Build Environment Variables
+  #       run: |
+  #         env | sort && echo
+  #         cat /etc/os-release && echo
+  #         uname -a && echo
+  #         df -h && echo
+  #         free -g && echo
+  #         lscpu && echo
+
+  #     - name: Set up Docker BuildX (local)
+  #       if: ${{ inputs.buildx_endpoint == '' }}
+  #       uses: docker/setup-buildx-action@v3
+  #       with:
+  #         platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+
+  #     - name: Set up Docker BuildX (remote)
+  #       if: ${{ inputs.buildx_endpoint != '' }}
+  #       uses: docker/setup-buildx-action@v3
+  #       with:
+  #         platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
+  #         driver: ${{ inputs.buildx_driver }}
+  #         endpoint: ${{ inputs.buildx_endpoint }}
+
+  #     - name: Login to DockerHub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: benjaminkirk
+  #         password: ${{ secrets.dockerhub_token }}
+
+  #     - name: Interrogate Environment & Query Docker
+  #       run: |
+  #         env | sort && echo
+  #         which docker
+  #         docker --version
+  #         docker buildx ls
+  #         docker buildx inspect
+  #         docker buildx du
+
+  #     - name: Publish Image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         push: true
+  #         tags: ${{ env.PUBLISH_IMAGE_TAG }},${{ env.PUBLISH_IMAGE_TAG_YYMM }}
+  #         cache-from: type=registry,ref=ncarcisl/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
+  #         cache-to: type=registry,ref=ncarcisl/gh-ci-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+  #         context: containers/publish
+  #         file: containers/publish/Dockerfile
+  #         build-args: |
+  #           BASE_IMAGE=${{ env.CI_IMAGE_TAG }}
+  #           DEPLOYMENT_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
+  #         target: final
+
+  #   outputs:
+  #     CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
+  #     PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
+  #     INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}

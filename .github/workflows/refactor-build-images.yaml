@@ -1,0 +1,77 @@
+name: Updated - Build HPC Development Images
+
+on:
+  workflow_dispatch:
+    # inputs:
+    #   os:
+    #     description: 'Base OS'
+    #     type: choice
+    #     required: true
+    #     default: almalinux9
+    #     options:
+    #       - almalinux8
+    #       - almalinux9
+    #       - almalinux10
+    #       - leap
+    #       - tumbleweed
+    #       - noble
+
+      conda:
+        description: 'Include Conda (Miniforge)'
+        type: boolean
+        required: false
+        default: true
+
+    #   # gpu:
+    #   #   description: 'GPU / Accelerator framework'
+    #   #   type: choice
+    #   #   required: true
+    #   #   default: nogpu
+    #   #   options:
+    #   #     - nogpu
+    #   #     - cuda
+    #   #     - rocm
+
+      test:
+        description: 'Test Image'
+        type: boolean
+        required: false
+        default: false
+
+      publish:
+        description: 'Publish Image'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+
+  build-matrix:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        os:       [ almalinux10, noble ]
+        arch:     [ x86_64, aarch64 ]
+        gpu:      [ nogpu ]
+        #compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
+        #mpi:      [ openmpi, mpich, mpich3 ]
+
+
+    uses: ./.github/workflows/refactor-hpc-development-image.yaml
+    with:
+      os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
+      gpu: ${{ matrix.gpu }}
+      runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+      conda: ${{ inputs.conda }}
+
+      # compiler: ${{ matrix.compiler }}
+      # compiler_build_args: ${{ matrix.compiler_build_args }}
+      # mpi: ${{ matrix.mpi }}
+      # mpi_build_args: ${{ matrix.mpi_build_args }}
+      test: ${{ inputs.test }}
+      publish: ${{ inputs.publish }}
+
+    secrets:
+      dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
