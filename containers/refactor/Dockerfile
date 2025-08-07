@@ -42,15 +42,15 @@ FROM rocm/dev-ubuntu-24.04:6.4.2-complete AS noble-rocm
 FROM ${BASE_OS} AS base_os
 #-------------------------------------------------------------------------------
 
-RUN cat <<EOF > /usr/bin/docker-clean
+RUN cat <<'EOF' > /usr/bin/docker-clean
 #!/bin/bash
-echo "[\${0}]: cleaning temporary files from container image to reduce layer size"
-[ -x "\$(command -v yum)" ] && yum clean all
-[ -x "\$(command -v apt)" ] && apt clean
-[ -x "\$(command -v conda)" ] && conda clean --all
-[ -x "\$(command -v zypper)" ] && zypper clean -a
+echo "[${0}]: cleaning temporary files from container image to reduce layer size"
+[ -x "$(command -v yum)" ] && yum clean all
+[ -x "$(command -v apt)" ] && apt clean
+[ -x "$(command -v conda)" ] && conda clean --all
+[ -x "$(command -v zypper)" ] && zypper clean -a
 for dir in /tmp/* /var/tmp/* /home/jupyter/{.ccache,.cache/pip,conda-bld,.conda} /root/* /root/.[^.]* /var/lib/apt/lists /var/log/* ; do
-	[ -e \${dir} ] && rm -rf \${dir} 2>/dev/null || true
+	[ -e ${dir} ] && rm -rf ${dir} 2>/dev/null || true
 done
 rm -rf /tmp/*
 EOF

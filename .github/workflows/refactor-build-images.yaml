@@ -39,7 +39,7 @@ jobs:
         compiler: [ os-gcc, gcc12 ]
         mpi:      [ openmpi ]
         arch:     [ x86_64, aarch64 ]
-        gpu:      [ cuda ]
+        gpu:      [ nogpu, cuda ]
 
         include:
           # gpu architecture-dependent build arg specifications
