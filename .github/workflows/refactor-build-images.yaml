@@ -32,7 +32,7 @@ on:
 jobs:
 
   build-matrix:
-    name: ${{ inputs.os }}
+    name: Build
     strategy:
       fail-fast: false
       matrix:
