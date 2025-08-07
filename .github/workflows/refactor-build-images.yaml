@@ -2,35 +2,12 @@ name: Updated - Build HPC Development Images
 
 on:
   workflow_dispatch:
-    # inputs:
-    #   os:
-    #     description: 'Base OS'
-    #     type: choice
-    #     required: true
-    #     default: almalinux9
-    #     options:
-    #       - almalinux8
-    #       - almalinux9
-    #       - almalinux10
-    #       - leap
-    #       - tumbleweed
-    #       - noble
-
+    inputs:
       conda:
         description: 'Include Conda (Miniforge)'
         type: boolean
         required: false
         default: true
-
-    #   # gpu:
-    #   #   description: 'GPU / Accelerator framework'
-    #   #   type: choice
-    #   #   required: true
-    #   #   default: nogpu
-    #   #   options:
-    #   #     - nogpu
-    #   #     - cuda
-    #   #     - rocm
 
       test:
         description: 'Test Image'
