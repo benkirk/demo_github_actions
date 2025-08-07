@@ -109,7 +109,6 @@ jobs:
     steps:
       - name: Interrogate Environment
         run: |
-          env | sort && echo
           cat /etc/os-release && echo
           uname -a && echo
           df -h && echo
@@ -148,7 +147,7 @@ jobs:
         run: |
           cat << EOF > tags.sh
           INPUTS_SHA=${INPUTS_SHA}
-          CI_IMAGE_TAG=benjaminkirk/gh-ci-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
+          CI_IMAGE_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           CI_IMAGE_TAG_DEVEL=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:devel
           PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           PUBLISH_IMAGE_TAG_YYMM=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:$(date +"%y.%m")
@@ -234,8 +233,8 @@ jobs:
       - name: Base OS + Toolkits
         uses: docker/build-push-action@v6
         with:
-          push: true
-          tags: ${{ env.CI_IMAGE_TAG }},${{ env.CI_IMAGE_TAG_DEVEL }}
+          push: false
+          tags: ${{ env.CI_IMAGE_TAG }}
           cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
           cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
           context: containers/refactor
@@ -244,8 +243,27 @@ jobs:
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=toolkits
             MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
-            ${{ inputs.gpu_build_args }}
             ${{ inputs.extra_build_args }}
+            ${{ inputs.gpu_build_args }}
+          target: final
+
+      - name: Compiler + MPI
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: ${{ env.CI_IMAGE_TAG }}
+          cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
+          cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
+          context: containers/refactor
+          file: containers/refactor/Dockerfile
+          build-args: |
+            BASE_OS=${{ inputs.os }}
+            FINAL_TARGET=fftlibs
+            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+            ${{ inputs.extra_build_args }}
+            ${{ inputs.gpu_build_args }}
+            ${{ inputs.compiler_build_args }}
+            ${{ inputs.mpi_build_args }}
           target: final
 
       # - name: Base OS + Compiler + MPI

@@ -18,6 +18,7 @@ on:
 jobs:
 
   build-matrix:
+    name: Build
     strategy:
       fail-fast: false
       matrix:
@@ -25,11 +26,12 @@ jobs:
         arch:     [ x86_64, aarch64 ]
         gpu:      [ nogpu, cuda ]
         #compiler: [ oneapi, aocc, os-gcc, gcc12, gcc13, gcc14, gcc15 ]
-        #mpi:      [ openmpi, mpich, mpich3 ]
+        compiler: [ os-gcc, gcc12 ]
+        mpi:      [ openmpi ]
 
         include:
 
-          # gpu build arg specifications -
+          # gpu architecture-dependent build arg specifications
           - arch: x86_64
             gpu: cuda
             gpu_build_args: |
@@ -42,6 +44,21 @@ jobs:
               CUDA_VERSION=12.9
               CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
+          # compiler build arg specifications
+          - compiler: os-gcc
+            compiler_build_args: |
+              COMPILER_FAMILY=os-gcc
+
+          - compiler: gcc12
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=12.5.0
+
+          # mpi build arg specifications
+          - mpi: openmpi
+            mpi_build_args: |
+              MPI_FAMILY=openmpi
+              OPENMPI_VERSION=5.0.8
 
 
     uses: ./.github/workflows/refactor-hpc-development-image.yaml
@@ -52,10 +69,10 @@ jobs:
       conda: true
       gpu: ${{ matrix.gpu }}
       gpu_build_args: ${{ matrix.gpu_build_args }}
-      # compiler: ${{ matrix.compiler }}
-      # compiler_build_args: ${{ matrix.compiler_build_args }}
-      # mpi: ${{ matrix.mpi }}
-      # mpi_build_args: ${{ matrix.mpi_build_args }}
+      compiler: ${{ matrix.compiler }}
+      compiler_build_args: ${{ matrix.compiler_build_args }}
+      mpi: ${{ matrix.mpi }}
+      mpi_build_args: ${{ matrix.mpi_build_args }}
       test: ${{ inputs.test }}
       publish: ${{ inputs.publish }}
 
