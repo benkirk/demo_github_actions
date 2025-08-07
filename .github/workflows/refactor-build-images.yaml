@@ -32,14 +32,9 @@ jobs:
 
           # gpu build arg specifications -
           - gpu: cuda
-            arch: x86_64
             gpu_build_args: |
               CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
-            arch: aarch64
-            gpu_build_args: |
-              CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux${{ matrix.arch == 'aarch64' && '_sbsa' || '' }}.run
 
 
 
@@ -51,7 +46,8 @@ jobs:
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
       conda: true
       gpu: ${{ matrix.gpu }}
-      gpu_build_args: ${{ matrix.gpu_build_args }}
+      gpu_build_args: |
+
       # compiler: ${{ matrix.compiler }}
       # compiler_build_args: ${{ matrix.compiler_build_args }}
       # mpi: ${{ matrix.mpi }}
