@@ -242,8 +242,9 @@ jobs:
           file: containers/refactor/Dockerfile
           build-args: |
             BASE_OS=${{ inputs.os }}
-            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
             FINAL_TARGET=toolkits
+            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+            ${{ inputs.gpu_build_args }}
             ${{ inputs.extra_build_args }}
           target: final
 
