@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ os-gcc, gcc12 ]
+        compiler: [ gcc, gcc12 ]
         mpi:      [ openmpi ]
         arch:     [ x86_64, aarch64 ]
         gpu:      [ nogpu, cuda ]
@@ -56,7 +56,7 @@ jobs:
               CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
           # compiler build arg specifications
-          - compiler: os-gcc
+          - compiler: gcc
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
 
