@@ -291,7 +291,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
-        merge-multiple: true
+          merge-multiple: true
 
       - name: Augment Environment with Artifact Results
         id: tags
