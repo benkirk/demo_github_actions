@@ -770,8 +770,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "export MPI_ROOT=${OPENMPI_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export OPENMPI_VERSION=${OPENMPI_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${OPENMPI_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
-    && echo "export PRTE_ALLOW_RUN_AS_ROOT=1" >>  /container/config_env.sh \
-    && echo "export PRTE_ALLOW_RUN_AS_ROOT_CONFIRM=1" >>  /container/config_env.sh \
+    && echo "export OMPI_ALLOW_RUN_AS_ROOT=1" >>  /container/config_env.sh \
+    && echo "export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1" >>  /container/config_env.sh \
     && echo "${OPENMPI_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/openmpi-${OPENMPI_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -1160,7 +1160,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && chown -R plainuser: /container/ \
     && cat /container/config_env.sh
 
-USER plainuser
+#USER plainuser
 #RUN sudo whoami
 
 # Local Variables:
