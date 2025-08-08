@@ -156,7 +156,7 @@ jobs:
           cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
           path: |
