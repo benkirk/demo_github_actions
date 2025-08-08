@@ -172,7 +172,7 @@ jobs:
 
     steps:
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
           merge-multiple: true
@@ -366,7 +366,7 @@ jobs:
   #         timeout 25m /container/extras/build_kokkos.sh
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: container_config-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
           path: /container/config_env.sh
@@ -387,7 +387,7 @@ jobs:
   #         fetch-depth: 0
 
   #     - name: Download Build Artifacts
-  #       uses: actions/download-artifact@v5
+  #       uses: actions/download-artifact@v4
   #       with:
   #         pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
   #         merge-multiple: true
