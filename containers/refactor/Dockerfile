@@ -129,6 +129,9 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
     && echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export MAKE_J_PROCS=\${MAKE_J_PROCS:-\$(nproc)}" >> /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh \
+    && useradd plainuser -d /home/plainuser \
+    && echo "root 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
+    && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
     && chmod a+rx /usr/bin/docker-clean \
     && docker-clean
 
@@ -1156,8 +1159,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && echo "Final configuration:" \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
     && 2>/dev/null du -hs /container/*/ /*/ | grep -v "K" | sort \
-    && useradd plainuser -d /home/plainuser \
-    && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
     && chown -R plainuser: /container/ \
     && cat /container/config_env.sh
 

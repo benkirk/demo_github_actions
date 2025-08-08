@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc, gcc12 ]
+        compiler: [ gcc, gcc12, oneapi  ]
         mpi:      [ openmpi ]
         arch:     [ x86_64, aarch64 ]
         gpu:      [ nogpu, cuda ]
@@ -65,11 +65,38 @@ jobs:
               COMPILER_FAMILY=gcc
               GCC_VERSION=12.5.0
 
+          - compiler: oneapi
+            compiler_build_args: |
+              COMPILER_FAMILY=oneapi
+              ONEAPI_VERSION=2025.2.0
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh
+
+          - compiler: aocc
+            compiler_build_args: |
+              COMPILER_FAMILY=aocc
+
           # mpi build arg specifications
           - mpi: openmpi
             mpi_build_args: |
               MPI_FAMILY=openmpi
               OPENMPI_VERSION=5.0.8
+
+          # - mpi: mpich
+          #   mpi_build_args: |
+          #     MPI_FAMILY=mpich
+          #     MPICH_VERSION=4.3.1
+
+          # - mpi: mpich3
+          #   mpi_build_args: |
+          #     MPI_FAMILY=mpich3
+          #     MPICH_VERSION=3.4.3
+
+        exclude:
+          - arch: aarch64
+            compiler: oneapi
+          - arch: aarch64
+            compiler: aocc
 
 
     uses: ./.github/workflows/refactor-hpc-development-image.yaml
