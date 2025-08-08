@@ -59,7 +59,7 @@ cd ${STAGE_DIR} \
     && sed -i 's/gfortran/mpifort/g' arch/configure.defaults \
     && ./configure_new -i ${INSTALL_ROOT}/wrf/${WRF_VERSION} -- ${WRF_CMAKE_ARGS} ${EXTRA_CMAKE_ARGS} <<< $'0\n0\n1\n0\nY\nN\nN' \
     && ./compile_new --jobs ${MAKE_J_PROCS:-$(nproc)} \
-    && docker-clean
+    && sudo docker-clean
 
 # CONFIGURE & COMPILE WPS ${WPS_VERSION}
 # (WPS does not yet recogize Linux aarch64 gfortran, but the conf is the same as x86_64)
@@ -71,4 +71,4 @@ cd ${STAGE_DIR} \
     && sed -i 's/Linux x86_64, gfortran/Linux x86_64 aarch64, gfortran/g' arch/configure.defaults \
     && ./configure_new -i ${INSTALL_ROOT}/wps/${WPS_VERSION} -- ${WPS_CMAKE_ARGS} ${EXTRA_CMAKE_ARGS} <<< $'0\nN\nY\nY' \
     && ./compile_new --jobs ${MAKE_J_PROCS:-$(nproc)} \
-    && docker-clean
+    && sudo docker-clean

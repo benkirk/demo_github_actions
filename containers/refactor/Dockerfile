@@ -56,7 +56,7 @@ rm -rf /tmp/*
 EOF
 
 SHELL ["/bin/bash", "--login", "-c"]
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/base-os.log) \
+RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.log) \
     && echo "# Common Configs" > /container/config_env.sh \
     && cat /etc/*-release \
     && source /etc/os-release \
@@ -77,7 +77,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/base-os.log) \
                        python3 \
                        cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
                        libxml2-devel curl-devel \
-                && echo 'export PKG_INSTALL_CMD="dnf -y install"' >> /container/config_env.sh \
+                       sudo \
+                && echo 'export PKG_INSTALL_CMD="sudo dnf -y install"' >> /container/config_env.sh \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
@@ -95,7 +96,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/base-os.log) \
                           python3 \
                           cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
                           libxml2-devel libedit-devel curl-devel \
-                && echo 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' >> /container/config_env.sh \
+                          sudo \
+                && echo 'export PKG_INSTALL_CMD="sudo zypper --gpg-auto-import-keys --non-interactive install"' >> /container/config_env.sh \
             ;; \
         *"|ubuntu|"*) \
             ${PKG_INSTALL_CMD} \
@@ -112,7 +114,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/base-os.log) \
                            libxml2 \
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
                            libxml2-dev  libcurl4-openssl-dev \
-                && echo 'export PKG_INSTALL_CMD="apt-get install -y"' >> /container/config_env.sh \
+                           sudo \
+                && echo 'export PKG_INSTALL_CMD="sudo apt-get install -y"' >> /container/config_env.sh \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
@@ -137,12 +140,15 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/base-os.log) \
 
 #-------------------------------------------------------------------------------
 # Cuda stages
+# about stubs & LD_LIBRARY_PATH:
+#   on a host with no NVIDIA device, libcuda.so etc will be provided by the stubs.
+#   these need to be overloaded at runtime by a proper libcuda.so which necessarily
+#   comes from the host.  So we put the systsem locations - /usr/lib64 or /usr/lib,
+#   into the LD_LIBRARY_PATH ahead of the stubs.  And we use ldconfig to resolve the stubs
+#   stubs as last resort.  This allows us to link and run on non-GPU hosts; and the
+#   LD_LIBRARY_PATH precedence should find the host libcuda.so should there be one.
 FROM base_os AS cuda
 #-------------------------------------------------------------------------------
-#ARG CUDA_VERSION="12.6"
-#ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run"
-
-
 ARG CUDA_VERSION="12.9"
 ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
@@ -170,11 +176,42 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && echo "export CPATH=${CUDA_HOME}/include:\${CPATH}" >> /container/config_env.sh \
     && echo "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" >> /container/config_env.sh \
+    && echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export NVCC_PREPEND_FLAGS=-allow-unsupported-compiler" >> /container/config_env.sh \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
+
+RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
+#!/bin/bash
+echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
+
+nvidia-smi 2>/dev/null && found_gpu=true || found_gpu=false
+
+# quick return when a GPU is found
+if [ "${found_gpu}" = true ]; then
+    echo "Found a GPU..."
+    exit 0
+else
+    echo "No GPU Found..."
+fi
+
+# otherwise,
+if [ -d "${CUDA_STUBDIR}" ]; then
+    find ${CUDA_STUBDIR} -name "libnvidia-ml.so.*" | xargs --no-run-if-empty rm -v
+fi
+
+echo "Disabling CUDA-Aware MPI Features..."
+case "${MPI_FAMILY}" in
+    "openmpi")
+        export OMPI_MCA_opal_cuda_support=false
+        ;;
+    "mpich")
+        export MPIR_CVAR_ENABLE_GPU=0
+        ;;
+esac
+EOF
 
 ARG TOGGLE_WITH_CUDA="--with-cuda=${CUDA_HOME}"
 LABEL cuda="${CUDA_VERSION}"
@@ -305,10 +342,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
                  --disable-static --enable-shared \
                  --enable-languages=c,c++,fortran,go \
                  --disable-multilib \
-                 --disable-bootstrap | tee /container/logs/gcc-configure.log \
+                 --disable-bootstrap \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 | tee /container/logs/gcc-build.log \
-    && make --no-print-directory install-strip | tee /container/logs/gcc-install.log \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory install-strip \
     && echo -e "\n# GCC compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \
     && echo "export GCC_VERSION=${GCC_VERSION}" >> /container/config_env.sh \
@@ -334,9 +371,12 @@ LABEL gcc="${GCC_VERSION}"
 # Intel OneAPI stage
 FROM toolkits AS oneapi
 #-------------------------------------------------------------------------------
+# https://packages.spack.io/package.html?name=intel-oneapi-compilers
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/intel-oneapi-compilers/package.py
 # Intel compilers do not -rpath their own libraries, relying instead on LD_LIBRARY_PATH
 # We'd rather not need that, so add to the system search path
+#
+# Instal and remove C++, Fortran one at a time as we go for when disk space is tight
 ARG ONEAPI_VERSION="2025.2.0"
 ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh"
 ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh"
@@ -346,13 +386,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
     && ONEAPI_INSTALL_PATH="/container/intel-oneapi" \
     && mkdir -p /tmp/intel_installers && cd /tmp/intel_installers \
-    && curl --retry 3 --retry-delay 5 -sO ${ONEAPI_CC_URL} \
-    && curl --retry 3 --retry-delay 5 -sO ${ONEAPI_FC_URL} \
-    && ls -ltrh \
-    && for installer in  *${ONEAPI_VERSION}*.sh; do chmod +x ${installer} && ./${installer} -a -s --eula accept --install-dir ${ONEAPI_INSTALL_PATH} --ignore-errors; done \
+    && installer_opts="-a -s --eula accept --install-dir ${ONEAPI_INSTALL_PATH} --ignore-errors" \
+    && curl --retry 3 --retry-delay 5 -s ${ONEAPI_CC_URL} -o cpp-installer.sh && ls -ltrh cpp-installer.sh && chmod +x ./cpp-installer.sh && ./cpp-installer.sh ${installer_opts} && rm -rf cpp-installer.sh \
+    && curl --retry 3 --retry-delay 5 -s ${ONEAPI_FC_URL} -o fortran-installer.sh && ls -ltrh fortran-installer.sh && chmod +x ./fortran-installer.sh && ./fortran-installer.sh ${installer_opts} && rm -rf fortran-installer.sh \
     && cd ${ONEAPI_INSTALL_PATH} \
     && rm_paths="mpi debugger tbb conda_channel compiler/*/linux/lib/oclfpga /opt/intel" \
-    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && cat README.whered_stuff_go \
+    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} /tmp/intel_installers /var/intel \
     && echo -e "\n# Intel OneAPI compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=oneapi" >> /container/config_env.sh \
@@ -602,10 +641,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
            --enable-fortran \
            ${TOGGLE_WITH_CUDA} \
            ${TOGGLE_WITH_ROCM} \
-           --disable-dependency-tracking | tee /container/logs/mpich-configure.log \
+           --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 | tee /container/logs/mpich-build.log \
-    && make --no-print-directory install | tee /container/logs/mpich-install.log \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory install \
     && echo -e "\n# MPICH ${MPICH_VERSION}" >> /container/config_env.sh \
     && echo "export MPI_FAMILY=mpich" >> /container/config_env.sh \
     && echo "export MPI_ROOT=${MPICH_INSTALL_PATH}"  >> /container/config_env.sh \
@@ -663,10 +702,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
            --disable-cxx \
            ${TOGGLE_WITH_CUDA} \
            ${TOGGLE_WITH_ROCM} \
-           --disable-dependency-tracking | tee /container/logs/mpich-configure.log \
+           --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 | tee /container/logs/mpich-build.log \
-    && make --no-print-directory install | tee /container/logs/mpich-install.log \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory install \
     && echo -e "\n# MPICH ${MPICH_VERSION}" >> /container/config_env.sh \
     && echo "export MPI_FAMILY=mpich" >> /container/config_env.sh \
     && echo "export MPI_ROOT=${MPICH_INSTALL_PATH}" >> /container/config_env.sh \
@@ -720,12 +759,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
            ${TOGGLE_WITH_CUDA} \
            ${TOGGLE_WITH_ROCM} \
            --disable-static --enable-shared \
-           --disable-dependency-tracking | tee /container/logs/openmpi-configure.log \
+           --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 | tee /container/logs/openmpi-build.log \
-    && make --no-print-directory install | tee /container/logs/openmpi-install.log \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory install \
     && cd ${OPENMPI_INSTALL_PATH} \
-    && rm_paths="share/doc/ share/man/" \
+    && rm_paths="share/doc/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
     && echo -e "\n# OPENMPI ${OPENMPI_VERSION}" >> /container/config_env.sh \
@@ -1112,13 +1151,18 @@ LABEL heffte="${HEFFTE_VERSION}"
 # Final Image
 ################################################################################
 FROM ${FINAL_TARGET} AS final
+ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && echo "Final configuration:" \
-    && mkdir -p /container/extras/ \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
     && 2>/dev/null du -hs /container/*/ /*/ | grep -v "K" | sort \
+    && useradd plainuser -d /home/plainuser \
+    && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
+    && chown -R plainuser: /container/ \
     && cat /container/config_env.sh
-ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
+
+USER plainuser
+RUN sudo whoami
 
 # Local Variables:
 # mode: sh

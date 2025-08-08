@@ -27,7 +27,7 @@ esac
 
 case "${MPI_FAMILY}" in
     "openmpi"*)
-        mpiexec_args="--allow-run-as-root"
+        #mpiexec_args="--allow-run-as-root"
         ;;
     "mpich")
         export MPIR_CVAR_ENABLE_GPU=0
@@ -45,10 +45,11 @@ curl --retry 3 --retry-delay 5 -sSL https://mvapich.cse.ohio-state.edu/download/
            LIBS="${CUDA_LIBS} ${ROCM_LIBS}" \
     && make --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make install-strip \
-    && docker-clean
+    && sudo docker-clean
 
 cd ${topdir}
 
+ldd ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_latency
 mpiexec -n 2 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_latency || true
 mpiexec -n 2 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bibw || true
 mpiexec -n 6 ${mpiexec_args} ${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION}/libexec/osu-micro-benchmarks/mpi/collective/osu_alltoallw || true

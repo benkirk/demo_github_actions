@@ -21,7 +21,7 @@ on:
         description: 'Test Image'
         type: boolean
         required: false
-        default: false
+        default: true
 
       publish:
         description: 'Publish Image'
