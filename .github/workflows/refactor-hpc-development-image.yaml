@@ -292,14 +292,15 @@ jobs:
         with:
           pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
           merge-multiple: true
+          path: /tmp/artifacts
 
       - name: Augment Environment with Artifact Results
         id: tags
         run: |
           pwd
           ls
-          cat tags.sh >> ${GITHUB_ENV}
-          cat tags.sh >> ${GITHUB_OUTPUT}
+          cat /tmp/artifacts/tags.sh >> ${GITHUB_ENV}
+          cat /tmp/artifacts/tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Interrogate Runtime Environment
         run: |

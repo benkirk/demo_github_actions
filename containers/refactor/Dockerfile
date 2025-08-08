@@ -1160,7 +1160,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && chown -R plainuser: /container/ \
     && cat /container/config_env.sh
 
-#USER plainuser
+USER plainuser
 #RUN sudo whoami
 
 # Local Variables:
