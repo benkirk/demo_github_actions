@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc, gcc12, oneapi  ]
+        compiler: [ gcc, gcc12, oneapi, aocc  ]
         mpi:      [ openmpi ]
         arch:     [ x86_64, aarch64 ]
         gpu:      [ nogpu, cuda ]
