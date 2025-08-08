@@ -323,10 +323,11 @@ jobs:
       - name: MPI+OpenMP Hello World
         continue-on-error: false
         run: |
-          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
-          ldd ./hello_world_mpi
+          pwd
+          mpicxx -o ~/hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+          ldd ~/hello_world_mpi
           export OMP_NUM_THREADS=2
-          mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi
+          mpiexec -n 2 ~/hello_world_mpi
 
       - name: OSU MPI Benchmarks
         continue-on-error: false
