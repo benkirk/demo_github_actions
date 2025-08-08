@@ -1152,7 +1152,7 @@ FROM ${FINAL_TARGET} AS final
 ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && echo "Final configuration:" \
-    && echo "export PKG_INSTALL_CMD=sudo ${PKG_INSTALL_CMD}" >> /container/config_env.sh \
+    && echo "export PKG_INSTALL_CMD=\"sudo ${PKG_INSTALL_CMD}\"" >> /container/config_env.sh \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
     && 2>/dev/null du -hs /container/*/ /*/ | grep -v "K" | sort \
     && useradd plainuser -d /home/plainuser \
@@ -1161,7 +1161,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && cat /container/config_env.sh
 
 USER plainuser
-RUN sudo whoami
+#RUN sudo whoami
 
 # Local Variables:
 # mode: sh
