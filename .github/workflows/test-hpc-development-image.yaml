@@ -17,7 +17,6 @@ on:
 jobs:
   test-image:
     name: Test Image
-    needs: build-image
     runs-on: ${{ inputs.runner }}
 
     defaults:
