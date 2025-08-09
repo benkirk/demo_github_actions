@@ -107,6 +107,9 @@ jobs:
     runs-on: ${{ inputs.runner }}
 
     steps:
+      -name: Free disk space on runner
+        uses: ./.github/workflows/slim-action-runner.yaml
+
       - name: Interrogate Environment
         run: |
           cat /etc/os-release && echo
