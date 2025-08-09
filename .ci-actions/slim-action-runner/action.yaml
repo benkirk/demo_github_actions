@@ -27,10 +27,12 @@ runs:
         sudo du -hs 2>/dev/null \
           /usr/*/ \
           /usr/share/*/ \
-          /usr/local/*/ \
+          /usr/local/* /usr/local/.* \
           /opt/*/ \
+          /opt/hostedtoolcache/*/ \
           /tmp \
-          /var/*/ | grep -v "4.0K" | sort || true
+          /var/*/ \
+          /var/lib/*/ | grep -v "4.0K" | sort || true
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -71,11 +73,14 @@ runs:
         sudo du -hs 2>/dev/null \
           /usr/*/ \
           /usr/share/*/ \
+          /usr/local/* /usr/local/.* \
           /usr/local/*/ \
           /usr/share/*/ \
           /opt/*/ \
+          /opt/hostedtoolcache/*/ \
           /tmp \
-          /var/*/ | grep -v "4.0K" | sort || true
+          /var/*/ \
+          /var/lib/*/ | grep -v "4.0K" | sort || true
       shell: bash
     - name: Free Disk Space MacOS
       if: runner.os == 'macOS'
