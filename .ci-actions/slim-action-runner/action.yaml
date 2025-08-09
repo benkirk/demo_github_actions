@@ -23,19 +23,23 @@ runs:
         fi
 
         probeUsage() {
-          echo && echo "${1}"
-          sudo du -hs 2>/dev/null \
-            /usr/*/ \
-            /usr/share/*/ \
-            /usr/local/* /usr/local/.* \
-            /opt/*/ \
-            /opt/hostedtoolcache/*/ \
-            /tmp \
-            /var/*/ \
-            /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
+          echo "--------------------------------------------"
+          echo "${1}"
+          echo "--------------------------------------------"
+          # sudo du -hs 2>/dev/null \
+          #   /usr/*/ \
+          #   /usr/share/*/ \
+          #   /usr/local/* /usr/local/.* \
+          #   /opt/*/ \
+          #   /opt/hostedtoolcache/*/ \
+          #   /tmp \
+          #   /var/*/ \
+          #   /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
 
-            for dir in $(sudo find /opt /usr/{share,local} /var/lib -mindepth 1 -maxdepth 2 -print | sort); do
-              sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
+            for depth in 1 2; do
+              for dir in $(sudo find /opt /usr/{share,local} /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
+                sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
+              done
             done
         }
 
