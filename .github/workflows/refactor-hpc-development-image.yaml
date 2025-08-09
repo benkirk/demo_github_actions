@@ -108,7 +108,7 @@ jobs:
 
     steps:
       -name: Free disk space on runner
-        uses: ./.github/workflows/slim-action-runner.yaml
+        uses: ./.github/workflows/slim-action-runner
 
       - name: Interrogate Environment
         run: |
