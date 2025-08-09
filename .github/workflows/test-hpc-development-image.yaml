@@ -1,0 +1,108 @@
+name: Updated - Test HPC Development Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image to Test'
+        type: string
+        required: true
+
+      runner:
+        description: 'GitHub Runner Type'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
+jobs:
+  test-image:
+    name: Test Image
+    needs: build-image
+    runs-on: ${{ inputs.runner }}
+
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    container:
+      image: ${{ inputs.image }}
+
+    steps:
+      - name: Interrogate Runtime Environment
+        run: |
+          pwd
+          ls
+          find -type d
+          env | sort
+          cat /container/config_env.sh
+          df -h
+          ls -l /glade/ || echo "No /glade on this runner?!!"
+          cat /etc/os-release 2>/dev/null || true
+          uname -a
+          lscpu
+          #find /usr /container -name "libcuda.so.*" -o -name "nvidia-smi" -o -name "libnvidia-ml.so*"
+          #[ -d "${CUDA_STUBDIR}" ] && rm -rf ${CUDA_STUBDIR}
+          #which nvidia-smi 2>/dev/null && nvidia-smi 2>/dev/null || echo "nvidia-smi not found."
+          echo && echo && echo
+          echo '----------------------------------------------------------------'
+          echo && echo && echo
+          echo "CC=${CC}"
+          echo "CXX=${CXX}"
+          echo "FC=${FC}"
+          echo "F77=${F77}"
+          echo
+          echo "CFLAGS=${CFLAGS}"
+          echo "CPPFLAGS=${CPPFLAGS}"
+          echo "CXXFLAGS=${CXXFLAGS}"
+          echo "FCFLAGS=${FCFLAGS}"
+          echo "F77FLAGS=${F77FLAGS}"
+          export CC CXX FC F77 CFLAGS CXXFLAGS FCFLAGS F77FLAGS CPPFLAGS
+          conda --version 2>/dev/null || echo " --> no conda in this container"
+          which mpicc
+          mpicc --version 2>/dev/null || true
+
+      - name: MPI+OpenMP Hello World
+        continue-on-error: false
+        run: |
+          pwd
+          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+          ldd ./hello_world_mpi
+          export OMP_NUM_THREADS=2
+          mpiexec -n 2 ./hello_world_mpi
+
+      - name: OSU MPI Benchmarks
+        continue-on-error: false
+        run: |
+          /container/extras/build_osu-micro-benchmarks.sh
+
+  #     - name: DART
+  #       continue-on-error: true
+  #       run: |
+  #         export DART_VERSION="v11.10.9"
+  #         timeout 25m /container/extras/build_dart.sh
+
+  #     - name: WRF
+  #       continue-on-error: true
+  #       run: |
+  #         export WRF_VERSION="4.7.0"
+  #         export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
+  #         export MAKE_J_PROCS=2
+  #         timeout 25m /container/extras/build_wrf.sh
+
+  #     - name: MPAS
+  #       continue-on-error: true
+  #       run: |
+  #         export MPAS_VERSION="8.2.3"
+  #         export DEBUG=true
+  #         timeout 25m /container/extras/build_mpas.sh
+
+  #     - name: ESMF
+  #       continue-on-error: true
+  #       run: |
+  #         export ESMF_VERSION="8.8.1"
+  #         timeout 25m /container/extras/build_esmf.sh
+
+      - name: Kokkos
+        continue-on-error: true
+        run: |
+          timeout 25m /container/extras/build_kokkos.sh

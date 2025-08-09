@@ -35,12 +35,15 @@ runs:
           #   /tmp \
           #   /var/*/ \
           #   /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
-
+            rm -f /tmp/du_list.txt
             for depth in 1 2; do
               for dir in $(sudo find /opt /usr/{share,local} /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
-                sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
+                sudo du -hs ${dir} 2>/dev/null >> /tmp/du_list.txt || continue
               done
             done
+            grep "M " /tmp/du_list.txt
+            grep "G " /tmp/du_list.txt
+            rm -f /tmp/du_list.txt
         }
 
         # look for removal candidates
