@@ -2,7 +2,7 @@
 
 name: 'Free Disk Space'
 description: 'Frees disk space on the runner'
-author: 'InstructLab'
+author: 'InstructLab, modified by benkirk'
 runs:
   using: "composite"
   steps:
@@ -32,7 +32,7 @@ runs:
           /opt/hostedtoolcache/*/ \
           /tmp \
           /var/*/ \
-          /var/lib/*/ | grep -v "4.0K" | sort || true
+          /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -57,6 +57,7 @@ runs:
         sudo rm -rf \
           /opt/az \
           /opt/ghc \
+          /opt/google-cloud-sdk/ \
           /opt/microsoft \
           /opt/pipx \
           /usr/lib/jvm \
@@ -69,6 +70,7 @@ runs:
 
         # see what is left
         echo && echo "After cleanup:"
+        sudo find /usr/local /var/lib -type d -ls
         sudo find /usr /opt -name "lib*.a" -ls
         sudo du -hs 2>/dev/null \
           /usr/*/ \
@@ -80,7 +82,7 @@ runs:
           /opt/hostedtoolcache/*/ \
           /tmp \
           /var/*/ \
-          /var/lib/*/ | grep -v "4.0K" | sort || true
+          /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
       shell: bash
     - name: Free Disk Space MacOS
       if: runner.os == 'macOS'
