@@ -304,10 +304,9 @@ jobs:
         uses: ./.ci-actions/slim-action-runner
 
       - name: Test
-        uses: ./.github/workflows/test-hpc-development-image.yaml
+        uses: ./.github/actions/test-hpc-development-image
         with:
           image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
-          runner: ${{ inputs.runner }}
 
 
   # publish-image:
