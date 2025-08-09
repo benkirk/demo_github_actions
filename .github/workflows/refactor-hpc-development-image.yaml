@@ -107,9 +107,6 @@ jobs:
     runs-on: ${{ inputs.runner }}
 
     steps:
-      -name: Free disk space on runner
-       uses: ./.github/workflows/slim-action-runner
-
       - name: Interrogate Environment
         run: |
           cat /etc/os-release && echo
@@ -190,6 +187,9 @@ jobs:
         with:
           submodules: 'true'
           fetch-depth: 0
+
+      - name: Free disk space on runner
+        uses: ./.ci-actions/slim-action-runner
 
       - name: Create containers/refactor/extras
         run: |
