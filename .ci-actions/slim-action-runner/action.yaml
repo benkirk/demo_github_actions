@@ -23,7 +23,7 @@ runs:
         fi
 
         probeUsage() {
-          echo && echo "${1}}"
+          echo && echo "${1}"
           sudo du -hs 2>/dev/null \
             /usr/*/ \
             /usr/share/*/ \
@@ -33,6 +33,8 @@ runs:
             /tmp \
             /var/*/ \
             /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
+
+          sudo find /opt /usr/{share,local} /var/lib -mindepth 1 -maxdepth 2 -print | sort | xargs -n 1 du -hs
         }
         # look for removal candidates
         probeUsage "Before Cleanup:"
@@ -72,7 +74,6 @@ runs:
           || true
 
         # see what is left
-        sudo find /usr/local /var/lib -type d -ls
         sudo find /usr /opt -name "lib*.a" -ls
         probeUsage "After cleanup:"
 
