@@ -188,9 +188,6 @@ jobs:
           submodules: 'true'
           fetch-depth: 0
 
-      - name: Free disk space on runner
-        uses: ./.ci-actions/slim-action-runner
-
       - name: Create containers/refactor/extras
         run: |
           sudo apt-get update
@@ -232,6 +229,9 @@ jobs:
           docker buildx ls
           docker buildx inspect
           docker buildx du
+
+      - name: Free Disk Space on Runner
+        uses: ./.ci-actions/slim-action-runner
 
       # - name: Base OS + Toolkits
       #   uses: docker/build-push-action@v6
