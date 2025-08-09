@@ -304,7 +304,7 @@ jobs:
         uses: ./.ci-actions/slim-action-runner
 
       - name: Test
-        uses:
+        uses: ./.github/workflows/test-hpc-development-image.yaml
           with:
             image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
             runner: ${{ inputs.runner }}
