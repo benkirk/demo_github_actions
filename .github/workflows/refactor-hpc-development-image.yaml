@@ -305,9 +305,9 @@ jobs:
 
       - name: Test
         uses: ./.github/workflows/test-hpc-development-image.yaml
-          with:
-            image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
-            runner: ${{ inputs.runner }}
+        with:
+          image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
+          runner: ${{ inputs.runner }}
 
 
   # publish-image:
