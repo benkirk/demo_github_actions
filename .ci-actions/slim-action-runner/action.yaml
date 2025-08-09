@@ -35,7 +35,7 @@ runs:
             /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
 
             for dir in $(sudo find /opt /usr/{share,local} /var/lib -mindepth 1 -maxdepth 2 -print | sort); do
-              sudo du -hs ${dir} 2>/dev/null || continue
+              sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
             done
         }
 
