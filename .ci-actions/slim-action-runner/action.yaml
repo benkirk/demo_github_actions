@@ -1,5 +1,3 @@
-# Adoped from  https://github.com/instructlab/ci-actions/blob/main/actions/free-disk-space/free-disk-space.md
-#
 # SPDX-License-Identifier: Apache-2.0
 
 name: 'Free Disk Space'
@@ -40,7 +38,6 @@ runs:
 
         # Remove large packages we don't use.
         echo "Attempting to remove unused ${os_id} packages..."
-
         if [[ "${os_id}" =~ "ubuntu" ]]; then
           sudo apt-get remove -y '^mysql-.*' || printWarningMessage '^mysql-.*'
           sudo apt-get remove -y '^dotnet-.*' --fix-missing || printWarningMessage '^dotnet-.*'
@@ -51,7 +48,6 @@ runs:
           sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
           sudo apt-get autoremove -y >/dev/null 2>&1
           sudo apt-get autoclean -y >/dev/null 2>&1
-
         elif [[ "${os_id}" =~ "centos" ]]; then
           sudo dnf -y remove 'mysql-*' || printWarningMessage 'mysql-*'
           sudo dnf -y remove 'dotnet-*' || printWarningMessage 'dotnet-*'
@@ -68,7 +64,6 @@ runs:
 
           # Remove mail transfer agents because we're not emailing anything
           postfix_packages=$(dnf list installed | grep postfix || echo "")
-
           if [[ ! -z "${postfix_packages}" ]]; then
             sudo systemctl stop postfix
             sudo systemctl disable postfix
@@ -90,7 +85,6 @@ runs:
 
           sudo dnf clean all
           rm -rf /var/cache/dnf*
-
         else
           echo "Skipping large package cleanup for OS '${os_id}' (not implemented)."
         fi
