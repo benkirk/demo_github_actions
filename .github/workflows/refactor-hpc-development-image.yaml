@@ -21,6 +21,12 @@ on:
         type: string
         default: 'ubuntu-latest'
 
+      free_runner_space:
+        description: 'Remove unneeded software on runner host to free up disk space'
+        type: boolean
+        required: false
+        default: true
+
       buildx_driver:
         description: 'Docker setup-buildx-action driver type'
         required: false
@@ -231,6 +237,7 @@ jobs:
           docker buildx du
 
       - name: Free Disk Space on Runner
+        if: ${{ inputs.free_runner_space }}
         uses: ./.ci-actions/slim-action-runner
 
       # - name: Base OS + Toolkits
@@ -364,10 +371,10 @@ jobs:
   #         export ESMF_VERSION="8.8.1"
   #         timeout 25m /container/extras/build_esmf.sh
 
-  #     - name: Kokkos
-  #       continue-on-error: true
-  #       run: |
-  #         timeout 25m /container/extras/build_kokkos.sh
+      - name: Kokkos
+        continue-on-error: true
+        run: |
+          timeout 25m /container/extras/build_kokkos.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

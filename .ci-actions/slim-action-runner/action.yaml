@@ -23,21 +23,14 @@ runs:
         fi
 
         # look for removal candidates
-        du -hs 2>/dev/null \
+        echo && echo "Before cleanup:"
+        sudo du -hs 2>/dev/null \
           /usr/*/ \
+          /usr/share/*/ \
           /usr/local/*/ \
           /opt/*/ \
-          /var/*/ | sort || true
-
-        # Remove Android, .NET, and Haskell runtimes
-        sudo rm -rf \
-          /usr/local/lib/android \
-          /usr/share/dotnet \
-          /opt/ghc \
-          /usr/local/.ghcup \
-          /usr/local/share/powershell \
-          /usr/share/swift \
-          /usr/lib/jvm || true
+          /tmp \
+          /var/*/ | grep -v "4.0K" | sort || true
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -58,12 +51,31 @@ runs:
           echo "Skipping large package cleanup for OS '${os_id}' (not implemented)."
         fi
 
+        # Remove Android, .NET, and Haskell runtimes
+        sudo rm -rf \
+          /opt/az \
+          /opt/ghc \
+          /opt/microsoft \
+          /opt/pipx \
+          /usr/lib/jvm \
+          /usr/local/.ghcup \
+          /usr/local/lib/android \
+          /usr/local/share/powershell \
+          /usr/share/dotnet \
+          /usr/share/swift \
+          || true
+
         # see what is left
-        du -hs 2>/dev/null \
+        echo && echo "After cleanup:"
+        sudo find /usr /opt -name "lib*.a" -ls
+        sudo du -hs 2>/dev/null \
           /usr/*/ \
+          /usr/share/*/ \
           /usr/local/*/ \
+          /usr/share/*/ \
           /opt/*/ \
-          /var/*/ | sort || true
+          /tmp \
+          /var/*/ | grep -v "4.0K" | sort || true
       shell: bash
     - name: Free Disk Space MacOS
       if: runner.os == 'macOS'
