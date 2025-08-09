@@ -22,17 +22,20 @@ runs:
           sudo docker rmi "$(docker image ls -aq) -f" >/dev/null 2>&1 || true
         fi
 
+        probeUsage() {
+          echo && echo "${1}}"
+          sudo du -hs 2>/dev/null \
+            /usr/*/ \
+            /usr/share/*/ \
+            /usr/local/* /usr/local/.* \
+            /opt/*/ \
+            /opt/hostedtoolcache/*/ \
+            /tmp \
+            /var/*/ \
+            /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
+        }
         # look for removal candidates
-        echo && echo "Before cleanup:"
-        sudo du -hs 2>/dev/null \
-          /usr/*/ \
-          /usr/share/*/ \
-          /usr/local/* /usr/local/.* \
-          /opt/*/ \
-          /opt/hostedtoolcache/*/ \
-          /tmp \
-          /var/*/ \
-          /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
+        probeUsage "Before Cleanup:"
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -69,20 +72,10 @@ runs:
           || true
 
         # see what is left
-        echo && echo "After cleanup:"
         sudo find /usr/local /var/lib -type d -ls
         sudo find /usr /opt -name "lib*.a" -ls
-        sudo du -hs 2>/dev/null \
-          /usr/*/ \
-          /usr/share/*/ \
-          /usr/local/* /usr/local/.* \
-          /usr/local/*/ \
-          /usr/share/*/ \
-          /opt/*/ \
-          /opt/hostedtoolcache/*/ \
-          /tmp \
-          /var/*/ \
-          /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
+        probeUsage "After cleanup:"
+
       shell: bash
     - name: Free Disk Space MacOS
       if: runner.os == 'macOS'
