@@ -35,7 +35,7 @@ runs:
           #   /tmp \
           #   /var/*/ \
           #   /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
-          for depth in 1 2; do
+          for depth in 1; do
             for dir in $(sudo find /opt /usr/{share,local} /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
               sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
             done
@@ -43,7 +43,7 @@ runs:
         }
 
         # look for removal candidates
-        probeUsage "Before Cleanup:"
+        #probeUsage "Before Cleanup:"
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -75,12 +75,14 @@ runs:
           /usr/local/.ghcup \
           /usr/local/lib/android \
           /usr/local/share/powershell \
+          /usr/local/julia*/ \
+          /usr/share/az*/ \
           /usr/share/dotnet \
           /usr/share/swift \
           || true
 
         # see what is left
-        sudo find /usr /opt -name "lib*.a" -ls
+        #sudo find /usr /opt -name "lib*.a" -ls
         probeUsage "After cleanup:"
 
       shell: bash

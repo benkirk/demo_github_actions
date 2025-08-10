@@ -238,7 +238,7 @@ jobs:
 
       - name: Free Disk Space on Runner
         if: ${{ inputs.free_runner_space }}
-        uses: ./.ci-actions/slim-action-runner
+        uses: ./.github/actions/slim-action-runner
 
       # - name: Base OS + Toolkits
       #   uses: docker/build-push-action@v6
@@ -301,7 +301,7 @@ jobs:
 
       - name: Free Disk Space on Runner
         if: ${{ inputs.free_runner_space }}
-        uses: ./.ci-actions/slim-action-runner
+        uses: ./.github/actions/slim-action-runner
 
       - name: Test
         uses: ./.github/actions/test-hpc-development-image
