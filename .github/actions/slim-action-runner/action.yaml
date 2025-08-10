@@ -26,15 +26,7 @@ runs:
           echo "--------------------------------------------"
           echo "${1}"
           echo "--------------------------------------------"
-          # sudo du -hs 2>/dev/null \
-          #   /usr/*/ \
-          #   /usr/share/*/ \
-          #   /usr/local/* /usr/local/.* \
-          #   /opt/*/ \
-          #   /opt/hostedtoolcache/*/ \
-          #   /tmp \
-          #   /var/*/ \
-          #   /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
+
           for depth in 1; do
             for dir in $(sudo find /opt /opt/actionarchivecache /opt/hostedtoolcache /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
               sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
@@ -61,7 +53,6 @@ runs:
           sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
           sudo apt-get autoremove -y >/dev/null 2>&1
           sudo apt-get autoclean -y >/dev/null 2>&1
-          echo "Skipping large package cleanup for OS '${os_id}' (not implemented)."
         fi
 
         # Remove Android, .NET, and Haskell runtimes

@@ -172,7 +172,7 @@ jobs:
           retention-days: 3
 
   build-image:
-    name: Build Image
+    name: Build & Test Image
     needs: create-image-metadata
     runs-on: ${{ inputs.runner }}
 
@@ -284,6 +284,26 @@ jobs:
             cat /container/config_env.sh
             echo "hello world"
 
+      - name: MPI+OpenMP Hello World
+        continue-on-error: false
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ env.CI_IMAGE_TAG }}
+          run: |
+            pwd
+            mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+            ldd ./hello_world_mpi
+            export OMP_NUM_THREADS=2
+            mpiexec -n 2 ./hello_world_mpi
+
+      - name: OSU MPI Benchmarks
+        continue-on-error: false
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ env.CI_IMAGE_TAG }}
+          run: |
+            /container/extras/build_osu-micro-benchmarks.sh
+
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
@@ -291,30 +311,30 @@ jobs:
 
 
 
-  test-image:
-    name: Test Image
-    needs: build-image
-    runs-on: ${{ inputs.runner }}
+  # test-image:
+  #   name: Test Image
+  #   needs: build-image
+  #   runs-on: ${{ inputs.runner }}
 
-    defaults:
-      run:
-        shell: bash -elo pipefail {0}
+  #   defaults:
+  #     run:
+  #       shell: bash -elo pipefail {0}
 
-    if: ${{ inputs.test }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-          fetch-depth: 0
+  #   if: ${{ inputs.test }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: 'true'
+  #         fetch-depth: 0
 
-      - name: Free Disk Space on Runner
-        if: ${{ inputs.free_runner_space }}
-        uses: ./.github/actions/slim-action-runner
+  #     - name: Free Disk Space on Runner
+  #       if: ${{ inputs.free_runner_space }}
+  #       uses: ./.github/actions/slim-action-runner
 
-      - name: Test
-        uses: ./.github/actions/test-hpc-development-image
-        with:
-          image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
+  #     - name: Test
+  #       uses: ./.github/actions/test-hpc-development-image
+  #       with:
+  #         image: ${{ needs.build-image.outputs.CI_IMAGE_TAG }}
 
 
   # publish-image:
