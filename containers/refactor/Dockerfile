@@ -338,7 +338,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
     && (/tmp/gcc-${GCC_VERSION}/configure \
                  --prefix=${GCC_INSTALL_PATH} \
                  --disable-static --enable-shared \
-                 --enable-languages=c,c++,fortran,go \
+                 --enable-languages=c,c++,fortran \
                  --disable-multilib \
                  --disable-bootstrap \
             || cat config.log) \
