@@ -276,36 +276,48 @@ jobs:
             ${{ inputs.mpi_build_args }}
           target: final
 
-      - name: Check Container Environment
-        uses: ./.github/actions/run-in-image
+      - name: Test Image
+        uses: docker/build-push-action@v6
         with:
-          image: ${{ env.CI_IMAGE_TAG }}
-          shell: bash
-          run: |
-            cat /container/config_env.sh
-            echo "hello world"
+          push: false
+          tags: local:test
+          context: containers/test
+          file: containers/test/Dockerfile
+          build-args: |
+            BASE_IMAGE=${{ env.CI_IMAGE_TAG }}
+            TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
+          target: final
 
-      - name: MPI+OpenMP Hello World
-        continue-on-error: false
-        uses: ./.github/actions/run-in-image
-        with:
-          image: ${{ env.CI_IMAGE_TAG }}
-          shell: bash
-          run: |
-            pwd
-            mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
-            ldd ./hello_world_mpi
-            export OMP_NUM_THREADS=2
-            mpiexec -n 2 ./hello_world_mpi
+      # - name: Check Container Environment
+      #   uses: ./.github/actions/run-in-image
+      #   with:
+      #     image: ${{ env.CI_IMAGE_TAG }}
+      #     shell: bash
+      #     run: |
+      #       cat /container/config_env.sh
+      #       echo "hello world"
 
-      - name: OSU MPI Benchmarks
-        continue-on-error: false
-        uses: ./.github/actions/run-in-image
-        with:
-          image: ${{ env.CI_IMAGE_TAG }}
-          shell: bash
-          run: |
-            /container/extras/build_osu-micro-benchmarks.sh
+      # - name: MPI+OpenMP Hello World
+      #   continue-on-error: false
+      #   uses: ./.github/actions/run-in-image
+      #   with:
+      #     image: ${{ env.CI_IMAGE_TAG }}
+      #     shell: bash
+      #     run: |
+      #       pwd
+      #       mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+      #       ldd ./hello_world_mpi
+      #       export OMP_NUM_THREADS=2
+      #       mpiexec -n 2 ./hello_world_mpi
+
+      # - name: OSU MPI Benchmarks
+      #   continue-on-error: false
+      #   uses: ./.github/actions/run-in-image
+      #   with:
+      #     image: ${{ env.CI_IMAGE_TAG }}
+      #     shell: bash
+      #     run: |
+      #       /container/extras/build_osu-micro-benchmarks.sh
 
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
