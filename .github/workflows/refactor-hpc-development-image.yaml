@@ -280,7 +280,9 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
-          run: echo "hello world"
+          run: |
+            cat /container/config_env.sh
+            echo "hello world"
 
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
