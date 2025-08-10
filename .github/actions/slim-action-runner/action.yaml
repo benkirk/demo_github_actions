@@ -60,6 +60,7 @@ runs:
           /opt/az \
           /opt/ghc \
           /opt/google*/ \
+          /opt/hostedtoolcache \
           /opt/microsoft \
           /opt/pipx \
           /usr/lib/jvm \
