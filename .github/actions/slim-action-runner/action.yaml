@@ -36,7 +36,7 @@ runs:
           #   /var/*/ \
           #   /var/lib/*/ | grep -v "4.0K" | sort | uniq || true
           for depth in 1; do
-            for dir in $(sudo find /opt /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
+            for dir in $(sudo find /opt /opt/actionarchivecache /opt/hostedtoolcache /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
               sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
             done
           done
@@ -77,13 +77,21 @@ runs:
           /usr/local/doc \
           /usr/local/julia*/ \
           /usr/local/lib/android \
+          /usr/local/n \
+          /usr/local/share/chromium \
           /usr/local/share/powershell \
+          /usr/local/share/vcpkg \
           /usr/share/az*/ \
+          /usr/share/doc \
           /usr/share/dotnet \
           /usr/share/gradle*/ \
+          /usr/share/icons \
+          /usr/share/java \
+          /usr/share/kotlinc \
+          /usr/share/man \
           /usr/share/miniconda \
           /usr/share/swift \
-          /usr/share/{doc,vim,java,kotlinc}, \
+          /usr/share/vim \
           /var/lib/{apt,mysql} \
           || true
 
