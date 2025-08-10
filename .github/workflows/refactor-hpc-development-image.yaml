@@ -280,7 +280,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
-          shell: bash --login
+          shell: bash
           run: |
             cat /container/config_env.sh
             echo "hello world"
@@ -290,7 +290,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
-          shell: bash --login
+          shell: bash
           run: |
             pwd
             mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
@@ -303,7 +303,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
-          shell: bash --login
+          shell: bash
           run: |
             /container/extras/build_osu-micro-benchmarks.sh
 
