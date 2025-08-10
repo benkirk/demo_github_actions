@@ -14,11 +14,16 @@ SHELL ["/bin/bash", "--login", "-c"]
 RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && env \
     && cat /container/config_env.sh \
+    && mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp \
+    && ldd ./hello_world_mpi \
+    && export OMP_NUM_THREADS=2 \
+    && mpiexec -n 2 ./hello_world_mpi \
     && docker-clean
 
 RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && ls /container/extras/*.sh \
     && SCRIPTS="${TEST_SCRIPTS}" \
+    && export NRANKS="${MAKE_J_PROCS}" \
     && for script in ${SCRIPTS//:/ }; do \
         [ -x "${script}" ] \
             && echo "-------------------------------------------------------------------------------" \
