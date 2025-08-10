@@ -198,7 +198,7 @@ jobs:
         if: ${{ inputs.free_runner_space }}
         uses: ./.github/actions/slim-action-runner
 
-      - name: Interrogate Environment
+      - name: Interrogate Runner Environment
         run: |
           env | sort && echo
           cat /etc/os-release && echo

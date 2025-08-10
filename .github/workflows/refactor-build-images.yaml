@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc, gcc12, gcc14, oneapi, aocc  ]
+        compiler: [ gcc, gcc12, gcc13, oneapi, aocc ]
         mpi:      [ openmpi ]
         gpu:      [ nogpu, cuda ]
         arch:     [ x86_64, aarch64 ]
@@ -65,10 +65,10 @@ jobs:
               COMPILER_FAMILY=gcc
               GCC_VERSION=12.5.0
 
-          - compiler: gcc14
+          - compiler: gcc13
             compiler_build_args: |
               COMPILER_FAMILY=gcc
-              GCC_VERSION=14.3.0
+              GCC_VERSION=13.4.0
 
           - compiler: oneapi
             compiler_build_args: |
@@ -80,6 +80,11 @@ jobs:
           - compiler: aocc
             compiler_build_args: |
               COMPILER_FAMILY=aocc
+
+          # - compiler: clang
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=clang
+          #     LLVM_VERSION=20.1.8
 
           # mpi build arg specifications
           - mpi: openmpi
