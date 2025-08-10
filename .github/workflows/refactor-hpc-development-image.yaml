@@ -276,6 +276,12 @@ jobs:
             ${{ inputs.mpi_build_args }}
           target: final
 
+      - name: Test Image
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ env.CI_IMAGE_TAG }}
+          run: echo "hello world"
+
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
       PUBLISH_IMAGE_TAG: ${{ steps.tags.outputs.PUBLISH_IMAGE_TAG }}
