@@ -83,12 +83,6 @@ on:
         type: string
         required: false
 
-      # build:
-      #   description: 'Build Image'
-      #   type: boolean
-      #   required: false
-      #   default: true
-
       test:
         description: 'Test Image'
         type: boolean
@@ -257,7 +251,7 @@ jobs:
       #       ${{ inputs.gpu_build_args }}
       #     target: final
 
-      - name: BaseOS + Toolkits + Compiler + MPI
+      - name: Build BaseOS + Toolkits + Compiler + MPI Image
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -285,8 +279,8 @@ jobs:
           file: containers/test/Dockerfile
           build-args: |
             BASE_IMAGE=${{ env.CI_IMAGE_TAG }}
-            TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
-          target: final
+            TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh:/container/extras/build_dart.sh:/container/extras/build_kokkos.sh
+          target: test
 
       # - name: Check Container Environment
       #   uses: ./.github/actions/run-in-image

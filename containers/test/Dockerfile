@@ -8,17 +8,24 @@ FROM ${BASE_IMAGE} AS base-image
 ARG TEST_SCRIPTS="/container/extras/build_osu-micro-benchmarks.sh"
 
 #-------------------------------------------------------------------------------
-FROM base-image AS final
+FROM base-image AS test
 #-------------------------------------------------------------------------------
 SHELL ["/bin/bash", "--login", "-c"]
-RUN echo "Publishing Production Image from ${BASE_IMAGE} ..." \
+RUN echo "Testing Image from ${BASE_IMAGE} ..." \
+    && env \
+    && cat /container/config_env.sh \
+    && docker-clean
+
+RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && ls /container/extras/*.sh \
     && SCRIPTS="${TEST_SCRIPTS}" \
     && for script in ${SCRIPTS//:/ }; do \
-         [ -x "${script}" ] \
-             && echo "Executing Test Script ${script} ..." \
-             && exec ${script} \
-             || { echo "${script} not executable or does not exist??"; ls -l ${script}; continue; }; \
+        [ -x "${script}" ] \
+            && echo "-------------------------------------------------------------------------------" \
+            && echo "Executing Test Script ${script} ..." \
+            && echo "-------------------------------------------------------------------------------" \
+            && exec ${script} \
+                || { echo "${script} not executable or does not exist??"; ls -l ${script}; continue; }; \
        done \
     && docker-clean
 
