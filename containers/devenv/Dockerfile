@@ -771,7 +771,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && echo "${MPICH_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/mpich-${MPICH_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
-    && ( which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
+    && (which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
     && sed -i 's/cxxlibs="-lmpicxx"/cxxlibs= #"-lmpicxx"/g' $(which mpicxx) \
     && case "${COMPILER_FAMILY}" in \
         "nvhpc") \
@@ -832,7 +832,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && echo "${MPICH_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/mpich-${MPICH_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
-    && ( which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
+    && (which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
     && docker-clean
 LABEL mpi="mpich"
 LABEL mpich="${MPICH_VERSION}"
@@ -895,8 +895,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "${OPENMPI_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/openmpi-${OPENMPI_VERSION}.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
-    && ( which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
-    && ompi_info --all --parseable \
+    && (which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
     && ompi_info --parsable --all | grep mpi_built_with_cuda_support:value \
     && docker-clean
 LABEL mpi="openmpi"

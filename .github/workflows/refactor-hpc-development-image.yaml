@@ -194,6 +194,10 @@ jobs:
           sudo apt-get install make
           make -C containers/refactor extras
 
+      - name: Free Disk Space on Runner
+        if: ${{ inputs.free_runner_space }}
+        uses: ./.github/actions/slim-action-runner
+
       - name: Interrogate Environment
         run: |
           env | sort && echo
@@ -230,10 +234,6 @@ jobs:
           docker buildx inspect
           docker buildx du
 
-      - name: Free Disk Space on Runner
-        if: ${{ inputs.free_runner_space }}
-        uses: ./.github/actions/slim-action-runner
-
       # - name: Base OS + Toolkits
       #   uses: docker/build-push-action@v6
       #   with:
@@ -260,6 +260,7 @@ jobs:
           cache-to: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ env.INPUTS_SHA }},mode=max
           context: containers/refactor
           file: containers/refactor/Dockerfile
+          target: final
           build-args: |
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=fftlibs
@@ -268,50 +269,25 @@ jobs:
             ${{ inputs.gpu_build_args }}
             ${{ inputs.compiler_build_args }}
             ${{ inputs.mpi_build_args }}
-          target: final
+
+      - name: Query Post-Build Disk Usage
+        run: |
+          df -h
+          docker image ls
+          docker buildx du
 
       - name: Test Image
         uses: docker/build-push-action@v6
         with:
           push: false
           tags: local:test
+          cache-from: type=registry,ref=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
           context: containers/test
           file: containers/test/Dockerfile
+          target: test
           build-args: |
             BASE_IMAGE=${{ env.CI_IMAGE_TAG }}
             TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh:/container/extras/build_dart.sh:/container/extras/build_kokkos.sh
-          target: test
-
-      # - name: Check Container Environment
-      #   uses: ./.github/actions/run-in-image
-      #   with:
-      #     image: ${{ env.CI_IMAGE_TAG }}
-      #     shell: bash
-      #     run: |
-      #       cat /container/config_env.sh
-      #       echo "hello world"
-
-      # - name: MPI+OpenMP Hello World
-      #   continue-on-error: false
-      #   uses: ./.github/actions/run-in-image
-      #   with:
-      #     image: ${{ env.CI_IMAGE_TAG }}
-      #     shell: bash
-      #     run: |
-      #       pwd
-      #       mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
-      #       ldd ./hello_world_mpi
-      #       export OMP_NUM_THREADS=2
-      #       mpiexec -n 2 ./hello_world_mpi
-
-      # - name: OSU MPI Benchmarks
-      #   continue-on-error: false
-      #   uses: ./.github/actions/run-in-image
-      #   with:
-      #     image: ${{ env.CI_IMAGE_TAG }}
-      #     shell: bash
-      #     run: |
-      #       /container/extras/build_osu-micro-benchmarks.sh
 
     outputs:
       CI_IMAGE_TAG: ${{ steps.tags.outputs.CI_IMAGE_TAG }}
