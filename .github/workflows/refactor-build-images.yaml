@@ -55,7 +55,7 @@ jobs:
               CUDA_VERSION=12.9
               CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
-          compiler build arg specifications
+          # compiler build arg specifications
           - compiler: gcc
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
