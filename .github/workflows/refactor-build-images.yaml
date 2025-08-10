@@ -36,34 +36,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc, oneapi, aocc  ]
+        compiler: [ gcc, gcc12, oneapi, aocc  ]
         mpi:      [ openmpi ]
-        arch:     [ x86_64 ]
-        gpu:      [ nogpu ]
+        arch:     [ x86_64, aarch64 ]
+        gpu:      [ nogpu, cuda ]
 
         include:
-          # # gpu architecture-dependent build arg specifications
-          # - arch: x86_64
-          #   gpu: cuda
-          #   gpu_build_args: |
-          #     CUDA_VERSION=12.9
-          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
+          # gpu architecture-dependent build arg specifications
+          - arch: x86_64
+            gpu: cuda
+            gpu_build_args: |
+              CUDA_VERSION=12.9
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
 
-          # - arch: aarch64
-          #   gpu: cuda
-          #   gpu_build_args: |
-          #     CUDA_VERSION=12.9
-          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
+          - arch: aarch64
+            gpu: cuda
+            gpu_build_args: |
+              CUDA_VERSION=12.9
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
-          # compiler build arg specifications
+          compiler build arg specifications
           - compiler: gcc
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
 
-          # - compiler: gcc12
-          #   compiler_build_args: |
-          #     COMPILER_FAMILY=gcc
-          #     GCC_VERSION=12.5.0
+          - compiler: gcc12
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=12.5.0
 
           - compiler: oneapi
             compiler_build_args: |

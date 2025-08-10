@@ -28,7 +28,7 @@ runs:
           echo "--------------------------------------------"
 
           for depth in 1; do
-            for dir in $(sudo find /opt /opt/actionarchivecache /opt/hostedtoolcache /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print | sort); do
+            for dir in $(sudo find /opt /opt/actionarchivecache /opt/hostedtoolcache /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print 2>/dev/null | sort); do
               sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
             done
           done
@@ -82,6 +82,7 @@ runs:
           /usr/share/kotlinc \
           /usr/share/man \
           /usr/share/miniconda \
+          /usr/share/ri \
           /usr/share/swift \
           /usr/share/vim \
           /var/lib/{apt,mysql} \
