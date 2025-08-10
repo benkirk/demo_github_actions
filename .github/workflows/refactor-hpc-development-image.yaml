@@ -276,19 +276,21 @@ jobs:
             ${{ inputs.mpi_build_args }}
           target: final
 
-      - name: Test: Check Container Environment
+      - name: 'Test: Check Container Environment'
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
+          shell: bash --login
           run: |
             cat /container/config_env.sh
             echo "hello world"
 
-      - name: Test: MPI+OpenMP Hello World
+      - name: 'Test: MPI+OpenMP Hello World'
         continue-on-error: false
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
+          shell: bash --login
           run: |
             pwd
             mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
@@ -296,11 +298,12 @@ jobs:
             export OMP_NUM_THREADS=2
             mpiexec -n 2 ./hello_world_mpi
 
-      - name: Test: OSU MPI Benchmarks
+      - name: 'Test: OSU MPI Benchmarks'
         continue-on-error: false
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
+          shell: bash --login
           run: |
             /container/extras/build_osu-micro-benchmarks.sh
 
