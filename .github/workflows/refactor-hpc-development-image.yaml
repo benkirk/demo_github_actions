@@ -276,7 +276,7 @@ jobs:
             ${{ inputs.mpi_build_args }}
           target: final
 
-      - name: 'Test: Check Container Environment'
+      - name: Check Container Environment
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ env.CI_IMAGE_TAG }}
@@ -285,7 +285,7 @@ jobs:
             cat /container/config_env.sh
             echo "hello world"
 
-      - name: 'Test: MPI+OpenMP Hello World'
+      - name: MPI+OpenMP Hello World
         continue-on-error: false
         uses: addnab/docker-run-action@v3
         with:
@@ -298,7 +298,7 @@ jobs:
             export OMP_NUM_THREADS=2
             mpiexec -n 2 ./hello_world_mpi
 
-      - name: 'Test: OSU MPI Benchmarks'
+      - name: OSU MPI Benchmarks
         continue-on-error: false
         uses: addnab/docker-run-action@v3
         with:
