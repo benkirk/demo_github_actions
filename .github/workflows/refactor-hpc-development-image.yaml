@@ -277,7 +277,7 @@ jobs:
           target: final
 
       - name: Check Container Environment
-        uses: .github/actions/run-in-image
+        uses: ./.github/actions/run-in-image
         with:
           image: ${{ env.CI_IMAGE_TAG }}
           shell: bash
@@ -287,7 +287,7 @@ jobs:
 
       - name: MPI+OpenMP Hello World
         continue-on-error: false
-        uses: .github/actions/run-in-image
+        uses: ./.github/actions/run-in-image
         with:
           image: ${{ env.CI_IMAGE_TAG }}
           shell: bash
@@ -300,7 +300,7 @@ jobs:
 
       - name: OSU MPI Benchmarks
         continue-on-error: false
-        uses: .github/actions/run-in-image
+        uses: ./.github/actions/run-in-image
         with:
           image: ${{ env.CI_IMAGE_TAG }}
           shell: bash
