@@ -49,8 +49,7 @@ runs:
           sudo apt-get remove -y 'php.*' --fix-missing || printWarningMessage 'php.*'
           sudo apt-get remove -y '^mongodb-.*' --fix-missing || printWarningMessage '^mongodb-.*'
           sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
-          sudo apt-get remove -y google-cloud-sdk --fix-missing || printWarningMessage 'google-cloud-sdk'
-          sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
+          sudo apt-get remove -y 'google-cloud-*' --fix-missing || printWarningMessage 'google-cloud-*'
           for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
             sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
           done
@@ -95,7 +94,7 @@ runs:
           /usr/share/ri \
           /usr/share/swift \
           /usr/share/vim \
-          /var/lib/{apt,mysql} \
+          /var/lib/{apt,mysql,dpkg,waagent} \
           || true
 
         # see what is left
