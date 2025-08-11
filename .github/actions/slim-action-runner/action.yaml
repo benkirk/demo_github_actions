@@ -51,13 +51,16 @@ runs:
           sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
           sudo apt-get remove -y google-cloud-sdk --fix-missing || printWarningMessage 'google-cloud-sdk'
           sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
+          for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman; do
+            sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
+          done
           sudo apt-get autoremove -y >/dev/null 2>&1
           sudo apt-get autoclean -y >/dev/null 2>&1
 
           echo "--------------------------------------------"
           echo Top remaining packages by size:
           echo "--------------------------------------------"
-          dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' | sort -rn | head -n 50 || true
+          dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
         fi
 
         #
