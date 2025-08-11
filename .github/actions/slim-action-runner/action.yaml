@@ -38,7 +38,7 @@ runs:
         #probeUsage "Before Cleanup:"
 
         printWarningMessage () {
-          echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
+          #echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
         }
 
         # Remove large packages we don't use.
@@ -53,7 +53,14 @@ runs:
           sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
           sudo apt-get autoremove -y >/dev/null 2>&1
           sudo apt-get autoclean -y >/dev/null 2>&1
+
+          echo "--------------------------------------------"
+          echo Top remaining packages by size:
+          echo "--------------------------------------------"
+          dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' | sort -rn | head -n 50 || true
         fi
+
+        #
 
         # Remove Android, .NET, and Haskell runtimes
         sudo rm -rf \

@@ -493,6 +493,7 @@ FROM toolkits AS clang
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
+# ref. https://llvm.org/docs/CMake.html
 ARG LLVM_VERSION="20.1.8"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
@@ -530,15 +531,17 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
            -G Ninja \
-           -DCMAKE_BUILD_TYPE=Release \
+           -DCMAKE_BUILD_TYPE=MinSizeRel \
            -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PATH} \
            -DCMAKE_CXX_STANDARD=17 \
            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
            -DCMAKE_CXX_LINK_FLAGS="-Wl,-rpath,$LD_LIBRARY_PATH" \
            -DFLANG_ENABLE_WERROR=ON \
-           -DLLVM_ENABLE_ASSERTIONS=ON \
            -DLLVM_TARGETS_TO_BUILD=host \
            -DLLVM_LIT_ARGS=-v \
+           -DLLVM_PARALLEL_LINK_JOBS=2 \
+           -DLLVM_BUILD_LLVM_DYLIB=ON \
+           -DLLVM_LINK_LLVM_DYLIB=ON \
            -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
            ../llvm-project/llvm \
     && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 2 || ninja -C . -j 2 || ninja -C . -j 1) && ninja -C . install \
