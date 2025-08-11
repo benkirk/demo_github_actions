@@ -51,7 +51,7 @@ runs:
           sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
           sudo apt-get remove -y google-cloud-sdk --fix-missing || printWarningMessage 'google-cloud-sdk'
           sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
-          for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman; do
+          for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
             sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
           done
           sudo apt-get autoremove -y >/dev/null 2>&1
