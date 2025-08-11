@@ -39,6 +39,7 @@ runs:
 
         printWarningMessage () {
           #echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
+          return
         }
 
         # Remove large packages we don't use.
