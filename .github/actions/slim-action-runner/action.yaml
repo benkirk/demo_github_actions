@@ -38,8 +38,7 @@ runs:
         #probeUsage "Before Cleanup:"
 
         printWarningMessage () {
-          #echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
-          return
+          echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
         }
 
         # Remove large packages we don't use.
