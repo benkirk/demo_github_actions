@@ -50,9 +50,9 @@ runs:
           sudo apt-get remove -y '^mongodb-.*' --fix-missing || printWarningMessage '^mongodb-.*'
           sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
           sudo apt-get remove -y 'google-cloud-*' --fix-missing || printWarningMessage 'google-cloud-*'
-          for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
-            sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
-          done
+          # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
+          #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
+          # done
           sudo apt-get autoremove -y >/dev/null 2>&1
           sudo apt-get autoclean -y >/dev/null 2>&1
 
