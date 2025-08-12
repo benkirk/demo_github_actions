@@ -21,7 +21,7 @@ echo "${id_tag}"
 
 case "${id_tag}" in
 
-    *"|platform:el8|"*|*"|platform:el9|"*)
+    *"almalinux"*|*"|rocky|"*|*"|rhel|"*)
         dnf -y --enablerepo crb install \
             cmake \
             csh time file hostname perl \
@@ -44,6 +44,8 @@ case "${id_tag}" in
             || true
         ;;
     *)
+        echo "Unrecognized base operating system!!"
+        echo "id_tag=${id_tag}"
         exit 1
         ;;
 esac

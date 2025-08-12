@@ -14,6 +14,25 @@ SHELL ["/bin/bash", "--login", "-c"]
 RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && env \
     && cat /container/config_env.sh \
+    && echo && echo && echo \
+    && echo '----------------------------------------------------------------' \
+    && echo "CC=${CC}" \
+    && echo "CXX=${CXX}" \
+    && echo "FC=${FC}" \
+    && echo "F77=${F77}" \
+    && echo \
+    && echo "CFLAGS=${CFLAGS}" \
+    && echo "CPPFLAGS=${CPPFLAGS}" \
+    && echo "CXXFLAGS=${CXXFLAGS}" \
+    && echo "FCFLAGS=${FCFLAGS}" \
+    && echo "F77FLAGS=${F77FLAGS}" \
+    && conda --version 2>/dev/null || echo " --> no conda in this container" \
+    && which mpicc \
+    && (mpicc --version 2>/dev/null || true) \
+    && echo '----------------------------------------------------------------' \
+    && docker-clean
+
+RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp \
     && ldd ./hello_world_mpi \
     && export OMP_NUM_THREADS=2 \

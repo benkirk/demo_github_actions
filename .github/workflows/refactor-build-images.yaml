@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc, gcc12, gcc13, oneapi, aocc, nvhpc, clang ]
+        compiler: [ gcc, gcc12, gcc13, gcc14, oneapi, aocc, nvhpc ]
         mpi:      [ openmpi ]
         gpu:      [ nogpu, cuda ]
         arch:     [ x86_64, aarch64 ]
@@ -70,6 +70,11 @@ jobs:
               COMPILER_FAMILY=gcc
               GCC_VERSION=13.4.0
 
+          - compiler: gcc14
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=14.2.0
+
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
@@ -95,10 +100,10 @@ jobs:
               NVHPC_VERSION=25.7
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_aarch64_cuda_12.9.tar.gz
 
-          - compiler: clang
-            compiler_build_args: |
-              COMPILER_FAMILY=clang
-              LLVM_VERSION=20.1.8
+          # - compiler: clang
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=clang
+          #     LLVM_VERSION=20.1.8
 
           # mpi build arg specifications
           - mpi: openmpi
