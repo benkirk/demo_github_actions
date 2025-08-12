@@ -148,7 +148,7 @@ jobs:
           cat << EOF > tags.sh
           INPUTS_SHA=${INPUTS_SHA}
           CI_IMAGE_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-          CI_IMAGE_TAG_DEVEL=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:devel
+          CI_IMAGE_TAG_DEVEL=benjaminkirk/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:devel
           PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
           PUBLISH_IMAGE_TAG_YYMM=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:$(date +"%y.%m")
           EOF

@@ -393,6 +393,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
     && rm -rf ${rm_paths} /tmp/intel_installers /var/intel \
     && echo -e "\n# Intel OneAPI compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=oneapi" >> /container/config_env.sh \
+    && echo "export ONEAPI_VERSION=${ONEAPI_VERSION}" >> /container/config_env.sh \
     && echo "source ${ONEAPI_INSTALL_PATH}/setvars.sh >/dev/null 2>&1" >> /container/config_env.sh \
     && source /container/config_env.sh \
     && echo "export oneapi_CC=$(which icx) && export CC=\${oneapi_CC}" >> /container/config_env.sh \
