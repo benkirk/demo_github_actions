@@ -43,28 +43,28 @@ runs:
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
         }
 
-        # Remove large packages we don't use.
-        echo "Attempting to remove unused ${os_id} packages..."
-        if [[ "${os_id}" =~ "ubuntu" ]]; then
-          sudo apt-get remove -y \
-            '^mysql-.*' \
-            '^dotnet-.*' \
-            'php.*' \
-            '^llvm-.*' \
-            'google-cloud-*' \
-            --fix-missing || echo "ERROR removing packages..."
-
-          # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
-          #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
-          # done
-          sudo apt-get autoremove -y >/dev/null 2>&1
-          sudo apt-get autoclean -y >/dev/null 2>&1
-
-          echo "--------------------------------------------"
-          echo Top remaining packages by size:
-          echo "--------------------------------------------"
-          dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
-        fi
+        # # Remove large packages we don't use.
+        # echo "Attempting to remove unused ${os_id} packages..."
+        # if [[ "${os_id}" =~ "ubuntu" ]]; then
+        #   sudo apt-get remove -y \
+        #     '^mysql-.*' \
+        #     '^dotnet-.*' \
+        #     'php.*' \
+        #     '^llvm-.*' \
+        #     'google-cloud-*' \
+        #     --fix-missing || echo "ERROR removing packages..."
+        #
+        #   # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
+        #   #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
+        #   # done
+        #   sudo apt-get autoremove -y >/dev/null 2>&1
+        #   sudo apt-get autoclean -y >/dev/null 2>&1
+        #
+        #   echo "--------------------------------------------"
+        #   echo Top remaining packages by size:
+        #   echo "--------------------------------------------"
+        #   dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
+        # fi
 
         # Remove Android, .NET, and Haskell runtimes
         sudo rm -rf \
