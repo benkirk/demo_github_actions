@@ -294,7 +294,7 @@ jobs:
         if: ${{ inputs.publish && inputs.test }}
         uses: docker/build-push-action@v6
         with:
-          push: false
+          push: true
           #tags: ${{ env.PUBLISH_IMAGE_TAG_DEVEL }}
           tags: ${{ env.CI_IMAGE_TAG_DEVEL }}
           cache-from: type=registry,ref=ncarcisl/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${{env.INPUTS_SHA }}
