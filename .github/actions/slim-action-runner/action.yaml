@@ -24,10 +24,16 @@ runs:
 
         probeUsage() {
           echo "--------------------------------------------"
-          echo "${1}"
+          echo "${1} : files"
+          echo "--------------------------------------------"
+          for dir in /usr/local/bin /usr/bin; do
+            sudo du --block-size=1M --threshold=$((9*1024*1024)) ${dir}/* | sort -n
+          done
+          echo "--------------------------------------------"
+          echo "${1} : dirs"
           echo "--------------------------------------------"
           for dir in /opt /usr /var; do
-            sudo du --max-depth=3 --block-size=1M --threshold=$((9*1024*1024)) ${dir} | sort -n
+            sudo du --max-depth=3 --block-size=1M --threshold=$((9*1024*1024)) --separate-dirs ${dir} | sort -n
           done
         }
 
@@ -104,6 +110,7 @@ runs:
 
         #sudo find /usr -type d -name "*azure*" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
         sudo find /usr /opt -type f -name "lib*.a" -print0 | xargs -0 --no-run-if-empty sudo rm -f
+        sudo find /usr /opt -type d -name "include" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
 
         # see what is left
         probeUsage "After cleanup:"

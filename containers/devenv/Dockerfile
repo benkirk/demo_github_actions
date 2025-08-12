@@ -552,6 +552,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
        esac \
     && cd /tmp \
     && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git \
+    && df -h && du -hs /tmp/*/ \
     && mkdir -p /tmp/BUILD_ALL && cd /tmp/BUILD_ALL \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
