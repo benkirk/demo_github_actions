@@ -27,7 +27,7 @@ runs:
           echo "${1}"
           echo "--------------------------------------------"
           for dir in /opt /usr /var; do
-            sudo du --max-depth=3 --block-size=1M --threshold=$((5*1024*1024)) | sort -n
+            sudo du --max-depth=3 --block-size=1M --threshold=$((5*1024*1024)) ${dir} | sort -n
           done
           # for depth in 1; do
           #   for dir in $(sudo find /opt /opt/actionarchivecache /opt/hostedtoolcache /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print 2>/dev/null | sort); do
