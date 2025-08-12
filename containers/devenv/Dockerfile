@@ -565,7 +565,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
            -DLLVM_ENABLE_ASSERTIONS=ON \
            -DLLVM_TARGETS_TO_BUILD=host \
            -DLLVM_LIT_ARGS=-v \
-           -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
+           -DLLVM_ENABLE_PROJECTS="clang;flang;openmp" \
            ../llvm-project/llvm \
     && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 2 || ninja -C . -j 2 || ninja -C . -j 1) && ninja -C . install \
     && echo -e "\n# LLVM clang compilers" >> /container/config_env.sh \
