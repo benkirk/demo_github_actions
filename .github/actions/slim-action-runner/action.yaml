@@ -27,13 +27,8 @@ runs:
           echo "${1}"
           echo "--------------------------------------------"
           for dir in /opt /usr /var; do
-            sudo du --max-depth=3 --block-size=1M --threshold=$((5*1024*1024)) ${dir} | sort -n
+            sudo du --max-depth=3 --block-size=1M --threshold=$((9*1024*1024)) ${dir} | sort -n
           done
-          # for depth in 1; do
-          #   for dir in $(sudo find /opt /opt/actionarchivecache /opt/hostedtoolcache /usr/{share,local} /usr/local/share /var/lib -mindepth ${depth} -maxdepth ${depth} -print 2>/dev/null | sort); do
-          #     sudo du -hs ${dir} 2>/dev/null | egrep "M|G" || continue
-          #   done
-          # done
         }
 
         # look for removal candidates
@@ -74,8 +69,12 @@ runs:
           /opt/hostedtoolcache \
           /opt/microsoft \
           /opt/pipx \
+          /usr/include/llvm-*/ \
+          /usr/lib/dotnet \
           /usr/lib/firefox \
+          /usr/lib/google-*/ \
           /usr/lib/jvm \
+          /usr/lib/llvm-*/ \
           /usr/local/.ghcup \
           /usr/local/aws*/ \
           /usr/local/doc \
@@ -100,7 +99,7 @@ runs:
           /usr/share/swift \
           /usr/share/vim \
           /var/cache \
-          /var/lib/{apt,mysql,dpkg,waagent,gems} \
+          /var/lib/{apt,mysql,dpkg,waagent,gems,mecab} \
           || true
 
         #sudo find /usr -type d -name "*azure*" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
