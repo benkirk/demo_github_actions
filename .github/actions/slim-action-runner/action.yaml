@@ -76,7 +76,6 @@ runs:
           /opt/pipx \
           /usr/lib/firefox \
           /usr/lib/jvm \
-          /usr/lib/ruby \
           /usr/local/.ghcup \
           /usr/local/aws*/ \
           /usr/local/doc \
@@ -105,9 +104,9 @@ runs:
           || true
 
         #sudo find /usr -type d -name "*azure*" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
+        sudo find /usr /opt -type f -name "lib*.a" -print0 | xargs -0 --no-run-if-empty sudo rm -f
 
         # see what is left
-        #sudo find /usr /opt -name "lib*.a" -ls
         probeUsage "After cleanup:"
 
       shell: bash
