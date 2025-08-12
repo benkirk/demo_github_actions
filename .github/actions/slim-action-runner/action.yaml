@@ -66,8 +66,6 @@ runs:
           dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
         fi
 
-        #
-
         # Remove Android, .NET, and Haskell runtimes
         sudo rm -rf \
           /opt/az \
@@ -76,12 +74,16 @@ runs:
           /opt/hostedtoolcache \
           /opt/microsoft \
           /opt/pipx \
+          /usr/lib/firefox \
           /usr/lib/jvm \
+          /usr/lib/ruby \
           /usr/local/.ghcup \
           /usr/local/aws*/ \
           /usr/local/doc \
+          /usr/local/include/node \
           /usr/local/julia*/ \
           /usr/local/lib/android \
+          /usr/local/lib/node_modules \
           /usr/local/n \
           /usr/local/share/chromium \
           /usr/local/share/powershell \
@@ -98,8 +100,11 @@ runs:
           /usr/share/ri \
           /usr/share/swift \
           /usr/share/vim \
-          /var/lib/{apt,mysql,dpkg,waagent} \
+          /var/cache \
+          /var/lib/{apt,mysql,dpkg,waagent,gems} \
           || true
+
+        sudo find /usr -name "*azure*" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
 
         # see what is left
         #sudo find /usr /opt -name "lib*.a" -ls
