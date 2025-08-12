@@ -527,6 +527,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
        esac \
     && cd /tmp \
     && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git \
+    && df -h && du -hs /tmp/*/ \
     && mkdir -p /tmp/BUILD_ALL && cd /tmp/BUILD_ALL \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
@@ -1157,11 +1158,14 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && echo "Final configuration:" \
     && echo "export PKG_INSTALL_CMD=\"sudo ${PKG_INSTALL_CMD}\"" >> /container/config_env.sh \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
-    && 2>/dev/null du -hs /container/*/ /*/ | grep -v "K" | sort \
+    && echo "Directories > 9MB:" \
+    && for dir in /var /usr /container; do du -hs ${dir} 2>/dev/null && du --block-size=1M --threshold=$((9*1024*1024)) --separate-dirs ${dir} 2>/dev/null | sort -n; done \
     && useradd plainuser -d /home/plainuser \
     && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
     && chown -R plainuser: /container/ \
     && cat /container/config_env.sh
+
+ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login"]
 
 #USER plainuser
 #RUN sudo whoami
