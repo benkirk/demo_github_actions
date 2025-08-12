@@ -10,12 +10,14 @@ runs:
       run: |
         df -h
       shell: bash
-    - name: Free Disk Space Linux
-      if: runner.os == 'Linux'
+    - name: Free Disk Space
+      shell: bash
       run: |
         # Determine if we have Ubuntu, CentOS, or other distro as our runner OS
         os_id=$(grep '^ID=' /etc/os-release | cut -d "=" -f2)
         echo "Detected OS distro as: ${os_id}"
+
+        TIMEFORMAT=$'\nReal time: %3R seconds'
 
         # Sometimes `docker` is not installed, so only remove images if we need to.
         if command -v docker 2>&1 >/dev/null ; then
@@ -24,21 +26,21 @@ runs:
 
         probeUsage() {
           echo "--------------------------------------------"
-          echo "${1} : files"
+          echo "Files: ${1}"
           echo "--------------------------------------------"
           for dir in /usr/local/bin /usr/bin; do
             sudo du --block-size=1M --threshold=$((9*1024*1024)) ${dir}/* | sort -n
           done
           echo "--------------------------------------------"
-          echo "${1} : dirs"
+          echo "Directories: ${1}"
           echo "--------------------------------------------"
           for dir in /opt /usr /var; do
-            sudo du --max-depth=3 --block-size=1M --threshold=$((9*1024*1024)) --separate-dirs ${dir} | sort -n
+            sudo du --max-depth=3 --block-size=1M --threshold=$((4*1024*1024)) --separate-dirs ${dir} | sort -n
           done
         }
 
         # look for removal candidates
-        # probeUsage "Before Cleanup:"
+        # probeUsage "Before Cleanup"
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -67,8 +69,12 @@ runs:
         #   dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
         # fi
 
-        # Remove Android, .NET, and Haskell runtimes
-        sudo rm -rf \
+        # Remove a whole slew of unnecessary directories
+        echo "----------------------------------------------------------------"
+        echo "Brute-force Removing directories, headers, and static libraries."
+        echo "----------------------------------------------------------------"
+        set -x
+        time sudo rm -rf \
           /opt/az \
           /opt/ghc \
           /opt/google*/ \
@@ -109,18 +115,13 @@ runs:
           || true
 
         #sudo find /usr -type d -name "*azure*" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
-        sudo find /usr /opt -type f -name "lib*.a" -print0 | xargs -0 --no-run-if-empty sudo rm -f
-        sudo find /usr /opt -type d -name "include" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
+        time sudo find /usr /opt -type f -name "lib*.a" -print0 | xargs -0 --no-run-if-empty sudo rm -f
+        time sudo find /usr /opt -type d -name "include" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
+        set +x
 
         # see what is left
-        probeUsage "After cleanup:"
+        time probeUsage "After cleanup"
 
-      shell: bash
-    - name: Free Disk Space MacOS
-      if: runner.os == 'macOS'
-      run: |
-        sudo rm -rf /System/Volumes/Data/Applications/Xcode_15*
-      shell: bash
     - name: Print disk space after cleanup
       run: |
         df -h
