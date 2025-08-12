@@ -37,7 +37,7 @@ runs:
         }
 
         # look for removal candidates
-        probeUsage "Before Cleanup:"
+        # probeUsage "Before Cleanup:"
 
         printWarningMessage () {
           echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
@@ -46,12 +46,14 @@ runs:
         # Remove large packages we don't use.
         echo "Attempting to remove unused ${os_id} packages..."
         if [[ "${os_id}" =~ "ubuntu" ]]; then
-          sudo apt-get remove -y '^mysql-.*' || printWarningMessage '^mysql-.*'
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || printWarningMessage '^dotnet-.*'
-          sudo apt-get remove -y 'php.*' --fix-missing || printWarningMessage 'php.*'
-          sudo apt-get remove -y '^mongodb-.*' --fix-missing || printWarningMessage '^mongodb-.*'
-          sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
-          sudo apt-get remove -y 'google-cloud-*' --fix-missing || printWarningMessage 'google-cloud-*'
+          sudo apt-get remove -y \
+            '^mysql-.*' \
+            '^dotnet-.*' \
+            'php.*' \
+            '^llvm-.*' \
+            'google-cloud-*' \
+            --fix-missing || echo "ERROR removing packages..."
+
           # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
           #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
           # done
