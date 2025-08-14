@@ -461,6 +461,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && ./nvhpc_*/install \
     && echo -e "\n# NVHPC version ${NVHPC_VERSION}" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=nvhpc" >> /container/config_env.sh \
+    && echo "export NVHPC_VERSION=${NVHPC_VERSION}" >> /container/config_env.sh \
     && echo "export NVARCH=$(uname -s)_$(uname -m)" >> /container/config_env.sh \
     && echo "export NVCOMPILERS=${NVHPC_INSTALL_DIR}" >> /container/config_env.sh \
     && echo "export MANPATH=\${MANPATH}:\${NVCOMPILERS}/\${NVARCH}/${NVHPC_VERSION}/compilers/man" >> /container/config_env.sh \
@@ -482,6 +483,16 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && echo "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && docker-clean
+
+RUN echo -e "\n#Identifying NVHPC-Provided Cuda" \
+    && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/*/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
+    && NVHPC_CUDA_HOME=$(ls -d ${NVCOMPILERS}/*/${NVHPC_VERSION}/cuda/${NVHPC_CUDA_VERSION}) \
+    && echo -e "\n# NVHPC-embedded CUDA ${NVHPC_CUDA_VERSION}" >> /container/config_env.sh \
+    && echo "export NVHPC_CUDA_HOME=${NVHPC_CUDA_HOME}" >> /container/config_env.sh \
+    && echo "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh \
+    && echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
+    && docker-clean
+
 # rm_paths="comm_libs cuda math_libs profilers" \
 LABEL compiler="nvhpc"
 LABEL nvhpc="${NVHPC_VERSION}"
@@ -1152,12 +1163,15 @@ LABEL heffte="${HEFFTE_VERSION}"
 
 ################################################################################
 # Final Image
+#  notes:
+#  remove duplicates from the front of the LD_LIBRARY_PATH
 ################################################################################
 FROM ${FINAL_TARGET} AS final
 ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
-    && echo "Final configuration:" \
+    && echo -e "\n# Final configuration:" | tee -a /container/config_env.sh \
     && echo "export PKG_INSTALL_CMD=\"sudo ${PKG_INSTALL_CMD}\"" >> /container/config_env.sh \
+    && echo "export LD_LIBRARY_PATH=$(echo "${LD_LIBRARY_PATH}" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/:$//')" >> /container/config_env.sh \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
     && echo "Directories > 9MB:" \
     && for dir in /var /usr /container; do du -hs ${dir} 2>/dev/null && du --block-size=1M --threshold=$((9*1024*1024)) --separate-dirs ${dir} 2>/dev/null | sort -n; done \
