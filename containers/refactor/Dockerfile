@@ -1,3 +1,23 @@
+################################################################################
+# Preliminaries
+# These build arguments control the flow of various layers.
+#
+#  These ARGs are set to sensible defaults but generally overridden by
+#  command-line arguments.
+#
+#  FINAL_TARGET is the final FROM statement to build.
+#
+#  *_PREREQ defines the preceding step for a stage.
+#    For example, The TOOLKITS_PREREQ could take on one of several values,
+#    'miniforge', 'cuda/rocm', or even 'base_os'.  In this way the 'toolkits'
+#    layer is dynamic and can include several (or none) packages.
+#    Similarly, IOLIBS_PREREQ is generally 'mpi'; meaning the 'iolibs' layer
+#    will be built after MPI with fill MPI support; however it could be
+#    'compilers' to build an image with no MPI support whatsoever. (rarely used)
+#
+################################################################################
+
+
 ARG BASE_OS="almalinux9"
 
 ARG COMPILER_FAMILY="gcc"
@@ -20,9 +40,11 @@ ARG TOGGLE_WITH_CUDA="--without-cuda"
 ARG TOGGLE_WITH_ROCM="--without-rocm --without-hip"
 
 ################################################################################
-# Part 1: various Base Operating Systems
+# Part 1: support for various Base Operating Systems
 ################################################################################
 
+#-------------------------------------------------------------------------------
+# Any of these upstream base images can be used as a ${BASE_OS}
 #-------------------------------------------------------------------------------
 FROM docker.io/almalinux:8 AS almalinux8
 FROM docker.io/almalinux:9 AS almalinux9
@@ -32,6 +54,9 @@ FROM docker.io/opensuse/tumbleweed AS tumbleweed
 FROM ubuntu:jammy AS jammy
 FROM ubuntu:noble AS noble
 
+# In theory we could not install CUDA or ROCM and instead take a
+# preconfigured vendor image; leaving these here for reference.
+# (since the vendors don't support the same array of OS images, usually this is not the approach taken)
 FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu24.04 AS noble-cuda
 FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux9 AS rockylinux9-cuda
 FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux8 AS rockylinux8-cuda
@@ -39,25 +64,37 @@ FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux8 AS rockylinux8-cuda
 FROM rocm/dev-almalinux-8:6.4.2-complete AS almalinux8-rocm
 FROM rocm/dev-ubuntu-24.04:6.4.2-complete AS noble-rocm
 
+#-------------------------------------------------------------------------------
 FROM ${BASE_OS} AS base_os
 #-------------------------------------------------------------------------------
 
+# an OS-independent helper script for removing caches and cruft to tidy up layers
 RUN cat <<'EOF' > /usr/bin/docker-clean
 #!/bin/bash
 echo "[${0}]: cleaning temporary files from container image to reduce layer size"
 [ -x "$(command -v yum)" ] && yum clean all
 [ -x "$(command -v apt)" ] && apt clean
-[ -x "$(command -v conda)" ] && conda clean --all
 [ -x "$(command -v zypper)" ] && zypper clean -a
+[ -x "$(command -v conda)" ] && conda clean --all --yes
 for dir in /tmp/* /var/tmp/* /home/jupyter/{.ccache,.cache/pip,conda-bld,.conda} /root/* /root/.[^.]* /var/lib/apt/lists /var/log/* ; do
 	[ -e ${dir} ] && rm -rf ${dir} 2>/dev/null || true
 done
 rm -rf /tmp/*
 EOF
 
+# use a bash login shell for all subsequent RUN commands. This will ultimately source the file
+# /container/config_env.sh; which we build up incrementally; and defines the configuration of all
+# the software installed in a particular image variant.
 SHELL ["/bin/bash", "--login", "-c"]
+
+# Initialize the base OS; whether it be a RHEL, SUSE, or Ubuntu variant with
+# a common development environment
+#
+# we initialize /container/config_env.sh here, setting variables like PATH etc. to whatever
+# they are preconfigured from the OS.
+# (We set rather than append at initialization; we will occasionally re-source this file repeatedly)
 RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.log) \
-    && echo "# Common Configs" > /container/config_env.sh \
+    && echo "# Container Environment Configuration" > /container/config_env.sh \
     && cat /etc/*-release \
     && source /etc/os-release \
     && id_tag="|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" \
@@ -121,7 +158,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                 && exit 1 \
             ;; \
        esac \
-    && echo "export PATH=${PATH}" >> /container/config_env.sh \
+    && echo "export PATH=$(echo "$PATH" | awk -v RS=: -v ORS=: '!/root/' | sed 's/:$//')" >> /container/config_env.sh \
     && echo "export CPATH=${CPATH}" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> /container/config_env.sh \
@@ -141,7 +178,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
 # about stubs & LD_LIBRARY_PATH:
 #   on a host with no NVIDIA device, libcuda.so etc will be provided by the stubs.
 #   these need to be overloaded at runtime by a proper libcuda.so which necessarily
-#   comes from the host.  So we put the systsem locations - /usr/lib64 or /usr/lib,
+#   comes from the host.  So we put the system locations - /usr/lib64 or /usr/lib,
 #   into the LD_LIBRARY_PATH ahead of the stubs.  And we use ldconfig to resolve the stubs
 #   stubs as last resort.  This allows us to link and run on non-GPU hosts; and the
 #   LD_LIBRARY_PATH precedence should find the host libcuda.so should there be one.
@@ -181,6 +218,9 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && ldconfig --verbose \
     && docker-clean
 
+# a source-able script to query the CUDA configuration at runtime.
+# (intended to simplify setting compatibility variables for
+# testing on hosts without a CUDA driver.)
 RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
 #!/bin/bash
 echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
@@ -270,6 +310,7 @@ LABEL rocm="${ROCM_VERSION}"
 
 #-------------------------------------------------------------------------------
 # miniforge stage
+# MINIFORGE_PREREQ could be cuda/rocm, or base_os
 FROM ${MINIFORGE_PREREQ} AS miniforge
 #-------------------------------------------------------------------------------
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
@@ -287,8 +328,9 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
 
 
 #-------------------------------------------------------------------------------
+# TOOLKITS_PREREQ could be miniforge, cuda/rocm, or even base_os
 FROM ${TOOLKITS_PREREQ} AS toolkits
-RUN echo "Settiing the third-party toolkits layer"
+RUN echo "Setting the third-party toolkits layer"
 #-------------------------------------------------------------------------------
 
 
@@ -298,7 +340,7 @@ RUN echo "Settiing the third-party toolkits layer"
 # ################################################################################
 
 #-------------------------------------------------------------------------------
-# GCC compilers stage (from base OS)
+# GCC compilers stage (taken from base OS installation)
 FROM toolkits AS os-gcc
 RUN echo "Selecting base OS gcc compilers" \
     && echo -e "\n# GCC compilers libraries (base OS)" >> /container/config_env.sh \
@@ -321,6 +363,11 @@ LABEL gcc="os-gcc"
 # ("unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH" fixes this on AWS/docker:)
 #   g++: error: spec failure: unrecognized spec option ‘@’
 #   g++: fatal error: unknown spec function ‘dumps’
+# About gcc & LD_LIBRARY_PATH:
+#   we might be installing a gcc older than that on the host.  If so; we do not want the
+#   installed gcc taking precedence for libstdc++.so; lest we get undefined symbols and break the
+#   host tools. So we only add this compiled gcc's libraries to the search paths if it is newer
+#   than the host version.
 FROM toolkits AS gcc
 #-------------------------------------------------------------------------------
 ARG GCC_VERSION="13.3.0"
@@ -374,7 +421,7 @@ FROM toolkits AS oneapi
 # Intel compilers do not -rpath their own libraries, relying instead on LD_LIBRARY_PATH
 # We'd rather not need that, so add to the system search path
 #
-# Instal and remove C++, Fortran one at a time as we go for when disk space is tight
+# Install and remove C++, Fortran one at a time as we go for when disk space is tight, rather than downloading both installers at once.
 ARG ONEAPI_VERSION="2025.2.0"
 ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh"
 ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh"
@@ -426,6 +473,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/aocc.log) \
     && ./install.sh && mv ../setenv_AOCC.sh . \
     && echo -e "\n# AMD AOCC compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=aocc" >> /container/config_env.sh \
+    && echo "export AOCC_VERSION=${AOCC_VERSION}" >> /container/config_env.sh \
     && echo "source ${AOCC_INSTALL_PATH}/setenv_AOCC.sh >/dev/null 2>&1" >> /container/config_env.sh \
     && source /container/config_env.sh \
     && echo "export aocc_CC=$(which clang) && export CC=\${aocc_CC}" >> /container/config_env.sh \
@@ -444,6 +492,8 @@ LABEL aocc="${AOCC_VERSION}"
 # NVHPC stage
 FROM toolkits AS nvhpc
 #-------------------------------------------------------------------------------
+# 24.x and previous do not fPIC by default; which cause all sorts of problems
+# when building shared libraries later. (not the case for the other compilers.)
 ARG NVHPC_VERSION="25.1"
 ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
 ARG MARCH_FLAGS=""
@@ -484,6 +534,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && docker-clean
 
+# NVHPC embeds CUDA, but not a complete toolkit.  So take some care to
+# identify the CUDA that ships with NVHPC but not have it hide the CUDA toolkit we may
+# have installed already.
+# refer to the note above in the CUDA section regarding stubs, CUDA, & LD_LIBRARY_PATH
 RUN echo -e "\n#Identifying NVHPC-Provided Cuda" \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/*/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
     && NVHPC_CUDA_HOME=$(ls -d ${NVCOMPILERS}/*/${NVHPC_VERSION}/cuda/${NVHPC_CUDA_VERSION}) \
@@ -579,7 +633,7 @@ LABEL clang="${LLVM_VERSION}"
 
 #-------------------------------------------------------------------------------
 FROM ${COMPILER_FAMILY} AS compilers
-RUN echo "Settiing ${COMPILER_FAMILY} compiler layer"
+RUN echo "Setting ${COMPILER_FAMILY} compiler layer"
 #-------------------------------------------------------------------------------
 
 
@@ -600,8 +654,9 @@ FROM compilers AS mpich3
 #    mpich-3.4.3 does not build with nvhpc's C/C++ compilers, so we will use the system gccs to
 #    build mpich, but then set the MPICH_{CC,CXX} vars later for the downstream wrappers.
 #    mpich-3.4.3 and nvfortran misunderstand each other regarding real*16, avoid false positive.
-#    so we take the rather drastic step of modyfying configure.ac to prevent building the f08 interface,
+#    so we take the rather drastic step of modifying configure.ac to prevent building the f08 interface,
 #    no matter what configure *thinks* it finds...
+#    does not fPIC by default, so add here.
 #   CLANG:
 #    ditto f08 interface
 #   GCC:
@@ -610,7 +665,7 @@ FROM compilers AS mpich3
 #    (ref. https://www.mpich.org/static/downloads/3.4.3/mpich-3.4.3-README.txt)
 #  -lmpicxx:
 #    We can't get mpicxx without -lmpicxx for mpich-v3.x, yet the -lmpicxx bindings are worthless
-#    and do not exist on our Cray-EX cray-mpich.  So at minimum, prefent them from being linked,
+#    and do not exist on our Cray-EX cray-mpich.  So at minimum, prevent them from being linked,
 #    since we would not then be able to override them. - final sed step
 #-------------------------------------------------------------------------------
 ARG MPICH_VERSION="3.4.3"
@@ -747,7 +802,7 @@ FROM compilers AS openmpi
 #     problem with half-precision floats; revisit with newer versions (>5.0.8)
 #     https://github.com/open-mpi/ompi/issues/13181
 #
-#   PRTE_ALLOW_RUN_AS_ROOT: distasteful; but unless we want to deal with multiple UIDs in the build/test process we'll allow
+#   OMPI_ALLOW_RUN_AS_ROOT: distasteful; but unless we want to deal with multiple UIDs in the build/test process we'll allow
 #     https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#the-allow-run-as-root-option
 #-------------------------------------------------------------------------------
 ARG OPENMPI_VERSION="5.0.8"
@@ -802,7 +857,7 @@ LABEL openmpi="${OPENMPI_VERSION}"
 
 #-------------------------------------------------------------------------------
 FROM ${MPI_FAMILY} AS mpi
-RUN echo "Settiing ${MPI_FAMILY} MPI layer" \
+RUN echo "Setting ${MPI_FAMILY} MPI layer" \
     && echo "export CXX=$(which mpicxx)" >> /container/config_env.sh \
     && echo "export CC=$(which mpicc)" >> /container/config_env.sh \
     && echo "export FC=$(which mpifort)" >> /container/config_env.sh \
@@ -1065,6 +1120,7 @@ LABEL pio="${PIO_VERSION}"
 
 #-------------------------------------------------------------------------------
 # FFTW & HEFFTE
+#  (sufficient to build MuRAM)
 FROM ${FFTLIBS_PREREQ} AS fftlibs
 #-------------------------------------------------------------------------------
 ARG FFTW_VERSION="3.3.10"
@@ -1185,6 +1241,15 @@ ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login"]
 #USER plainuser
 #RUN sudo whoami
 
+
+
+#-------------------------------------------------------------------------------
+# emacs cruft follows
+#-------------------------------------------------------------------------------
 # Local Variables:
 # mode: sh
 # End:
+
+#  LocalWords:  ARG iolibs os miniforge mpi cuda rocm rhel gcc CXX FC
+#  LocalWords:  gfortran CPATH CONFIG LD OneAPI AOCC NVHPC nvhpc libs
+#  LocalWords:  uname NVCOMPILERS MANPATH NVARCH MPICH OPENMPI BLOSC
