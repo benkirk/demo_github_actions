@@ -1236,7 +1236,9 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && chown -R plainuser: /container/ \
     && cat /container/config_env.sh
 
-ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login"]
+# ref: https://spack.readthedocs.io/en/latest/containers.html
+ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login", "-c", "$*", "--" ]
+CMD [ "/bin/bash" ]
 
 #USER plainuser
 #RUN sudo whoami
