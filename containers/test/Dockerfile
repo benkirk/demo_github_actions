@@ -32,6 +32,14 @@ RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && echo '----------------------------------------------------------------' \
     && docker-clean
 
+RUN cat <<EOF >> /container/config_env.sh
+# runtime-disable GPU-Aware MPI
+## (OpenMPI)
+export OMPI_MCA_opal_cuda_support=false
+## (MPICH)
+export MPIR_CVAR_ENABLE_GPU=0
+EOF
+
 RUN echo "Testing Image from ${BASE_IMAGE} ..." \
     && mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp \
     && ldd ./hello_world_mpi \
