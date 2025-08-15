@@ -133,6 +133,10 @@ jobs:
           - compiler: clang
             gpu: cuda
 
+          # omit mpich3/cuda on public GHA runners; (cannot test without a GPU)
+          - mpi: mpich3
+            gpu: cuda
+
 
     uses: ./.github/workflows/refactor-hpc-development-image.yaml
     with:
