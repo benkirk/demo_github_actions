@@ -150,6 +150,10 @@ jobs:
 
           PUBLISH_IMAGE_CACHE=${CI_IMAGE_CACHE//benjaminkirk/ncarcisl}
           PUBLISH_IMAGE_TAG=${CI_IMAGE_TAG_DEVEL//-devel/-latest}
+          EOF
+          cat tags.sh
+          cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Check out Repository
         uses: actions/checkout@v4
