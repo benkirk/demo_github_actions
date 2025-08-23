@@ -294,4 +294,4 @@ jobs:
         run: |
           docker run --rm \
             ${{ env.CI_TAG_DEVEL }} \
-            "cat /container/config_env.sh && mpicc --version"
+            mpicc --version
