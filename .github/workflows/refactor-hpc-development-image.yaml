@@ -239,6 +239,13 @@ jobs:
       # Test image
       #----------------------------------------------
       # ref https://docs.docker.com/build/ci/github-actions/test-before-push/
+      - name: Test Image - Pull
+        if: ${{ inputs.test }}
+        run: |
+          docker run --rm \
+            ${{ env.CI_TAG }} \
+            cat /container/config_env.sh
+
       - name: Test Image - OSU
         if: ${{ inputs.test }}
         run: |
