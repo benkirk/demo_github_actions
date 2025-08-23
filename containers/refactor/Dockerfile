@@ -390,7 +390,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
                  --disable-multilib \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && echo -e "\n# GCC compilers" >> /container/config_env.sh \
     && echo "export COMPILER_FAMILY=gcc" >> /container/config_env.sh \
     && echo "export GCC_VERSION=${GCC_VERSION}" >> /container/config_env.sh \
@@ -712,7 +712,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install \
+    && make --no-print-directory --silent install \
     && echo -e "\n# MPICH ${MPICH_VERSION}" >> /container/config_env.sh \
     && echo "export MPI_FAMILY=mpich" >> /container/config_env.sh \
     && echo "export MPI_ROOT=${MPICH_INSTALL_PATH}"  >> /container/config_env.sh \
@@ -773,7 +773,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install \
+    && make --no-print-directory --silent install \
     && echo -e "\n# MPICH ${MPICH_VERSION}" >> /container/config_env.sh \
     && echo "export MPI_FAMILY=mpich" >> /container/config_env.sh \
     && echo "export MPI_ROOT=${MPICH_INSTALL_PATH}" >> /container/config_env.sh \
@@ -830,7 +830,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install \
+    && make --no-print-directory --silent install \
     && cd ${OPENMPI_INSTALL_PATH} \
     && rm_paths="share/doc/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
@@ -907,7 +907,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && echo "#include <stddef.h>" >> ${SZIP_INSTALL_PATH}/include/ricehdf.h \
     && echo -e "\n# SZIP ${SZIP_VERSION}" >> /container/config_env.sh \
     && echo "export SZIP_VERSION=${SZIP_VERSION}" >> /container/config_env.sh \
@@ -934,7 +934,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
            -DPREFER_EXTERNAL_ZSTD=ON \
            -DPREFER_EXTERNAL_LZ4=ON \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install \
+    && make --no-print-directory --silent install \
     && echo -e "\n# BLOSC ${BLOSC_VERSION}" >> /container/config_env.sh \
     && echo "export BLOSC_VERSION=${BLOSC_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${BLOSC_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
@@ -971,7 +971,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
         "clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
     && echo -e "\n# HDF5 ${HDF5_VERSION}" >> /container/config_env.sh \
     && echo "export HDF5_VERSION=${HDF5_VERSION}" >> /container/config_env.sh \
@@ -1001,7 +1001,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
     && echo -e "\n# NETCDF libraries" >> /container/config_env.sh \
     && echo "export NETCDF=${NETCDF_INSTALL_PATH}" >> /container/config_env.sh \
@@ -1030,7 +1030,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
         "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
     && ldconfig --verbose \
     && (h5pcc -showconfig || h5cc -showconfig) \
@@ -1069,7 +1069,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && echo -e "\n# PNETCDF ${PNETCDF_VERSION}" >> /container/config_env.sh \
     && echo "export PNETCDF=${PNETCDF_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export PNETCDF_VERSION=${PNETCDF_VERSION}" >> /container/config_env.sh \
@@ -1101,7 +1101,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
         "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && echo -e "\n# PIO ${PIO_VERSION}" >> /container/config_env.sh \
     && echo "export PIO=${PIO_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export PIO_VERSION=${PIO_VERSION}" >> /container/config_env.sh \
@@ -1138,7 +1138,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && make --no-print-directory distclean \
     && (./configure \
             CFLAGS="-O3 ${CFLAGS}" \
@@ -1148,7 +1148,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install-strip \
+    && make --no-print-directory --silent install-strip \
     && echo -e "\n# FFTW ${FFTW_VERSION}" >> /container/config_env.sh \
     && echo "export FFTW_VERSION=${FFTW_VERSION}" >> /container/config_env.sh \
     && echo "export FFTW_ROOT=${FFTW_INSTALL_PATH}" >> /container/config_env.sh \
@@ -1176,7 +1176,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
            -DMPI_CXX_COMPILER=${CXX} \
            .. \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory install \
+    && make --no-print-directory --silent install \
     && case "|${CUDA_HOME}|${ROCM_HOME}|" in \
         "|"*"cuda"*"|") \
             cd /tmp/heffte && git clean -xdf . && mkdir -p build && cd build \
@@ -1198,7 +1198,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
                        -DMPI_CXX_COMPILER=${CXX} \
                        .. \
                 && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-                && make --no-print-directory install \
+                && make --no-print-directory --silent install \
           ;; \
        esac \
     && echo -e "\n# HEFFTE ${HEFFTE_VERSION}" >> /container/config_env.sh \
