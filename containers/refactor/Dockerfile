@@ -518,7 +518,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export PATH=\${NVCOMPILERS}/\${NVARCH}/${NVHPC_VERSION}/compilers/bin:\$PATH" >> /container/config_env.sh \
     && echo "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && cd ${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION} \
-    && rm_paths="comm_libs profilers math_libs" \
+    && rm_paths="comm_libs profilers" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
     && echo "${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION}/compilers/lib" >> /etc/ld.so.conf.d/nvhpc.conf \
