@@ -46,7 +46,7 @@ curl --retry 3 --retry-delay 5 -sSL https://mvapich.cse.ohio-state.edu/download/
            LIBS="${CUDA_LIBS} ${ROCM_LIBS}" \
     && make --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --silent install-strip  \
-    && sudo docker-clean
+    && docker-clean
 
 cd ${topdir}
 
