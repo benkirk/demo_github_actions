@@ -231,6 +231,7 @@ jobs:
         run: |
           df -h
           docker image ls
+          docker system df
           docker buildx du
           docker image inspect ${{ env.CI_TAG }}
 
@@ -265,6 +266,11 @@ jobs:
       #----------------------------------------------
       # Publish image
       #----------------------------------------------
+      - name: Clean all Docker data
+        if: ${{ inputs.publish && inputs.test }}
+        run: |
+          docker system prune --all --force --volumes
+
       - name: Publish Image
         if: ${{ inputs.publish && inputs.test }}
         uses: docker/build-push-action@v6
