@@ -386,8 +386,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
                  --prefix=${GCC_INSTALL_PATH} \
                  --disable-static --enable-shared \
                  --enable-languages=c,c++,fortran \
-                 --disable-multilib \
                  --disable-bootstrap \
+                 --disable-multilib \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --no-print-directory install-strip \
@@ -547,7 +547,6 @@ RUN echo -e "\n#Identifying NVHPC-Provided Cuda" \
     && echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && docker-clean
 
-# rm_paths="comm_libs cuda math_libs profilers" \
 LABEL compiler="nvhpc"
 LABEL nvhpc="${NVHPC_VERSION}"
 
@@ -847,7 +846,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && ldconfig --verbose \
     && source /container/config_env.sh \
     && (which mpicxx || { echo "no mpicxx found, build fail?!"; exit 1; } ) \
-    && ompi_info --all --parseable \
     && ompi_info --parsable --all | grep mpi_built_with_cuda_support:value \
     && docker-clean
 LABEL mpi="openmpi"
@@ -1226,7 +1224,6 @@ FROM ${FINAL_TARGET} AS final
 ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && echo -e "\n# Final configuration:" | tee -a /container/config_env.sh \
-    && echo "export PKG_INSTALL_CMD=\"sudo ${PKG_INSTALL_CMD}\"" >> /container/config_env.sh \
     && echo "export LD_LIBRARY_PATH=$(echo "${LD_LIBRARY_PATH}" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/:$//')" >> /container/config_env.sh \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
     && echo "Directories > 9MB:" \
@@ -1240,6 +1237,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
 ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login", "-c", "$*", "--" ]
 CMD [ "/bin/bash" ]
 
+# Many github actions do not work as a regular user -- alas, stay root for now.
+# && echo "export PKG_INSTALL_CMD=\"sudo ${PKG_INSTALL_CMD}\"" >> /container/config_env.sh \
 #USER plainuser
 #RUN sudo whoami
 

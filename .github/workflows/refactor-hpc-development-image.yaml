@@ -102,86 +102,12 @@ on:
 
 
 jobs:
-  # create-image-metadata:
-  #   name: Metadata
-  #   runs-on: ${{ inputs.runner }}
-
-  #   steps:
-  #     - name: Interrogate Environment
-  #       run: |
-  #         cat /etc/os-release && echo
-  #         uname -a && echo
-  #         df -h && echo
-  #         free -g && echo
-  #         lscpu
-
-  #     - name: Build Environment Variables
-  #       run: |
-  #         cat << EOF >> ${GITHUB_ENV}
-  #         COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
-  #         GPU_LABEL=-${{ inputs.gpu }}
-  #         MPI_LABEL=-${{ inputs.mpi }}
-  #         EOF
-  #         cat << EOF > build_inputs.txt
-  #         arch: '${{ inputs.arch }}'
-  #         os: '${{ inputs.os }}'
-  #         compiler: '${{ inputs.compiler }}'
-  #         ${{ inputs.compiler_build_args }}
-  #         mpi: '${{ inputs.mpi }}'
-  #         ${{ inputs.mpi_build_args }}
-  #         gpu: '${{ inputs.gpu }}'
-  #         ${{ inputs.gpu_build_args }}
-  #         ${{ inputs.extra_build_args }}
-  #         EOF
-  #         sed -i '/^[[:space:]]*$/d' build_inputs.txt
-  #         echo && echo "Build Inputs:" && cat build_inputs.txt
-  #         shasum build_inputs.txt > inputs_sha.txt
-  #         cat inputs_sha.txt
-  #         echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
-  #         if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
-  #             echo "GPU_LABEL=" >> ${GITHUB_ENV}
-  #         fi
-
-  #     - name: Image Tags
-  #       id: tags
-  #       run: |
-  #         cat << EOF > tags.sh
-  #         INPUTS_SHA=${INPUTS_SHA}
-  #         CI_IMAGE_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-  #         CI_IMAGE_TAG_DEVEL=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:devel
-  #         PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-  #         PUBLISH_IMAGE_TAG_YYMM=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:$(date +"%y.%m")
-  #         EOF
-  #         cat tags.sh >> ${GITHUB_ENV}
-  #         cat tags.sh >> ${GITHUB_OUTPUT}
-
-  #     - name: Upload Artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: image-metadata-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}
-  #         path: |
-  #           build_inputs.txt
-  #           inputs_sha.txt
-  #           tags.sh
-  #         retention-days: 3
 
   build-image:
     name: Build, Test, & Publish Image
-    #needs: create-image-metadata
     runs-on: ${{ inputs.runner }}
 
     steps:
-      # - name: Download Build Artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     pattern: "*-${{ inputs.arch }}-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}-${{ inputs.gpu }}"
-      #     merge-multiple: true
-
-      # - name: Augment Environment with Artifact Results
-      #   id: tags
-      #   run: |
-      #     cat tags.sh >> ${GITHUB_ENV}
-      #     cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Set Image Build Environment Variables
         run: |
@@ -217,16 +143,13 @@ jobs:
           INPUTS_SHA=${INPUTS_SHA}
 
           CI_IMAGE_CACHE=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${INPUTS_SHA}
-          CI_IMAGE_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-          CI_IMAGE_TAG_DEVEL=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:devel
+          CI_IMAGE_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}-${{ inputs.os }}:${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
+          CI_IMAGE_TAG_DEVEL=${CI_IMAGE_TAG}
+          CI_IMAGE_TAG_DEVEL=${CI_IMAGE_TAG_DEVEL//benjaminkirk/ncarcisl}
+          CI_IMAGE_TAG_DEVEL=${CI_IMAGE_TAG_DEVEL//-latest/-devel}
 
-          PUBLISH_IMAGE_CACHE=ncarcisl/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${INPUTS_SHA}
-          PUBLISH_IMAGE_TAG=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:latest
-          PUBLISH_IMAGE_TAG_YYMM=ncarcisl/cisldev-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}:$(date +"%y.%m")
-          EOF
-          cat tags.sh
-          cat tags.sh >> ${GITHUB_ENV}
-          cat tags.sh >> ${GITHUB_OUTPUT}
+          PUBLISH_IMAGE_CACHE=${CI_IMAGE_CACHE//benjaminkirk/ncarcisl}
+          PUBLISH_IMAGE_TAG=${CI_IMAGE_TAG_DEVEL//-devel/-latest}
 
       - name: Check out Repository
         uses: actions/checkout@v4
@@ -300,6 +223,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          load: true
           tags: ${{ env.CI_IMAGE_TAG }}
           cache-from: type=registry,ref=${{env.CI_IMAGE_CACHE }}
           cache-to: type=registry,ref=${{ env.CI_IMAGE_CACHE }},mode=max
@@ -319,6 +243,7 @@ jobs:
         run: |
           df -h
           docker image ls
+          docker image inspect ${{ env.CI_IMAGE_TAG }}
           docker buildx du
 
       - name: Test Image

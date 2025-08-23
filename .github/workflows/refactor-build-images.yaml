@@ -7,7 +7,7 @@ on:
         description: 'Base OS'
         type: choice
         required: true
-        default: almalinux10
+        default: almalinux9
         options:
           - almalinux8
           - almalinux9
@@ -37,23 +37,23 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, gcc12, gcc13, gcc14, oneapi, aocc, nvhpc ]
-        mpi:      [ openmpi, mpich, mpich3 ]
-        gpu:      [ nogpu, cuda ]
+        mpi:      [ openmpi, mpich ]
+        gpu:      [ nogpu ]
         arch:     [ x86_64, aarch64 ]
 
         include:
-          # gpu architecture-dependent build arg specifications
-          - arch: x86_64
-            gpu: cuda
-            gpu_build_args: |
-              CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
+          # # gpu architecture-dependent build arg specifications
+          # - arch: x86_64
+          #   gpu: cuda
+          #   gpu_build_args: |
+          #     CUDA_VERSION=12.9
+          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
 
-          - arch: aarch64
-            gpu: cuda
-            gpu_build_args: |
-              CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
+          # # - arch: aarch64
+          # #   gpu: cuda
+          # #   gpu_build_args: |
+          # #     CUDA_VERSION=12.9
+          # #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
           # compiler build arg specifications
           - compiler: gcc
@@ -117,10 +117,10 @@ jobs:
               MPI_FAMILY=mpich
               MPICH_VERSION=4.3.1
 
-          - mpi: mpich3
-            mpi_build_args: |
-              MPI_FAMILY=mpich3
-              MPICH_VERSION=3.4.3
+          # - mpi: mpich3
+          #   mpi_build_args: |
+          #     MPI_FAMILY=mpich3
+          #     MPICH_VERSION=3.4.3
 
         exclude:
           - arch: aarch64
