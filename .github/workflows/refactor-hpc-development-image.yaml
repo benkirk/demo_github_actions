@@ -109,59 +109,6 @@ jobs:
 
     steps:
 
-      - name: Set Image Build Environment Variables
-        run: |
-          cat << EOF >> ${GITHUB_ENV}
-          COMPILER_LABEL=-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}
-          GPU_LABEL=-${{ inputs.gpu }}
-          MPI_LABEL=-${{ inputs.mpi }}
-          EOF
-
-          cat << EOF > build_inputs.txt
-          arch: '${{ inputs.arch }}'
-          os: '${{ inputs.os }}'
-          compiler: '${{ inputs.compiler }}'
-          ${{ inputs.compiler_build_args }}
-          mpi: '${{ inputs.mpi }}'
-          ${{ inputs.mpi_build_args }}
-          gpu: '${{ inputs.gpu }}'
-          ${{ inputs.gpu_build_args }}
-          ${{ inputs.extra_build_args }}
-          EOF
-
-          sed -i '/^[[:space:]]*$/d' build_inputs.txt
-          echo && echo "Build Inputs:" && cat build_inputs.txt
-          shasum build_inputs.txt > inputs_sha.txt
-          cat inputs_sha.txt
-          echo "INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)" >> ${GITHUB_ENV}
-          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
-              echo "GPU_LABEL=" >> ${GITHUB_ENV}
-          fi
-
-      # manipulate environment variables in current shell, then set results into tags.sh && GITHUB_ENV
-      - name: Set Image Tags
-        id: tags
-        run: |
-          CI_CACHE=benjaminkirk/gh-ci-refactor-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${INPUTS_SHA}
-          CI_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
-          CI_TAG_DEVEL=${CI_TAG}
-          CI_TAG_DEVEL=${CI_TAG_DEVEL//benjaminkirk/ncarcisl}
-          CI_TAG_DEVEL=${CI_TAG_DEVEL//-latest/-devel}
-          PUBLISH_CACHE=${CI_CACHE//benjaminkirk/ncarcisl}
-          PUBLISH_TAG=${CI_TAG_DEVEL//-devel/-latest}
-
-          cat << EOF > tags.sh
-          CI_CACHE=${CI_CACHE}
-          CI_TAG=${CI_TAG}
-          CI_TAG_DEVEL=${CI_TAG_DEVEL}
-          PUBLISH_CACHE=${PUBLISH_CACHE}
-          PUBLISH_TAG=${PUBLISH_TAG}
-          EOF
-
-          cat tags.sh
-          cat tags.sh >> ${GITHUB_ENV}
-          cat tags.sh >> ${GITHUB_OUTPUT}
-
       - name: Check out Repository
         uses: actions/checkout@v4
         with:
@@ -213,6 +160,53 @@ jobs:
           docker buildx inspect
           docker buildx du
 
+      #----------------------------------------------
+      # Build image
+      #----------------------------------------------
+      - name: Set Image Build Environment & Tag Variables
+        run: |
+          COMPILER_LABEL="-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}"
+          GPU_LABEL="-${{ inputs.gpu }}"
+          MPI_LABEL="-${{ inputs.mpi }}"
+
+          cat << EOF > build_inputs.txt
+          arch: '${{ inputs.arch }}'
+          os: '${{ inputs.os }}'
+          compiler: '${{ inputs.compiler }}'
+          ${{ inputs.compiler_build_args }}
+          mpi: '${{ inputs.mpi }}'
+          ${{ inputs.mpi_build_args }}
+          gpu: '${{ inputs.gpu }}'
+          ${{ inputs.gpu_build_args }}
+          ${{ inputs.extra_build_args }}
+          EOF
+
+          sed -i '/^[[:space:]]*$/d' build_inputs.txt
+          echo && echo "Build Inputs:" && cat build_inputs.txt
+          shasum build_inputs.txt > inputs_sha.txt
+          cat inputs_sha.txt
+          INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)
+          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
+              GPU_LABEL=
+          fi
+
+          CI_CACHE=benjaminkirk/gh-ci-refactor-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${INPUTS_SHA}
+          CI_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
+          CI_TAG_DEVEL=${CI_TAG}
+          CI_TAG_DEVEL=${CI_TAG_DEVEL//benjaminkirk/ncarcisl}
+          CI_TAG_DEVEL=${CI_TAG_DEVEL//-latest/-devel}
+          PUBLISH_TAG=${CI_TAG_DEVEL//-devel/-latest}
+
+          cat << EOF > tags.sh
+          CI_CACHE=${CI_CACHE}
+          CI_TAG=${CI_TAG}
+          CI_TAG_DEVEL=${CI_TAG_DEVEL}
+          PUBLISH_TAG=${PUBLISH_TAG}
+          EOF
+
+          cat tags.sh
+          cat tags.sh >> ${GITHUB_ENV}
+
       - name: BaseOS + Toolkits + Compiler + MPI Image
         uses: docker/build-push-action@v6
         with:
@@ -240,63 +234,48 @@ jobs:
           docker buildx du
           docker image inspect ${{ env.CI_TAG }}
 
+      #----------------------------------------------
+      # Test image
+      #----------------------------------------------
       # ref https://docs.docker.com/build/ci/github-actions/test-before-push/
       - name: Test Image - OSU
         if: ${{ inputs.test }}
         run: |
-          docker run \
-            --rm ${{ env.CI_TAG }} \
+          docker run --rm \
+            --env OMB_VERSION=7.5.1 \
+            ${{ env.CI_TAG }} \
             /container/extras/build_osu-micro-benchmarks.sh
 
       - name: Test Image - Dart
         if: ${{ inputs.test }}
         run: |
-          docker run \
-            --rm ${{ env.CI_TAG }} \
+          docker run --rm \
+            --env DART_VERSION=v11.12.1 \
+            ${{ env.CI_TAG }} \
             /container/extras/build_dart.sh
 
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
         run: |
-          docker run \
-            --rm ${{ env.CI_TAG }} \
+          docker run --rm \
+            --env KOKKOS_VERSION=4.6.02 \
+            ${{ env.CI_TAG }} \
             /container/extras/build_kokkos.sh
 
-
-      # - name: Test Image
-      #   if: ${{ inputs.test }}
-      #   uses: docker/build-push-action@v6
-      #   env:
-      #     DOCKER_BUILD_SUMMARY: false
-      #   with:
-      #     push: false
-      #     tags: local:test
-      #     cache-from: type=registry,ref=${{env.CI_CACHE }}
-      #     context: containers/test
-      #     file: containers/test/Dockerfile
-      #     target: test
-      #     build-args: |
-      #       BASE_IMAGE=${{ env.CI_TAG }}
-      #       TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh:/container/extras/build_dart.sh:/container/extras/build_kokkos.sh
-
+      #----------------------------------------------
+      # Publish image
+      #----------------------------------------------
       - name: Publish Image
         if: ${{ inputs.publish && inputs.test }}
         uses: docker/build-push-action@v6
         env:
           DOCKER_BUILD_SUMMARY: false
         with:
-          push: true
+          push: false
           tags: ${{ env.CI_TAG_DEVEL }}
-          cache-from: type=registry,ref=${{env.PUBLISH_CACHE }}
-          cache-to: type=registry,ref=${{ env.PUBLISH_CACHE }},mode=max
           context: containers/publish
           file: containers/publish/Dockerfile
           build-args: |
             BASE_IMAGE=${{ env.CI_TAG }}
             DEPLOYMENT_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
           target: final
-
-    outputs:
-      CI_TAG: ${{ steps.tags.outputs.CI_TAG }}
-      PUBLISH_TAG: ${{ steps.tags.outputs.PUBLISH_TAG }}
-      INPUTS_SHA: ${{ steps.tags.outputs.INPUTS_SHA }}

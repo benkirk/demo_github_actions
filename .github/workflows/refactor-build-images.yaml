@@ -137,6 +137,17 @@ jobs:
           - mpi: mpich3
             gpu: cuda
 
+          - compiler: nvhpc
+            arch: aarch64
+            mpi: mpich
+          #   gpu: nogpu
+
+          # - compiler: nvhpc
+          #   arch: aarch64
+          #   mpi: mpich
+          #   gpu: cuda
+
+
 
     uses: ./.github/workflows/refactor-hpc-development-image.yaml
     with:
