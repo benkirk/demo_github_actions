@@ -254,8 +254,13 @@ jobs:
         run: |
           df -h
           docker image ls
-          docker image inspect ${{ env.CI_TAG }}
           docker buildx du
+          docker image inspect ${{ env.CI_TAG }}
+
+      # ref https://docs.docker.com/build/ci/github-actions/test-before-push/
+      - name: Run Image
+        run: |
+          docker run --rm ${{ env.CI_TAG }} cat /container/config_env.sh
 
       - name: Test Image
         if: ${{ inputs.test }}
