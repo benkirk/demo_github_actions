@@ -210,7 +210,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          load: true
+          load: false
           tags: ${{ env.CI_TAG }}
           cache-from: type=registry,ref=${{env.CI_CACHE }}
           cache-to: type=registry,ref=${{ env.CI_CACHE }},mode=max
@@ -226,13 +226,14 @@ jobs:
             ${{ inputs.compiler_build_args }}
             ${{ inputs.mpi_build_args }}
 
-      - name: Query Post-Build Disk Usage
+      - name: Done Build - Clean Docker (images, containers, volumes, cache)
         run: |
           df -h
           docker image ls
           docker system df
-          docker buildx du
-          docker image inspect ${{ env.CI_TAG }}
+          docker system prune --all --force --volumes
+          df -h
+          docker system df
 
       #----------------------------------------------
       # Test image
@@ -265,6 +266,7 @@ jobs:
       - name: Done Testing - Clean Docker (images, containers, volumes, cache)
         run: |
           df -h
+          docker image ls
           docker system df
           docker system prune --all --force --volumes
           df -h
