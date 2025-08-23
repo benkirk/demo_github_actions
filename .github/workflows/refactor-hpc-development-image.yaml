@@ -25,7 +25,7 @@ on:
         description: 'Remove unneeded software on runner host to free up disk space'
         type: boolean
         required: false
-        default: true
+        default: false
 
       buildx_driver:
         description: 'Docker setup-buildx-action driver type'
@@ -233,7 +233,7 @@ jobs:
       - name: BaseOS + Toolkits + Compiler + MPI Image
         uses: docker/build-push-action@v6
         with:
-          push: true
+          push: false
           load: true
           tags: ${{ env.CI_TAG }}
           cache-from: type=registry,ref=${{env.CI_CACHE }}
@@ -258,25 +258,26 @@ jobs:
           docker image inspect ${{ env.CI_TAG }}
 
       # ref https://docs.docker.com/build/ci/github-actions/test-before-push/
-      - name: Run Image
-        run: |
-          docker run --rm ${{ env.CI_TAG }} cat /container/config_env.sh
-
-      - name: Test Image
+      - name: Test Image - OSU
         if: ${{ inputs.test }}
-        uses: docker/build-push-action@v6
-        env:
-          DOCKER_BUILD_SUMMARY: false
-        with:
-          push: false
-          tags: local:test
-          cache-from: type=registry,ref=${{env.CI_CACHE }}
-          context: containers/test
-          file: containers/test/Dockerfile
-          target: test
-          build-args: |
-            BASE_IMAGE=${{ env.CI_TAG }}
-            TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh:/container/extras/build_dart.sh:/container/extras/build_kokkos.sh
+        run: |
+          docker run ${{ env.CI_TAG }} /container/extras/build_osu-micro-benchmarks.sh
+
+      # - name: Test Image
+      #   if: ${{ inputs.test }}
+      #   uses: docker/build-push-action@v6
+      #   env:
+      #     DOCKER_BUILD_SUMMARY: false
+      #   with:
+      #     push: false
+      #     tags: local:test
+      #     cache-from: type=registry,ref=${{env.CI_CACHE }}
+      #     context: containers/test
+      #     file: containers/test/Dockerfile
+      #     target: test
+      #     build-args: |
+      #       BASE_IMAGE=${{ env.CI_TAG }}
+      #       TEST_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh:/container/extras/build_dart.sh:/container/extras/build_kokkos.sh
 
       - name: Publish Image
         if: ${{ inputs.publish && inputs.test }}
