@@ -108,7 +108,6 @@ jobs:
     runs-on: ${{ inputs.runner }}
 
     steps:
-
       - name: Check out Repository
         uses: actions/checkout@v4
         with:
@@ -263,14 +262,17 @@ jobs:
             ${{ env.CI_TAG }} \
             /container/extras/build_kokkos.sh
 
+      - name: Done Testing - Clean Docker (images, containers, volumes, cache)
+        run: |
+          df -h
+          docker system df
+          docker system prune --all --force --volumes
+          df -h
+          docker system df
+
       #----------------------------------------------
       # Publish image
       #----------------------------------------------
-      - name: Clean all Docker data
-        if: ${{ inputs.publish && inputs.test }}
-        run: |
-          docker system prune --all --force --volumes
-
       - name: Publish Image
         if: ${{ inputs.publish && inputs.test }}
         uses: docker/build-push-action@v6
