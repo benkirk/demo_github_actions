@@ -116,6 +116,7 @@ jobs:
           GPU_LABEL=-${{ inputs.gpu }}
           MPI_LABEL=-${{ inputs.mpi }}
           EOF
+
           cat << EOF > build_inputs.txt
           arch: '${{ inputs.arch }}'
           os: '${{ inputs.os }}'
@@ -127,6 +128,7 @@ jobs:
           ${{ inputs.gpu_build_args }}
           ${{ inputs.extra_build_args }}
           EOF
+
           sed -i '/^[[:space:]]*$/d' build_inputs.txt
           echo && echo "Build Inputs:" && cat build_inputs.txt
           shasum build_inputs.txt > inputs_sha.txt
@@ -136,16 +138,18 @@ jobs:
               echo "GPU_LABEL=" >> ${GITHUB_ENV}
           fi
 
+      # manipulate environment variables in current shell, then set results into tags.sh && GITHUB_ENV
       - name: Set Image Tags
         id: tags
         run: |
-          CI_CACHE=benjaminkirk/gh-ci-cache-refactor-${{ inputs.os }}:cache-${{ inputs.arch }}-${INPUTS_SHA}
+          CI_CACHE=benjaminkirk/gh-ci-refactor-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${INPUTS_SHA}
           CI_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
           CI_TAG_DEVEL=${CI_TAG}
           CI_TAG_DEVEL=${CI_TAG_DEVEL//benjaminkirk/ncarcisl}
           CI_TAG_DEVEL=${CI_TAG_DEVEL//-latest/-devel}
           PUBLISH_CACHE=${CI_CACHE//benjaminkirk/ncarcisl}
           PUBLISH_TAG=${CI_TAG_DEVEL//-devel/-latest}
+
           cat << EOF > tags.sh
           CI_CACHE=${CI_CACHE}
           CI_TAG=${CI_TAG}
@@ -153,8 +157,8 @@ jobs:
           PUBLISH_CACHE=${PUBLISH_CACHE}
           PUBLISH_TAG=${PUBLISH_TAG}
           EOF
-          cat tags.sh
 
+          cat tags.sh
           cat tags.sh >> ${GITHUB_ENV}
           cat tags.sh >> ${GITHUB_OUTPUT}
 
