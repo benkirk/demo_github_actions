@@ -226,15 +226,8 @@ jobs:
             ${{ inputs.mpi_build_args }}
 
       - name: Done Build - Clean Docker (images, containers, volumes, cache)
-        run: |
-          df -h
-          docker image ls
-          docker buildx du
-          docker buildx prune --force
-          docker system df
-          docker system prune --all --force --volumes
-          df -h
-          docker system df
+        if: ${{ inputs.free_runner_space }}
+        uses: ./.github/actions/slim-action-runner
 
       #----------------------------------------------
       # Test image
@@ -272,15 +265,8 @@ jobs:
             /container/extras/build_kokkos.sh
 
       - name: Done Testing - Clean Docker (images, containers, volumes, cache)
-        run: |
-          df -h
-          docker image ls
-          docker buildx du
-          docker buildx prune --force
-          docker system df
-          docker system prune --all --force --volumes
-          df -h
-          docker system df
+        if: ${{ inputs.free_runner_space }}
+        uses: ./.github/actions/slim-action-runner
 
       #----------------------------------------------
       # Publish image
@@ -309,12 +295,5 @@ jobs:
       #       mpicc --version
 
       - name: Done Publish - Clean Docker (images, containers, volumes, cache)
-        run: |
-          df -h
-          docker image ls
-          docker buildx du
-          docker buildx prune --force
-          docker system df
-          docker system prune --all --force --volumes
-          df -h
-          docker system df
+        if: ${{ inputs.free_runner_space }}
+        uses: ./.github/actions/slim-action-runner
