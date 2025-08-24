@@ -229,9 +229,10 @@ jobs:
         run: |
           df -h
           docker image ls
+          docker buildx du
+          docker buildx prune --force
           docker system df
           docker system prune --all --force --volumes
-          docker buildx prune --force
           df -h
           docker system df
 
@@ -274,9 +275,10 @@ jobs:
         run: |
           df -h
           docker image ls
+          docker buildx du
+          docker buildx prune --force
           docker system df
           docker system prune --all --force --volumes
-          docker buildx prune --force
           df -h
           docker system df
 
@@ -290,7 +292,7 @@ jobs:
           DOCKER_BUILD_SUMMARY: false
         with:
           push: false
-          load: true
+          load: false
           tags: ${{ env.PUBLISH_TAG }}
           context: containers/publish
           file: containers/publish/Dockerfile
@@ -299,9 +301,20 @@ jobs:
             DEPLOYMENT_SCRIPTS=/container/extras/build_osu-micro-benchmarks.sh
           target: final
 
-      - name: Run Published Image
-        if: ${{ inputs.publish && inputs.test }}
+      # - name: Run Published Image
+      #   if: ${{ inputs.publish && inputs.test }}
+      #   run: |
+      #     docker run --rm \
+      #       ${{ env.PUBLISH_TAG }} \
+      #       mpicc --version
+
+      - name: Done Publish - Clean Docker (images, containers, volumes, cache)
         run: |
-          docker run --rm \
-            ${{ env.PUBLISH_TAG }} \
-            mpicc --version
+          df -h
+          docker image ls
+          docker buildx du
+          docker buildx prune --force
+          docker system df
+          docker system prune --all --force --volumes
+          df -h
+          docker system df
