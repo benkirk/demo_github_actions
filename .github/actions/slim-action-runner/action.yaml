@@ -24,12 +24,14 @@ runs:
           echo "--------------------------------------------"
           echo "Cleaning Docker Caches:"
           echo "--------------------------------------------"
+          sleep 10s
           sudo docker buildx du 2>/dev/null || true
           sudo docker buildx prune --force 2>/dev/null || true
           sudo docker image ls 2>/dev/null || true
           sudo docker image prune --all --force 2>/dev/null || true
           sudo docker system df 2>/dev/null || true
           sudo docker system prune --all --volumes --force 2>/dev/null || true
+          sleep 10s
         fi
 
         probeUsage() {
@@ -138,6 +140,4 @@ runs:
     - name: Print disk space after cleanup
       shell: bash
       run: |
-        set -x
-        sleep 15s
         df -h
