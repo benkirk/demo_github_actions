@@ -550,10 +550,11 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
            echo "Removing duplicate CUDA (${NVHPC_CUDA_VERSION} == ${CUDA_VERSION})" ;\
            for dir in {cuda,math_libs}/${NVHPC_CUDA_VERSION}; do \
                dir=$(realpath ${dir}) ;\
-               echo "Before: ${dir}/.." && ls -l ${dir}/.. ;\
+               parent=$(dirname ${dir}) ;\
+               echo "Before: ${parent}" && ls -l ${parent} ;\
                du -hs ${dir} >> README.whered_stuff_go ;\
                rm -rf ${dir} && ln -s ${CUDA_HOME} ${dir} ;\
-               echo "After: ${dir}/.." && ls -l ${dir}/.. ;\
+               echo "After: ${parent}" && ls -l ${parent} ;\
            done ;\
        else \
            NVHPC_CUDA_HOME=$(ls -d ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/${NVHPC_CUDA_VERSION}) ;\
