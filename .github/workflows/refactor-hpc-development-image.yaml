@@ -234,7 +234,7 @@ jobs:
             ${{ inputs.compiler_build_args }}
             ${{ inputs.mpi_build_args }}
 
-      - name: Done Build - Clean Docker (images, containers, volumes, cache)
+      - name: Done Build - Clean Up
         if: ${{ inputs.free_runner_space }}
         uses: ./.github/actions/slim-action-runner
 
@@ -284,7 +284,7 @@ jobs:
             ${{ env.CI_TAG }} \
             /container/extras/build_kokkos.sh
 
-      - name: Done Testing - Clean Docker (images, containers, volumes, cache)
+      - name: Done Testing - Clean Up
         if: ${{ inputs.free_runner_space }}
         uses: ./.github/actions/slim-action-runner
 
@@ -314,6 +314,6 @@ jobs:
       #       ${{ env.PUBLISH_TAG }} \
       #       mpicc --version
 
-      - name: Done Publish - Clean Docker (images, containers, volumes, cache)
+      - name: Done Publish - Clean Up
         if: ${{ inputs.free_runner_space }}
         uses: ./.github/actions/slim-action-runner
