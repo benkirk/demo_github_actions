@@ -43,6 +43,12 @@ runs:
           for dir in /opt /usr /var; do
             sudo du --max-depth=3 --block-size=1M --threshold=$((4*1024*1024)) --separate-dirs ${dir} | sort -n
           done
+
+          echo "--------------------------------------------"
+          echo "Root: ${1}"
+          echo "--------------------------------------------"
+          sudo du 2>/dev/null --max-depth=3 --block-size=1M --threshold=$((4*1024*1024)) --separate-dirs / | sort -n
+
         }
 
         # look for removal candidates
