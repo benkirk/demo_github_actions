@@ -26,7 +26,7 @@ runs:
           sudo docker buildx du 2>/dev/null || true
           sudo docker buildx prune --force 2>/dev/null || true
           sudo docker image ls 2>/dev/null || true
-          sudo docker image prune -a 2>/dev/null || true
+          sudo docker image prune --all --force 2>/dev/null || true
           sudo docker system df 2>/dev/null || true
           sudo docker system prune --all --volumes --force 2>/dev/null || true
         fi
@@ -42,9 +42,8 @@ runs:
           echo "Directories: ${1}"
           echo "--------------------------------------------"
           ls /
-          for dir in /home /mnt /tmp /opt /usr /var /var/lib/docker ; do
-            sudo du 2>/dev/null--max-depth=3 --block-size=1M --threshold=$((4*1024*1024)) --separate-dirs $(realpath ${dir}) | sort -n \
-            || true
+          for dir in /mnt /tmp /opt /usr /var /var/lib/docker ; do
+            sudo du 2>/dev/null--max-depth=3 --block-size=1M --threshold=$((4*1024*1024)) --separate-dirs $(realpath ${dir}) | sort -n
           done
         }
 
