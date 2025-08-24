@@ -221,6 +221,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
+    && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && echo -e "\n# CUDA ${CUDA_VERSION}" >> /container/config_env.sh \
     && echo "export CUDA_VERSION=${CUDA_VERSION}" >> /container/config_env.sh \
     && echo "export CUDA_HOME=${CUDA_HOME}" >> /container/config_env.sh \
@@ -229,7 +230,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && echo "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh \
     && echo "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
-    && echo "export NVCC_PREPEND_FLAGS=-allow-unsupported-compiler" >> /container/config_env.sh \
+    && echo "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler\"" >> /container/config_env.sh \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
@@ -563,7 +564,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
            echo "export NVHPC_CUDA_HOME=${NVHPC_CUDA_HOME}" >> /container/config_env.sh ;\
            echo "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh ;\
            echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh ;\
+           for dir in {cuda,math_libs}/${NVHPC_CUDA_VERSION}; do \
+               dir=$(realpath ${dir}) ;\
+               find ${dir} -type f -name "lib*_static.a" -print0 | xargs -0 -n1 --no-run-if-empty rm -vf >> README.whered_stuff_go ;\
+           done ;\
        fi \
+    && find ${NVCOMPILERS} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && echo "Configuring ld.so.conf.d..." \
     && echo "${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION}/compilers/lib" >> /etc/ld.so.conf.d/nvhpc.conf \
     && ldconfig --verbose \
@@ -576,6 +582,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && echo "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && echo "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
+    && echo "export NVCC_PREPEND_FLAGS=\"--cudart shared\"" >> /container/config_env.sh \
     && docker-clean
 
 LABEL compiler="nvhpc"
