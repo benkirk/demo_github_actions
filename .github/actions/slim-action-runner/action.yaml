@@ -18,13 +18,16 @@ runs:
 
         TIMEFORMAT=$'--> Real time: %3R seconds'
 
-        # Sometimes `docker` is not installed, so only remove images if we need to.
+        # If docker is installed, clean anythhing we can
         if command -v docker 2>&1 >/dev/null ; then
-          sudo docker buildx du
-          sudo docker buildx prune --force
-          sudo docker image ls
-          sudo docker system df
-          sudo docker system prune --all --force --volumes
+          echo "--------------------------------------------"
+          echo "Cleaning Docker Caches:
+          echo "--------------------------------------------"
+          sudo docker buildx du 2>/dev/null || true
+          sudo docker buildx prune --force 2>/dev/null || true
+          sudo docker image ls 2>/dev/null || true
+          sudo docker system df 2>/dev/null || true
+          sudo docker system prune --all --volumes --force 2>/dev/null || true
         fi
 
         probeUsage() {

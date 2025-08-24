@@ -233,17 +233,28 @@ jobs:
       # Test image
       #----------------------------------------------
       # ref https://docs.docker.com/build/ci/github-actions/test-before-push/
+      - name: Test Image - Environment Variables
+        if: ${{ inputs.test }}
+        run: |
+          cat << EOF > test_env.cfg
+          OMPI_MCA_opal_cuda_support=false
+          MPIR_CVAR_ENABLE_GPU=0
+          EOF
+
+          echo "setting runtime-disable GPU-Aware MPI env vars for both OpenMPI and MPICH..."
+          cat test_env.cfg
+
       - name: Test Image - Pull
         if: ${{ inputs.test }}
         run: |
-          docker run --rm \
+          docker run --rm --env-file test_env.cfg \
             ${{ env.CI_TAG }} \
             cat /container/config_env.sh
 
       - name: Test Image - OSU
         if: ${{ inputs.test }}
         run: |
-          docker run --rm \
+          docker run --rm --env-file test_env.cfg \
             --env OMB_VERSION=7.5.1 \
             ${{ env.CI_TAG }} \
             /container/extras/build_osu-micro-benchmarks.sh
@@ -251,7 +262,7 @@ jobs:
       - name: Test Image - Dart
         if: ${{ inputs.test }}
         run: |
-          docker run --rm \
+          docker run --rm --env-file test_env.cfg \
             --env DART_VERSION=v11.12.1 \
             ${{ env.CI_TAG }} \
             /container/extras/build_dart.sh
@@ -259,7 +270,7 @@ jobs:
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
         run: |
-          docker run --rm \
+          docker run --rm --env-file test_env.cfg \
             --env KOKKOS_VERSION=4.6.02 \
             ${{ env.CI_TAG }} \
             /container/extras/build_kokkos.sh
