@@ -394,8 +394,10 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
     && unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH \
     && env \
     && GCC_INSTALL_PATH="/container/gcc/${GCC_VERSION}" \
-    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://ftpmirror.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
-    && cd ./gcc-${GCC_VERSION} \
+    && (cd /tmp \
+            && curl --retry 3 --retry-delay 5 -sSL https://ftpmirror.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
+            || curl --retry 3 --retry-delay 5 -sSL https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx) \
+    && cd /tmp/gcc-${GCC_VERSION} \
     && mkdir -p /container/logs/ \
     && ./configure --help \
     && ./contrib/download_prerequisites \
