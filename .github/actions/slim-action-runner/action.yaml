@@ -7,9 +7,10 @@ runs:
   using: "composite"
   steps:
     - name: Print disk space before cleanup
+      shell: bash
       run: |
         df -h
-      shell: bash
+
     - name: Free Disk Space
       shell: bash
       run: |
@@ -135,6 +136,8 @@ runs:
         time probeUsage "After cleanup"
 
     - name: Print disk space after cleanup
-      run: |
-        df -h
       shell: bash
+      run: |
+        set -x
+        sleep 15s
+        df -h
