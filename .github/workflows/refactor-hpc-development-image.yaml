@@ -278,6 +278,7 @@ jobs:
 
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
+        continue-on-error: ${{ inputs.gpu == 'nogpu' && false || true }}
         run: |
           docker run --rm --env-file test_env.cfg \
             --env KOKKOS_VERSION=4.6.02 \

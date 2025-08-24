@@ -35,17 +35,18 @@ runs:
         fi
 
         probeUsage() {
+          local THRESHOLD_SIZE_MB=5
           echo "--------------------------------------------"
           echo "Files: ${1}"
           echo "--------------------------------------------"
           for dir in /usr/local/bin /usr/bin; do
-            sudo du --block-size=1M --threshold=$((9*1024*1024)) ${dir}/* | sort -n
+            sudo du --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB ${dir}/* | sort -n
           done
           echo "--------------------------------------------"
           echo "Directories: ${1}"
           echo "--------------------------------------------"
           for dir in /home /mnt /tmp /opt /usr /var; do
-            sudo du 2>/dev/null --max-depth=5 --block-size=1M --threshold=$((4*1024*1024)) --separate-dirs $(realpath ${dir}) | sort -n
+            sudo du 2>/dev/null --max-depth=5 --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs $(realpath ${dir}) | sort -n
           done
         }
 

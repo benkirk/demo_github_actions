@@ -90,11 +90,14 @@ if [ ${#} -ge 1 ]; then
    dirs=${@}
 fi
 
-echo "[${0}]: Finding large directories in ${dirs} - output is MiB"
+THRESHOLD_SIZE_MB=4
+
+echo "[${0}]: Finding large files & directories >${THRESHOLD_SIZE_MB}MiB in ${dirs} - output is MiB"
 for dir in ${dirs}; do
     dir=$(realpath ${dir})
     if [ -d ${dir} ]; then
-        du 2>/dev/null --block-size=1MiB --threshold=$((4*1024*1024)) --separate-dirs ${dir} | sort -n
+        find 2>/dev/null ${dir} -type f -size +${THRESHOLD_SIZE_MB}M -print0 | xargs -0 --no-run-if-empty du --block-size=1MiB | sort -n
+        du 2>/dev/null --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs ${dir} | sort -n
     fi
 done
 EOF
@@ -386,6 +389,8 @@ LABEL gcc="os-gcc"
 #   installed gcc taking precedence for libstdc++.so; lest we get undefined symbols and break the
 #   host tools. So we only add this compiled gcc's libraries to the search paths if it is newer
 #   than the host version.
+# mirrors:
+#  https://gcc.gnu.org/mirrors.html
 FROM toolkits AS gcc
 #-------------------------------------------------------------------------------
 ARG GCC_VERSION="13.3.0"
@@ -396,7 +401,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
     && GCC_INSTALL_PATH="/container/gcc/${GCC_VERSION}" \
     && (cd /tmp \
             && curl --retry 3 --retry-delay 5 -sSL https://ftpmirror.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
-            || curl --retry 3 --retry-delay 5 -sSL https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx) \
+                || curl --retry 3 --retry-delay 5 -sSL https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
+                || curl --retry 3 --retry-delay 5 -sSL https://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx) \
     && cd /tmp/gcc-${GCC_VERSION} \
     && mkdir -p /container/logs/ \
     && ./configure --help \
