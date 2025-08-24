@@ -191,15 +191,14 @@ jobs:
 
           CI_CACHE=benjaminkirk/gh-ci-refactor-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-${INPUTS_SHA}
           CI_TAG=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
-          CI_TAG_DEVEL=${CI_TAG}
-          CI_TAG_DEVEL=${CI_TAG_DEVEL//benjaminkirk/ncarcisl}
-          CI_TAG_DEVEL=${CI_TAG_DEVEL//-latest/-devel}
-          PUBLISH_TAG=${CI_TAG_DEVEL//-devel/-latest}
+          PUBLISH_TAG=${CI_TAG}
+          PUBLISH_TAG=${PUBLISH_TAG//benjaminkirk/ncarcisl}
+          PUBLISH_TAG=${PUBLISH_TAG//gh-ci-refactor/cisldev}
+          #PUBLISH_TAG=${PUBLISH_TAG//-devel/-latest}
 
           cat << EOF > tags.sh
           CI_CACHE=${CI_CACHE}
           CI_TAG=${CI_TAG}
-          CI_TAG_DEVEL=${CI_TAG_DEVEL}
           PUBLISH_TAG=${PUBLISH_TAG}
           EOF
 
@@ -232,6 +231,7 @@ jobs:
           docker image ls
           docker system df
           docker system prune --all --force --volumes
+          docker buildx prune --force
           df -h
           docker system df
 
@@ -276,6 +276,7 @@ jobs:
           docker image ls
           docker system df
           docker system prune --all --force --volumes
+          docker buildx prune --force
           df -h
           docker system df
 
@@ -290,7 +291,7 @@ jobs:
         with:
           push: false
           load: true
-          tags: ${{ env.CI_TAG_DEVEL }}
+          tags: ${{ env.PUBLISH_TAG }}
           context: containers/publish
           file: containers/publish/Dockerfile
           build-args: |
@@ -302,5 +303,5 @@ jobs:
         if: ${{ inputs.publish && inputs.test }}
         run: |
           docker run --rm \
-            ${{ env.CI_TAG_DEVEL }} \
+            ${{ env.PUBLISH_TAG }} \
             mpicc --version
