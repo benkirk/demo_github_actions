@@ -82,6 +82,23 @@ done
 rm -rf /tmp/*
 EOF
 
+RUN cat <<'EOF' > /usr/bin/list-large-directories
+#!/bin/bash
+
+dirs="/home /mnt /tmp /opt /usr /var /container"
+if [ ${#} -ge 1 ]; then
+   dirs=${@}
+fi
+
+echo "[${0}]: Finding large directories in ${dirs} - output is MiB"
+for dir in ${dirs}; do
+    dir=$(realpath ${dir})
+    if [ -d ${dir} ]; then
+        du 2>/dev/null --block-size=1MiB --threshold=$((4*1024*1024)) --separate-dirs ${dir} | sort -n
+    fi
+done
+EOF
+
 # use a bash login shell for all subsequent RUN commands. This will ultimately source the file
 # /container/config_env.sh; which we build up incrementally; and defines the configuration of all
 # the software installed in a particular image variant.
@@ -95,6 +112,7 @@ SHELL ["/bin/bash", "--login", "-c"]
 # (We set rather than append at initialization; we will occasionally re-source this file repeatedly)
 RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.log) \
     && echo "# Container Environment Configuration" > /container/config_env.sh \
+    && chmod a+rx /usr/bin/{docker-clean,list-large-directories} \
     && cat /etc/*-release \
     && source /etc/os-release \
     && id_tag="|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" \
@@ -164,9 +182,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
     && echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && echo "export MAKE_J_PROCS=\${MAKE_J_PROCS:-\$(nproc)}" >> /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh \
-    && chmod a+rx /usr/bin/docker-clean \
     && docker-clean
-
 
 
 ################################################################################
@@ -206,6 +222,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
     && echo -e "\n# CUDA ${CUDA_VERSION}" >> /container/config_env.sh \
+    && echo "export CUDA_VERSION=${CUDA_VERSION}" >> /container/config_env.sh \
     && echo "export CUDA_HOME=${CUDA_HOME}" >> /container/config_env.sh \
     && echo "export PATH=${CUDA_HOME}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${CUDA_HOME}/include:\${CPATH}" >> /container/config_env.sh \
@@ -491,6 +508,11 @@ LABEL aocc="${AOCC_VERSION}"
 #-------------------------------------------------------------------------------
 # NVHPC stage
 FROM toolkits AS nvhpc
+# Notes: math_libs, cuda, etc...
+#   the NVHPC directories cuda/XX.Y and math_libs/XX.Y contain bits of the CUDA
+#   toolkit - which we may have already installed.
+#   If so, remove the duplicates and symlink from ${CUDA_HOME}.
+#   (Note for now we assume a match when XX.Y are the same; alternatively we compare the files
 #-------------------------------------------------------------------------------
 # 24.x and previous do not fPIC by default; which cause all sorts of problems
 # when building shared libraries later. (not the case for the other compilers.)
@@ -498,7 +520,7 @@ ARG NVHPC_VERSION="25.1"
 ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
 ARG MARCH_FLAGS=""
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
-    && echo "Installing NVida HPC Toolkit ${NVHPC_VERSION}" \
+    && echo "Installing NVIDIA HPC Toolkit ${NVHPC_VERSION}" \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
     && cd /tmp \
     && echo "downloading ${NVHPC_URL}" \
@@ -517,10 +539,31 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export MANPATH=\${MANPATH}:\${NVCOMPILERS}/\${NVARCH}/${NVHPC_VERSION}/compilers/man" >> /container/config_env.sh \
     && echo "export PATH=\${NVCOMPILERS}/\${NVARCH}/${NVHPC_VERSION}/compilers/bin:\$PATH" >> /container/config_env.sh \
     && echo "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" >> /container/config_env.sh \
-    && cd ${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION} \
+    && source /container/config_env.sh \
+    && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
     && rm_paths="comm_libs profilers" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
+    && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
+    && echo -e "\nNVHPC-Provided CUDA: ${NVHPC_CUDA_VERSION}" \
+    && if [[ "${NVHPC_CUDA_VERSION}" == "${CUDA_VERSION}" ]]; then \
+           echo "Removing duplicate CUDA (${NVHPC_CUDA_VERSION} == ${CUDA_VERSION})" ;\
+           for dir in {cuda,math_libs}/${NVHPC_CUDA_VERSION}; do \
+               dir=$(realpath ${dir}) ;\
+               echo "Before: ${dir}/.." && ls -l ${dir}/.. ;\
+               du -hs ${dir} >> README.whered_stuff_go ;\
+               rm -rf ${dir} && ln -s ${CUDA_HOME} ${dir} ;\
+               echo "After: ${dir}/.." && ls -l ${dir}/.. ;\
+           done ;\
+       else \
+           NVHPC_CUDA_HOME=$(ls -d ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/${NVHPC_CUDA_VERSION}) ;\
+           echo -e "\n# NVHPC-embedded CUDA ${NVHPC_CUDA_VERSION}" >> /container/config_env.sh ;\
+           echo "export NVHPC_CUDA_VERSION=${NVHPC_CUDA_VERSION}" >> /container/config_env.sh ;\
+           echo "export NVHPC_CUDA_HOME=${NVHPC_CUDA_HOME}" >> /container/config_env.sh ;\
+           echo "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh ;\
+           echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh ;\
+       fi \
+    && echo "Configuring ld.so.conf.d..." \
     && echo "${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION}/compilers/lib" >> /etc/ld.so.conf.d/nvhpc.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
@@ -532,19 +575,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
     && echo "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && echo "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
     && echo "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" >> /container/config_env.sh \
-    && docker-clean
-
-# NVHPC embeds CUDA, but not a complete toolkit.  So take some care to
-# identify the CUDA that ships with NVHPC but not have it hide the CUDA toolkit we may
-# have installed already.
-# refer to the note above in the CUDA section regarding stubs, CUDA, & LD_LIBRARY_PATH
-RUN echo -e "\n#Identifying NVHPC-Provided Cuda" \
-    && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/*/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
-    && NVHPC_CUDA_HOME=$(ls -d ${NVCOMPILERS}/*/${NVHPC_VERSION}/cuda/${NVHPC_CUDA_VERSION}) \
-    && echo -e "\n# NVHPC-embedded CUDA ${NVHPC_CUDA_VERSION}" >> /container/config_env.sh \
-    && echo "export NVHPC_CUDA_HOME=${NVHPC_CUDA_HOME}" >> /container/config_env.sh \
-    && echo "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" >> /container/config_env.sh \
-    && echo "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" >> /container/config_env.sh \
     && docker-clean
 
 LABEL compiler="nvhpc"
@@ -1223,11 +1253,10 @@ LABEL heffte="${HEFFTE_VERSION}"
 FROM ${FINAL_TARGET} AS final
 ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
-    && echo -e "\n# Final configuration:" | tee -a /container/config_env.sh \
+    && list-large-directories \
     && echo "export LD_LIBRARY_PATH=$(echo "${LD_LIBRARY_PATH}" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/:$//')" >> /container/config_env.sh \
+    && echo -e "\n# Final configuration:" | tee -a /container/config_env.sh \
     && echo -e "\n# (container image build completed at $(date))" >> /container/config_env.sh \
-    && echo "Directories > 9MB:" \
-    && for dir in /var /usr /container; do du -hs ${dir} 2>/dev/null && du --block-size=1M --threshold=$((9*1024*1024)) --separate-dirs ${dir} 2>/dev/null | sort -n; done \
     && useradd plainuser -d /home/plainuser \
     && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
     && chown -R plainuser: /container/ \
