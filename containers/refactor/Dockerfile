@@ -172,6 +172,11 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                            libxml2-dev  libcurl4-openssl-dev \
                            sudo \
                 && echo 'export PKG_INSTALL_CMD="apt-get install -y"' >> /container/config_env.sh \
+                && case "${id_tag}" in \
+                        *"|noble|"*) \
+                            apt-get install -y g++-14 gcc-14 gfortran-14 \
+                            ;; \
+                   esac \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
@@ -716,12 +721,6 @@ FROM compilers AS mpich3
 ARG MPICH_VERSION="3.4.3"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && echo "building MPICH-${MPICH_VERSION}" \
-    && env \
-    && echo "Installing additional dependencies" \
-    && (${PKG_INSTALL_CMD} glibc-devel file pkgconf patch \
-            || ${PKG_INSTALL_CMD} libc-dev linux-libc-dev libc6-dev file pkg-config patch \
-            || (apt-get update && ${PKG_INSTALL_CMD} libc-dev linux-libc-dev libc6-dev file pkg-config patch) \
-            || false) \
     && MPICH_INSTALL_PATH="/container/mpich/${MPICH_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
@@ -854,12 +853,6 @@ ARG OPENMPI_VERSION="5.0.8"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && echo "building OpenMPI-${OPENMPI_VERSION}" \
-    && echo "Installing additional compression libraries for OpenMPI" \
-    && (${PKG_INSTALL_CMD} zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
-            || ${PKG_INSTALL_CMD} zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
-            || (apt-get update && ${PKG_INSTALL_CMD} zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev) \
-            || false) \
-    && env \
     && OPENMPI_INSTALL_PATH="/container/openmpi/${OPENMPI_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://download.open-mpi.org/release/open-mpi/v$(echo ${OPENMPI_VERSION} | cut -d . -f -2)/openmpi-${OPENMPI_VERSION}.tar.bz2 | tar xj \
     && cd ./openmpi-${OPENMPI_VERSION} \
