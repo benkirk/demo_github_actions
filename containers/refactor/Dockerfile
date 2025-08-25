@@ -155,6 +155,15 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                           libxml2-devel libedit-devel curl-devel \
                           sudo \
                 && echo 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' >> /container/config_env.sh \
+                && case "${id_tag}" in \
+                    *"leap|"*) \
+                        zypper --non-interactive install \
+                               gcc12{,-c++,-fortran} \
+                            && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 50 \
+                            && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 50 \
+                            && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-12 50 \
+                       ;; \
+                   esac \
             ;; \
         *"|ubuntu|"*) \
                 apt-get update \
@@ -173,9 +182,9 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                            sudo \
                 && echo 'export PKG_INSTALL_CMD="apt-get install -y"' >> /container/config_env.sh \
                 && case "${id_tag}" in \
-                        *"|noble|"*) \
-                            apt-get install -y g++-14 gcc-14 gfortran-14 \
-                            ;; \
+                    *"|noble|"*) \
+                        apt-get install -y g++-14 gcc-14 gfortran-14 \
+                    ;; \
                    esac \
             ;; \
         *) \
