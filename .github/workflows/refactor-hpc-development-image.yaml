@@ -104,7 +104,7 @@ on:
 jobs:
 
   build-image:
-    name: Build, Test, & Publish ${{inputs.os }} Image
+    name: Build, Test, & Publish ${{inputs.os }}
     runs-on: ${{ inputs.runner }}
 
     steps:
@@ -189,14 +189,14 @@ jobs:
               GPU_LABEL=
           fi
 
-          CI_CACHE=benjaminkirk/gh-ci-refactor-cache-${{ inputs.os }}:cache-${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-${INPUTS_SHA}
-          CI_IMAGE=benjaminkirk/gh-ci-refactor-${{ inputs.arch }}
+          CI_CACHE=benjaminkirk/gh-ci-cache-${{ inputs.os }}:${{ inputs.arch }}-${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
+          CI_IMAGE=benjaminkirk/gh-ci-${{ inputs.arch }}
           CI_TAG=${CI_IMAGE}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
 
           PUBLISH_TAG=${CI_TAG}
           PUBLISH_TAG=${PUBLISH_TAG//benjaminkirk/ncarcisl}
-          PUBLISH_TAG=${PUBLISH_TAG//gh-ci-refactor/cisldev}
-          #PUBLISH_TAG=${PUBLISH_TAG//-devel/-latest}
+          PUBLISH_TAG=${PUBLISH_TAG//gh-ci/cisldev}
+          PUBLISH_TAG=${PUBLISH_TAG//-devel/}
 
           cat << EOF > tags.sh
           CI_IMAGE=${CI_IMAGE}
@@ -302,6 +302,9 @@ jobs:
           push: false
           load: false
           tags: ${{ env.PUBLISH_TAG }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: mode=max
+          sbom: true
           context: containers/publish
           file: containers/publish/Dockerfile
           build-args: |
