@@ -220,6 +220,9 @@ jobs:
           push: true
           load: false
           tags: ${{ env.CI_TAG }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: mode=max
+          sbom: true
           cache-from: type=registry,ref=${{env.CI_CACHE }}
           cache-to: type=registry,ref=${{ env.CI_CACHE }},mode=max
           context: containers/refactor
@@ -235,8 +238,7 @@ jobs:
             ${{ inputs.mpi_build_args }}
 
       - name: Done Build - Clean Up
-        if: ${{ inputs.free_runner_space }}
-        uses: ./.github/actions/slim-action-runner
+        uses: ./.github/actions/docker-cleanup
 
       #----------------------------------------------
       # Test image
@@ -286,8 +288,7 @@ jobs:
             /container/extras/build_kokkos.sh
 
       - name: Done Testing - Clean Up
-        if: ${{ inputs.free_runner_space }}
-        uses: ./.github/actions/slim-action-runner
+        uses: ./.github/actions/docker-cleanup
 
       #----------------------------------------------
       # Publish image
@@ -316,5 +317,4 @@ jobs:
       #       mpicc --version
 
       - name: Done Publish - Clean Up
-        if: ${{ inputs.free_runner_space }}
-        uses: ./.github/actions/slim-action-runner
+        uses: ./.github/actions/docker-cleanup

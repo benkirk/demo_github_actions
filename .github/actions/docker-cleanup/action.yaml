@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: 'Free Docker Disk Space'
+description: 'Frees disk space on the runner'
+author: 'benkirk'
+runs:
+  using: "composite"
+  steps:
+    - name: Print disk space before cleanup
+      shell: bash
+      run: |
+        df -h
+
+    - name: Free Disk Space
+      shell: bash
+      run: |
+        # If docker is installed, clean anythhing we can
+        if command -v docker 2>&1 >/dev/null ; then
+          echo "--------------------------------------------"
+          echo "Cleaning Docker Caches:"
+          echo "--------------------------------------------"
+          sudo docker buildx du 2>/dev/null || true
+          sudo docker buildx prune --force 2>/dev/null || true
+          sudo docker image ls 2>/dev/null || true
+          sudo docker image prune --all --force 2>/dev/null || true
+          sudo docker system df 2>/dev/null || true
+          sudo docker system prune --all --volumes --force 2>/dev/null || true
+        fi
+
+    - name: Print disk space after cleanup
+      shell: bash
+      run: |
+        df -h
