@@ -193,20 +193,22 @@ jobs:
           CI_IMAGE=benjaminkirk/gh-ci-${{ inputs.arch }}
           CI_TAG=${CI_IMAGE}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
 
-          PUBLISH_TAG=${CI_TAG}
-          PUBLISH_TAG=${PUBLISH_TAG//benjaminkirk/ncarcisl}
-          PUBLISH_TAG=${PUBLISH_TAG//gh-ci/cisldev}
-          PUBLISH_TAG=${PUBLISH_TAG//-devel/}
+          PUBLISH_IMAGE=${CI_IMAGE}
+          PUBLISH_IMAGE=${PUBLISH_IMAGE//benjaminkirk/ncarcisl}
+          PUBLISH_IMAGE=${PUBLISH_IMAGE//gh-ci/cisldev}
+          PUBLISH_TAG=${PUBLISH_IMAGE}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-latest
 
           cat << EOF > tags.sh
-          CI_IMAGE=${CI_IMAGE}
           CI_CACHE=${CI_CACHE}
+          CI_IMAGE=${CI_IMAGE}
           CI_TAG=${CI_TAG}
+          PUBLISH_IMAGE=${PUBLISH_IMAGE}
           PUBLISH_TAG=${PUBLISH_TAG}
           EOF
 
           cat tags.sh
           cat tags.sh >> ${GITHUB_ENV}
+          cat tags.sh >> ${GITHUB_OUTPUT}
 
       - name: Extract Docker image metadata
         id: meta
@@ -321,3 +323,10 @@ jobs:
 
       - name: Done Publish - Clean Up
         uses: ./.github/actions/docker-cleanup
+
+    outputs:
+      CI_CACHE: ${{ steps.tags.outputs.CI_CACHE }}
+      CI_IMAGE: ${{ steps.tags.outputs.CI_IMAGE }}
+      CI_TAG: ${{ steps.tags.outputs.CI_TAG }}
+      PUBLISH_IMAGE: ${{ steps.tags.outputs.PUBLISH_IMAGE }}
+      PUBLISH_TAG: ${{ steps.tags.outputs.PUBLISH_TAG }}

@@ -7,12 +7,12 @@
 #
 #  FINAL_TARGET is the final FROM statement to build.
 #
-#  *_PREREQ defines the preceding step for a stage.
+#  *_PREREQ defines the prerequisite step for a stage.
 #    For example, The TOOLKITS_PREREQ could take on one of several values,
 #    'miniforge', 'cuda/rocm', or even 'base_os'.  In this way the 'toolkits'
 #    layer is dynamic and can include several (or none) packages.
 #    Similarly, IOLIBS_PREREQ is generally 'mpi'; meaning the 'iolibs' layer
-#    will be built after MPI with fill MPI support; however it could be
+#    will be built after MPI with full MPI support; however it could be
 #    'compilers' to build an image with no MPI support whatsoever. (rarely used)
 #
 ################################################################################
@@ -68,7 +68,7 @@ FROM rocm/dev-ubuntu-24.04:6.4.2-complete AS noble-rocm
 FROM ${BASE_OS} AS base_os
 #-------------------------------------------------------------------------------
 
-# an OS-independent helper script for removing caches and cruft to tidy up layers
+# An OS-independent helper script for removing caches and temporary files to reduce layer size
 RUN cat <<'EOF' > /usr/bin/docker-clean
 #!/bin/bash
 echo "[${0}]: cleaning temporary files from container image to reduce layer size"
@@ -102,12 +102,12 @@ for dir in ${dirs}; do
 done
 EOF
 
-# use a bash login shell for all subsequent RUN commands. This will ultimately source the file
+# Use a bash login shell for all subsequent RUN commands. This will ultimately source the file
 # /container/config_env.sh; which we build up incrementally; and defines the configuration of all
 # the software installed in a particular image variant.
 SHELL ["/bin/bash", "--login", "-c"]
 
-# Initialize the base OS; whether it be a RHEL, SUSE, or Ubuntu variant with
+# Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
 # a common development environment
 #
 # we initialize /container/config_env.sh here, setting variables like PATH etc. to whatever
@@ -207,7 +207,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
 ################################################################################
 
 #-------------------------------------------------------------------------------
-# Cuda stages
+# CUDA stages
 # about stubs & LD_LIBRARY_PATH:
 #   on a host with no NVIDIA device, libcuda.so etc will be provided by the stubs.
 #   these need to be overloaded at runtime by a proper libcuda.so which necessarily
@@ -253,7 +253,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && ldconfig --verbose \
     && docker-clean
 
-# a source-able script to query the CUDA configuration at runtime.
+# A sourceable script to query the CUDA configuration at runtime.
 # (intended to simplify setting compatibility variables for
 # testing on hosts without a CUDA driver.)
 RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
@@ -299,7 +299,7 @@ ARG ROCM_VERSION="6.2.3"
 ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
 ENV ROCM_HOME="${ROCM_HOME}"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
-    && echo "Rocm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
+    && echo "ROCm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
     && echo "ROCm: https://rocm.docs.amd.com/en/latest/about/license.html" >> /container/EULAs.txt \
     && source /etc/os-release \
     && cd /tmp \
@@ -329,7 +329,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
     && amdgpu-install --list-usecase \
     && amdgpu-install -y --usecase=hiplibsdk --no-dkms --accept-eula --dryrun \
     && amdgpu-install -y --usecase=hiplibsdk --no-dkms --accept-eula \
-    && echo -e "\n# ROCM ${ROCM_VERSION}" >> /container/config_env.sh \
+    && echo -e "\n# ROCm ${ROCM_VERSION}" >> /container/config_env.sh \
     && echo "export ROCM_VERSION=${ROCM_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${ROCM_HOME}/bin:\${PATH}" >> /container/config_env.sh \
     && echo "export CPATH=${ROCM_HOME}/include:\${CPATH}" >> /container/config_env.sh \
@@ -337,7 +337,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
     && echo "${ROCM_HOME}/lib" >> /etc/ld.so.conf.d/rocm-${ROCM_VERSION}.conf \
     && ldconfig --verbose \
     && docker-clean
-# amdgpu-install -y --usecase=rocmdevtools,hiplibsdk --no-dkms --accept-eula --dryrun
 ARG TOGGLE_WITH_ROCM="--with-rocm=${ROCM_HOME} --with-hip=${ROCM_HOME}"
 LABEL rocm="${ROCM_VERSION}"
 
@@ -396,8 +395,8 @@ LABEL gcc="os-gcc"
 # Note, if installing CUDA, use a supported GCC!:
 #   https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#host-compiler-support-policy
 # ("unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH" fixes this on AWS/docker:)
-#   g++: error: spec failure: unrecognized spec option ‘@’
-#   g++: fatal error: unknown spec function ‘dumps’
+#   g++: error: spec failure: unrecognized spec option '@'
+#   g++: fatal error: unknown spec function 'dumps'
 # About gcc & LD_LIBRARY_PATH:
 #   we might be installing a gcc older than that on the host.  If so; we do not want the
 #   installed gcc taking precedence for libstdc++.so; lest we get undefined symbols and break the
@@ -883,7 +882,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
     && rm_paths="share/doc/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
-    && echo -e "\n# OPENMPI ${OPENMPI_VERSION}" >> /container/config_env.sh \
+    && echo -e "\n# OpenMPI ${OPENMPI_VERSION}" >> /container/config_env.sh \
     && echo "export MPI_FAMILY=openmpi" >> /container/config_env.sh \
     && echo "export MPI_ROOT=${OPENMPI_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export OPENMPI_VERSION=${OPENMPI_VERSION}" >> /container/config_env.sh \
@@ -1033,7 +1032,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && (${PKG_INSTALL_CMD} libxml2-devel curl-devel \
             || ${PKG_INSTALL_CMD} libxml2-dev libcurl4-openssl-dev \
             || false) \
-    && echo "building NETCDF-${NETCDF_C_VERSION}" \
+    && echo "building NetCDF-${NETCDF_C_VERSION}" \
     && NETCDF_INSTALL_PATH="/container/netcdf" \
     && HDF5_PLUGIN_PATH="${NETCDF_INSTALL_PATH}/lib/plugins" \
     && cd /tmp \
@@ -1051,7 +1050,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
-    && echo -e "\n# NETCDF libraries" >> /container/config_env.sh \
+    && echo -e "\n# NetCDF libraries" >> /container/config_env.sh \
     && echo "export NETCDF=${NETCDF_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export NETCDF_C_VERSION=${NETCDF_C_VERSION}" >> /container/config_env.sh \
     && echo "export NETCDF_FORTRAN_VERSION=${NETCDF_FORTRAN_VERSION}" >> /container/config_env.sh \
@@ -1091,7 +1090,7 @@ LABEL netcdf-fortran="${NETCDF_FORTRAN_VERSION}"
 
 
 #-------------------------------------------------------------------------------
-# PNetCDF & ParalleIO
+# PNetCDF & ParallelIO
 FROM iolibs AS mpi-iolibs
 #-------------------------------------------------------------------------------
 ARG PNETCDF_VERSION="1.14.0"
@@ -1118,7 +1117,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
     && make --no-print-directory --silent install-strip \
-    && echo -e "\n# PNETCDF ${PNETCDF_VERSION}" >> /container/config_env.sh \
+    && echo -e "\n# PNetCDF ${PNETCDF_VERSION}" >> /container/config_env.sh \
     && echo "export PNETCDF=${PNETCDF_INSTALL_PATH}" >> /container/config_env.sh \
     && echo "export PNETCDF_VERSION=${PNETCDF_VERSION}" >> /container/config_env.sh \
     && echo "export PATH=${PNETCDF_INSTALL_PATH}/bin:\${PATH}" >> /container/config_env.sh \
@@ -1300,4 +1299,4 @@ CMD [ "/bin/bash" ]
 
 #  LocalWords:  ARG iolibs os miniforge mpi cuda rocm rhel gcc CXX FC
 #  LocalWords:  gfortran CPATH CONFIG LD OneAPI AOCC NVHPC nvhpc libs
-#  LocalWords:  uname NVCOMPILERS MANPATH NVARCH MPICH OPENMPI BLOSC
+#  LocalWords:  uname NVCOMPILERS MANPATH NVARCH MPICH OpenMPI BLOSC
