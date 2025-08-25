@@ -104,7 +104,7 @@ on:
 jobs:
 
   build-image:
-    name: Build, Test, & Publish Image
+    name: Build, Test, & Publish ${{inputs.os }} Image
     runs-on: ${{ inputs.runner }}
 
     steps:
