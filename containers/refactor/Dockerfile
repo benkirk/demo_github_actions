@@ -126,7 +126,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                 && echo "GCC & build tools" \
                 && dnf -y install \
                        procps \
-                       gcc gcc-c++ gcc-gfortran \
+                       gcc gcc-c++ gcc-gfortran gdb \
                        glibc-devel file pkgconf patch \
                        make autoconf automake libtool \
                        git wget which tar gzip bzip2 xz \
@@ -144,7 +144,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                 && echo "GCC & build tools" \
                 && zypper --non-interactive install \
                           procps \
-                          gcc gcc-c++ gcc-fortran \
+                          gcc gcc-c++ gcc-fortran gdb \
                           glibc-devel file pkgconf patch \
                           gmake autoconf automake libtool \
                           git wget which tar gzip bzip2 xz \
@@ -170,7 +170,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                 && apt-get autoclean \
                 && apt-get install -y \
                            procps \
-                           gcc g++ gfortran \
+                           gcc g++ gfortran gdb \
                            libc-dev linux-libc-dev libc6-dev file pkg-config patch \
                            make autoconf automake libtool \
                            git curl wget tar gzip bzip2 xz-utils \
@@ -178,7 +178,7 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                            python3 \
                            libxml2 \
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
-                           libxml2-dev  libcurl4-openssl-dev \
+                           libxml2-dev libcurl4-openssl-dev \
                            sudo \
                 && echo 'export PKG_INSTALL_CMD="apt-get install -y"' >> /container/config_env.sh \
                 && case "${id_tag}" in \
@@ -465,7 +465,6 @@ ARG ONEAPI_VERSION="2025.2.0"
 ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh"
 ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
-    && ${PKG_INSTALL_CMD} procps \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
     && ONEAPI_INSTALL_PATH="/container/intel-oneapi" \
@@ -799,11 +798,6 @@ ARG MPICH_DEVICE="ch4:ucx"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
     && echo "building MPICH-${MPICH_VERSION}" \
     && env \
-    && echo "Installing additional dependencies" \
-    && (${PKG_INSTALL_CMD} glibc-devel file pkgconf \
-            || ${PKG_INSTALL_CMD} libc-dev linux-libc-dev libc6-dev file pkg-config \
-            || (apt-get update && ${PKG_INSTALL_CMD} libc-dev linux-libc-dev libc6-dev file pkg-config) \
-            || false) \
     && MPICH_INSTALL_PATH="/container/mpich/${MPICH_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
@@ -937,11 +931,6 @@ ARG NETCDF_C_VERSION="4.9.3"
 ARG NETCDF_FORTRAN_VERSION="4.6.2"
 RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "building IO libraries" \
-    && echo "Installing additional compression libraries" \
-    && (${PKG_INSTALL_CMD} zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel cmake \
-            || ${PKG_INSTALL_CMD} zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel cmake \
-            || (apt-get update && ${PKG_INSTALL_CMD} zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev cmake) \
-            || false) \
     && echo "building libszip-${SZIP_VERSION}" \
     && env \
     && SZIP_INSTALL_PATH="/container/szip/${SZIP_VERSION}" \
@@ -1029,9 +1018,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && ldconfig --verbose \
     && source /container/config_env.sh \
     && echo "Installing additional NetCDF dependencies" \
-    && (${PKG_INSTALL_CMD} libxml2-devel curl-devel \
-            || ${PKG_INSTALL_CMD} libxml2-dev libcurl4-openssl-dev \
-            || false) \
     && echo "building NetCDF-${NETCDF_C_VERSION}" \
     && NETCDF_INSTALL_PATH="/container/netcdf" \
     && HDF5_PLUGIN_PATH="${NETCDF_INSTALL_PATH}/lib/plugins" \
