@@ -125,15 +125,14 @@ runs:
         time probeUsage "After cleanup"
 
         if [[ -d /mnt ]]; then
+            [[ -f /mnt/DATALOSS_WARNING_README.txt ]] && cat /mnt/DATALOSS_WARNING_README.txt || true
             echo "----------------------------------------------------------------"
             echo "Stealing some working space from /mnt/..."
             echo "----------------------------------------------------------------"
+            sudo swapon --show
             sudo mkdir -p /mnt/my_temp_worspace
-            sudo find /mnt -maxdepth 2 -ls
-            sudo find /mnt -type f -size +5M -ls
+            sudo find /mnt -type f -size +2M -ls
         fi
-    - name: Docker cleanup
-      uses: ./.github/actions/docker-cleanup
 
     - name: Print disk space after cleanup
       shell: bash
