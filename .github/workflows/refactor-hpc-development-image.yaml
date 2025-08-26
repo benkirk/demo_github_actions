@@ -122,6 +122,7 @@ jobs:
           mkdir -p $(pwd)/workspace
           if [[ -d /mnt/my_temp_worspace ]]; then
             sudo mount --bind /mnt/my_temp_worspace $(pwd)/workspace
+          fi
           df -h $(pwd)/workspace
 
       - name: Free Disk Space on Runner
