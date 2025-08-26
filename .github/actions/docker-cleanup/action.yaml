@@ -9,6 +9,7 @@ runs:
     - name: Before Cleanup
       shell: bash
       run: |
+        # Before Cleanup Docker
         echo "Docker System:"
         sudo docker image ls 2>/dev/null || true
         sudo docker volume ls 2>/dev/null || true
@@ -20,6 +21,7 @@ runs:
     - name: Cleaning All Docker Images/Volumes/Caches
       shell: bash
       run: |
+        # Cleanup Docker
         echo "--------------------------------------------"
         echo "Cleaning All Docker Images/Volumes/Caches:"
         echo "--------------------------------------------"
@@ -33,5 +35,6 @@ runs:
     - name: After Cleanup
       shell: bash
       run: |
+        # Before Cleanup Docker
         sudo docker system df 2>/dev/null || true
         df -h

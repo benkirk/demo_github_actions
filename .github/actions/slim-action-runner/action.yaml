@@ -41,29 +41,29 @@ runs:
         # Remove large packages we don't use using Ubuntu package management
         # (slow but should be safe...)
         removePackages() {
-          printWarningMessage () {
-            echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
-          }
-          echo "Attempting to remove unused ${os_id} packages..."
-          if [[ "${os_id}" =~ "ubuntu" ]]; then
-            sudo apt-get remove -y \
-              '^mysql-.*' \
-              '^dotnet-.*' \
-              'php.*' \
-              '^llvm-.*' \
-              'google-cloud-*' \
-              --fix-missing || echo "ERROR removing packages..."
-            # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
-            #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
-            # done
-            sudo apt-get autoremove -y >/dev/null 2>&1
-            sudo apt-get autoclean -y >/dev/null 2>&1
+            printWarningMessage () {
+                echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
+            }
+            echo "Attempting to remove unused ${os_id} packages..."
+            if [[ "${os_id}" =~ "ubuntu" ]]; then
+                sudo apt-get remove -y \
+                  '^mysql-.*' \
+                  '^dotnet-.*' \
+                  'php.*' \
+                  '^llvm-.*' \
+                  'google-cloud-*' \
+                  --fix-missing || echo "ERROR removing packages..."
+                # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
+                #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
+                # done
+                sudo apt-get autoremove -y >/dev/null 2>&1
+                sudo apt-get autoclean -y >/dev/null 2>&1
 
-            echo "--------------------------------------------"
-            echo Top remaining packages by size:
-            echo "--------------------------------------------"
-            dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
-          fi
+                echo "--------------------------------------------"
+                echo Top remaining packages by size:
+                echo "--------------------------------------------"
+                dpkg-query --show --showformat='${Installed-Size} : ${Package}\n' 2>/dev/null | sort -rn | head -n 50 || true
+            fi
         }
 
         # Remove a whole slew of unnecessary directories
@@ -124,10 +124,14 @@ runs:
         # see what is left
         time probeUsage "After cleanup"
 
-        echo "Stealing some working space from /mnt/..."
-        sudo mkdir -p /mnt/my_temp_worspace
-        sudo find /mnt -maxdepth 2 -ls
-
+        if [[ -d /mnt ]]; then
+            echo "----------------------------------------------------------------"
+            echo "Stealing some working space from /mnt/..."
+            echo "----------------------------------------------------------------"
+            sudo mkdir -p /mnt/my_temp_worspace
+            sudo find /mnt -maxdepth 2 -ls
+            sudo find /mnt -type f -size +5M -ls
+        fi
     - name: Docker cleanup
       uses: ./.github/actions/docker-cleanup
 
