@@ -129,9 +129,13 @@ runs:
             echo "----------------------------------------------------------------"
             echo "Stealing some working space from /mnt/..."
             echo "----------------------------------------------------------------"
-            sudo swapon --show
             sudo mkdir -p /mnt/my_temp_worspace
-            sudo find /mnt -type f -size +2M -ls
+            sudo swapon --show
+            if [[ -f /mnt/swapfile ]]; then
+                sudo swapoff -v /mnt/swapfile
+                sudo rm -f /mnt/swapfile
+            fi
+            sudo find /mnt -type f -size +1M -ls
         fi
 
     - name: Print disk space after cleanup
