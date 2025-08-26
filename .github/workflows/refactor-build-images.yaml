@@ -148,6 +148,15 @@ jobs:
       mpi_build_args: ${{ matrix.mpi_build_args }}
       test: ${{ inputs.test }}
       publish: ${{ inputs.publish }}
+      extra_build_args: |
+        HDF5_VERSION=1.14.6
+        NETCDF_C_VERSION=4.9.3
+        NETCDF_FORTRAN_VERSION=4.6.2
+        PNETCDF_VERSION=1.14.0
+        PIO_VERSION=2.6.6
+        PIO_TAG=pio2_6_6
+        FFTW_VERSION=3.3.10
+        HEFFTE_VERSION=2.4.1
 
     secrets:
       dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
