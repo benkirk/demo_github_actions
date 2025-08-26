@@ -25,13 +25,13 @@ runs:
           echo "Files: ${1}"
           echo "--------------------------------------------"
           for dir in /usr/local/bin /usr/bin; do
-            du --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB ${dir}/* | sort -n
+            sudo du --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB ${dir}/* | sort -n
           done
           echo "--------------------------------------------"
           echo "Directories: ${1}"
           echo "--------------------------------------------"
           for dir in /home /mnt /tmp /opt /usr /var; do
-            du 2>/dev/null --max-depth=5 --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs $(realpath ${dir}) | sort -n
+            sudo du 2>/dev/null --max-depth=5 --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs $(realpath ${dir}) | sort -n
           done
         }
 
@@ -45,7 +45,7 @@ runs:
         # # Remove large packages we don't use.
         # echo "Attempting to remove unused ${os_id} packages..."
         # if [[ "${os_id}" =~ "ubuntu" ]]; then
-        #   apt-get remove -y \
+        #   sudo apt-get remove -y \
         #     '^mysql-.*' \
         #     '^dotnet-.*' \
         #     'php.*' \
@@ -54,10 +54,10 @@ runs:
         #     --fix-missing || echo "ERROR removing packages..."
         #
         #   # for pkg in azure-cli microsoft-edge-stable google-chrome-stable powershell 'temurin-*' gh podman vim-runtime; do
-        #   #   apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
+        #   #   sudo apt-get remove -y ${pkg} --fix-missing || printWarningMessage "${pkg}"
         #   # done
-        #   apt-get autoremove -y >/dev/null 2>&1
-        #   apt-get autoclean -y >/dev/null 2>&1
+        #   sudo apt-get autoremove -y >/dev/null 2>&1
+        #   sudo apt-get autoclean -y >/dev/null 2>&1
         #
         #   echo "--------------------------------------------"
         #   echo Top remaining packages by size:
@@ -70,7 +70,7 @@ runs:
         echo "Brute-force Removing directories, headers, and static libraries."
         echo "----------------------------------------------------------------"
         set -x
-        time rm -rf \
+        time sudo rm -rf \
           /opt/az \
           /opt/ghc \
           /opt/google*/ \
@@ -115,10 +115,9 @@ runs:
           /var/cache \
           /var/lib/{apt,mysql,dpkg,gems,mecab}
 
-        #find /usr -type d -name "*azure*" -print0 | xargs -0 --no-run-if-empty rm -rf
-        time find /usr /opt -type f -name "lib*.a" -print0 | xargs -0 --no-run-if-empty rm -f
-        time find /usr /opt -type d -name "include" -print0 | xargs -0 --no-run-if-empty rm -rf
-        sync
+        #sudo find /usr -type d -name "*azure*" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
+        time sudo find /usr /opt -type f -name "lib*.a" -print0 | xargs -0 --no-run-if-empty sudo rm -f
+        time sudo find /usr /opt -type d -name "include" -print0 | xargs -0 --no-run-if-empty sudo rm -rf
         set +x
 
         # see what is left
@@ -130,4 +129,5 @@ runs:
     - name: Print disk space after cleanup
       shell: bash
       run: |
+        sudo sync
         df -h
