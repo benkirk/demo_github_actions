@@ -114,10 +114,15 @@ jobs:
           submodules: 'true'
           fetch-depth: 0
 
-      - name: Create containers/refactor/extras
+      - name: Create containers/refactor/extras and host bind mounts
         run: |
           which make 2>/dev/null || { sudo apt-get update && sudo apt-get install make; }
-          make -C containers/refactor extras
+          cd containers/refactor
+          make extras
+          mkdir -p $(pwd)/workspace
+          if [[ -d /mnt/my_temp_worspace ]]; then
+            sudo mount --bind /mnt/my_temp_worspace $(pwd)/workspace
+          df -h $(pwd)/workspace
 
       - name: Free Disk Space on Runner
         if: ${{ inputs.free_runner_space }}
