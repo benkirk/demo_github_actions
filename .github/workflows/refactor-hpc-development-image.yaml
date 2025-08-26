@@ -118,7 +118,7 @@ jobs:
         if: ${{ inputs.free_runner_space }}
         uses: ./.github/actions/slim-action-runner
 
-      - name: Create containers/refactor/extras and host bind mounts
+      - name: Create host bind mounts & containers/refactor/extras
         run: |
           which make 2>/dev/null || { sudo apt-get update && sudo apt-get install make; }
           cd containers/refactor
@@ -131,10 +131,10 @@ jobs:
 
       - name: Interrogate Runner Environment
         run: |
-          env | sort && echo
-          cat /etc/os-release && echo
-          uname -a && echo
-          df -h && echo
+          cat /etc/os-release
+          uname -a
+          df -h
+          free
           lscpu
 
       - name: Set up Docker BuildX (local)
