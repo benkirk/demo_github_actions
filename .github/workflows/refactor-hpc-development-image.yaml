@@ -114,6 +114,10 @@ jobs:
           submodules: 'true'
           fetch-depth: 0
 
+      - name: Free Disk Space on Runner
+        if: ${{ inputs.free_runner_space }}
+        uses: ./.github/actions/slim-action-runner
+
       - name: Create containers/refactor/extras and host bind mounts
         run: |
           which make 2>/dev/null || { sudo apt-get update && sudo apt-get install make; }
@@ -124,10 +128,6 @@ jobs:
             sudo mount --bind /mnt/my_temp_worspace $(pwd)/workspace
           fi
           df -h $(pwd)/workspace
-
-      - name: Free Disk Space on Runner
-        if: ${{ inputs.free_runner_space }}
-        uses: ./.github/actions/slim-action-runner
 
       - name: Interrogate Runner Environment
         run: |
