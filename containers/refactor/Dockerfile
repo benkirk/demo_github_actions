@@ -646,22 +646,15 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && case "${id_tag}" in \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
             dnf -y --enablerepo crb install \
-                cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
-                libxml2-devel libedit-devel \
-                ninja-build \
+                libedit-devel ninja-build \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
-                cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
-                libxml2-devel libedit-devel \
-                ninja \
-                python311 \
+                libedit-devel ninja python311 \
             ;; \
         *"|ubuntu|"*) \
             ${PKG_INSTALL_CMD} \
-                cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
-                libxml2-dev libedit2-dev \
-                ninja-build \
+                libedit2-dev ninja-build \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
@@ -671,25 +664,33 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
        esac \
     && cd /tmp \
     && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git \
-    && df -h && du -hs /tmp/*/ \
+    && du -hs /tmp/*/ \
     && mkdir -p /tmp/BUILD_ALL && cd /tmp/BUILD_ALL \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
            -G Ninja \
            -DCMAKE_BUILD_TYPE=MinSizeRel \
-           -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PATH} \
+           -DCMAKE_CXX_LINK_FLAGS="-Wl,-rpath,$LD_LIBRARY_PATH" \
            -DCMAKE_CXX_STANDARD=17 \
            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-           -DCMAKE_CXX_LINK_FLAGS="-Wl,-rpath,$LD_LIBRARY_PATH" \
+           -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PATH} \
            -DFLANG_ENABLE_WERROR=ON \
-           -DLLVM_TARGETS_TO_BUILD=host \
-           -DLLVM_LIT_ARGS=-v \
-           -DLLVM_PARALLEL_LINK_JOBS=2 \
+           -DFLANG_INCLUDE_TESTS=OFF \
            -DLLVM_BUILD_LLVM_DYLIB=ON \
-           -DLLVM_LINK_LLVM_DYLIB=ON \
            -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
+           -DLLVM_INCLUDE_BENCHMARKS=OFF \
+           -DLLVM_INCLUDE_EXAMPLES=OFF \
+           -DLLVM_INCLUDE_TESTS=OFF \
+           -DLLVM_LINK_LLVM_DYLIB=ON \
+           -DLLVM_LIT_ARGS=-v \
+           -DLLVM_RAM_PER_COMPILE_JOB=10000 \
+           -DLLVM_RAM_PER_LINK_JOB=10000 \
+           -DLLVM_RAM_PER_TABLEGEN_JOB=10000 \
+           -DLLVM_TARGETS_TO_BUILD=host \
            ../llvm-project/llvm \
-    && (ninja -C . -j ${MAKE_J_PROCS:-$(nproc)} || ninja -C . -j 2 || ninja -C . -j 2 || ninja -C . -j 1) && ninja -C . install \
+    && (ninja || ninja || ninja ) \
+    && du -hs /tmp/*/ \
+    && ninja install \
     && add_conf "\n# LLVM clang compilers" \
     && add_conf "export COMPILER_FAMILY=clang" \
     && add_conf "export LLVM_VERSION=${LLVM_VERSION}"  \
@@ -703,6 +704,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && echo "${LLVM_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/llvm.conf \
     && ls -d ${LLVM_INSTALL_PATH}/lib/$(uname -m)-*  >> /etc/ld.so.conf.d/llvm.conf \
     && ldconfig --verbose \
+    && du -hs /tmp/*/ ${LLVM_INSTALL_PATH} \
     && docker-clean
 LABEL compiler="clang"
 LABEL clang="${LLVM_VERSION}"
