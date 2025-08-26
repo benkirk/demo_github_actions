@@ -105,7 +105,7 @@ EOF
 # Use a bash login shell for all subsequent RUN commands. This will ultimately source the file
 # /container/config_env.sh; which we build up incrementally; and defines the configuration of all
 # the software installed in a particular image variant.
-SHELL ["/bin/bash", "--login", "-c"]
+SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
 # a common development environment
