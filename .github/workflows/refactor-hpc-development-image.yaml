@@ -313,12 +313,14 @@ jobs:
         env:
           DOCKER_BUILD_SUMMARY: false
         with:
-          push: false
+          push: true
           load: false
           tags: ${{ env.PUBLISH_TAG }}
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: mode=max
           sbom: true
+          cache-from: type=registry,ref=${{env.PUBLISH_CACHE }}
+          cache-to: type=registry,ref=${{ env.PUBLISH_CACHE }},mode=max
           context: containers/publish
           file: containers/publish/Dockerfile
           build-args: |
