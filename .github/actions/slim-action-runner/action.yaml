@@ -125,15 +125,16 @@ runs:
         time probeUsage "After cleanup"
 
         if [[ -d /mnt ]]; then
-            [[ -f /mnt/DATALOSS_WARNING_README.txt ]] && cat /mnt/DATALOSS_WARNING_README.txt || true
             echo "----------------------------------------------------------------"
             echo "Stealing some working space from /mnt/..."
             echo "----------------------------------------------------------------"
             sudo mkdir -p /mnt/my_temp_worspace
             sudo swapon --show
             if [[ -f /mnt/swapfile ]]; then
+                set -x
                 sudo swapoff -v /mnt/swapfile
                 sudo rm -f /mnt/swapfile
+                set +x
             fi
             sudo find /mnt -type f -size +1M -ls
         fi
