@@ -6,28 +6,32 @@ author: 'benkirk'
 runs:
   using: "composite"
   steps:
-    - name: Print disk space before cleanup
+    - name: Before Cleanup
       shell: bash
       run: |
+        echo "Docker System:"
+        docker image ls 2>/dev/null || true
+        docker volume ls 2>/dev/null || true
+        docker system df 2>/dev/null || true
+        echo "Docker BuildX:"
+        docker buildx du 2>/dev/null || true
         df -h
 
-    - name: Free Disk Space
+    - name: Cleaning All Docker Images/Volumes/Caches
       shell: bash
       run: |
-        # If docker is installed, clean anythhing we can
-        if command -v docker 2>&1 >/dev/null ; then
-          echo "--------------------------------------------"
-          echo "Cleaning Docker Caches:"
-          echo "--------------------------------------------"
-          sudo docker buildx du 2>/dev/null || true
-          sudo docker buildx prune --force 2>/dev/null || true
-          sudo docker image ls 2>/dev/null || true
-          sudo docker image prune --all --force 2>/dev/null || true
-          sudo docker system df 2>/dev/null || true
-          sudo docker system prune --all --volumes --force 2>/dev/null || true
-        fi
+        echo "--------------------------------------------"
+        echo "Cleaning All Docker Images/Volumes/Caches:"
+        echo "--------------------------------------------"
+        echo "Docker System:"
+        docker image prune --all --force 2>/dev/null || true
+        docker system prune --all --volumes --force 2>/dev/null || true
+        echo "Docker BuildX:"
+        docker buildx prune --force 2>/dev/null || true
+        sync
 
-    - name: Print disk space after cleanup
+    - name: After Cleanup
       shell: bash
       run: |
+        docker system df 2>/dev/null || true
         df -h
