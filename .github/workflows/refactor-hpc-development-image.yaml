@@ -195,9 +195,9 @@ jobs:
               GPU_LABEL=
           fi
 
-          CI_CACHE=benjaminkirk/gh-ci-cache-${{ inputs.arch }}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
+          CI_CACHE=ncarcisl/gh-ci-cache-${{ inputs.arch }}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
 
-          CI_IMAGE=benjaminkirk/gh-ci-${{ inputs.arch }}
+          CI_IMAGE=ncarcisl/gh-ci-${{ inputs.arch }}
 
           PUBLISH_CACHE=${CI_CACHE}
           PUBLISH_CACHE=${PUBLISH_CACHE//benjaminkirk/ncarcisl}
