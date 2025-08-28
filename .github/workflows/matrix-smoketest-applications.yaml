@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc13, gcc14, clang ]
+        compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
         mpi:      [ openmpi, mpich ]
         gpu:      [ nogpu, cuda ]
         arch:     [ x86_64 ]
@@ -50,7 +50,7 @@ jobs:
         shell: bash -elo pipefail {0}
 
     container:
-      image: ncarcisl/cisldev-${{ matrix.arch }}-${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}:devel
+      image: ncarcisl/hpcdev-${{ matrix.arch }}:${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}-latest
 
     steps:
       - uses: actions/checkout@v4
