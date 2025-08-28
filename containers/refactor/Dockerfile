@@ -89,8 +89,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
 export MAKE_J_PROCS=\${MAKE_J_PROCS:-\$(nproc)}
 TOGGLE_ENABLE_PARALLEL="--disable-parallel"
-TOGGLE_WITH_CUDA="--without-cuda"
-TOGGLE_WITH_ROCM="--without-rocm --without-hip"
+unset TOGGLE_WITH_CUDA
+unset TOGGLE_WITH_ROCM
 FILE1
 #!/bin/bash
 echo "[${0}]: cleaning temporary files from container image to reduce layer size"
@@ -773,9 +773,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --with-device=ch4:ofi \
            --enable-silent-rules \
            --disable-static --enable-shared \
-           --enable-fortran \
-           ${TOGGLE_WITH_CUDA} \
-           ${TOGGLE_WITH_ROCM} \
+           --enable-fortran ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
@@ -828,9 +826,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --with-device=${MPICH_DEVICE} \
            --enable-silent-rules \
            --disable-static --enable-shared \
-           --disable-cxx \
-           ${TOGGLE_WITH_CUDA} \
-           ${TOGGLE_WITH_ROCM} \
+           --disable-cxx ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
@@ -877,9 +873,7 @@ RUN exec &> >(tee /container/logs/openmpi.log) \
        esac \
     && ./configure --help \
     && (./configure \
-           --prefix=${OPENMPI_INSTALL_PATH} ${extra_config_args} \
-           ${TOGGLE_WITH_CUDA} \
-           ${TOGGLE_WITH_ROCM} \
+           --prefix=${OPENMPI_INSTALL_PATH} ${extra_config_args} ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
            --disable-static --enable-shared \
            --disable-dependency-tracking \
             || cat config.log) \
@@ -1016,8 +1010,7 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
             --with-default-plugindir \
             --enable-fortran \
             --disable-cxx \
-            --enable-hl ${extra_args} \
-            ${TOGGLE_ENABLE_PARALLEL} \
+            --enable-hl ${extra_args} ${TOGGLE_ENABLE_PARALLEL} \
             --disable-dependency-tracking \
             || cat config.log) \
     && case "${COMPILER_FAMILY}" in \
