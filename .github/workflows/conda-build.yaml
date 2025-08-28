@@ -80,6 +80,10 @@ jobs:
           ldd ./hello_world
           ./hello_world
 
-          ${CXX} -o ./hello_world_openmp src/hello_world_openmp.C -fopenmp
+          ${CXX} -o ./hello_world src/hello_world.cxx
+          ldd ./hello_world
+          ./hello_world
+
+          ${CXX} -o ./hello_world_openmp src/hello_world.cxx -fopenmp
           ldd ./hello_world_openmp
           OMP_NUM_THREADS=4 ./hello_world_openmp
