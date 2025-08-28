@@ -199,7 +199,7 @@ jobs:
 
           CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
 
-          CI_CACHE=${CI_REPO}:${{ inputs.os }}-cache
+          CI_CACHE=${CI_REPO}-cache:${{ inputs.os }}-cache
 
           PUBLISH_REPO=${CI_REPO}
 
