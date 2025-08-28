@@ -41,7 +41,7 @@ export MPIR_CVAR_ENABLE_GPU=0
 EOF
 
 RUN echo "Testing Image from ${BASE_IMAGE} ..." \
-    && mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp \
+    && mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.cxx -fopenmp \
     && ldd ./hello_world_mpi \
     && export OMP_NUM_THREADS=2 \
     && mpiexec -n 2 ./hello_world_mpi \

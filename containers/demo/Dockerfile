@@ -12,7 +12,7 @@ RUN cat /etc/os-release
 FROM base-image AS final
 #-------------------------------------------------------------------------------
 RUN cat <<EOF > /container/my_buildscript.sh
-\${MPICXX} -o /container/speak.exe /container/extras/hello_world_mpi.C -fopenmp
+\${MPICXX} -o /container/speak.exe /container/extras/hello_world_mpi.cxx -fopenmp
 EOF
 
 RUN echo "Building my application..." \

@@ -12,8 +12,10 @@ int main (int argc, char **argv)
 
   gethostname(hn, sizeof(hn) / sizeof(char));
 
+#ifdef _OPENNMP
 #pragma omp parallel
   { if (0 == omp_get_thread_num()) nthreads = omp_get_num_threads(); }
+#endif
 
   std::cout << "Hello World!: " << std::string (hn)
 	    << ", running " << argv[0];

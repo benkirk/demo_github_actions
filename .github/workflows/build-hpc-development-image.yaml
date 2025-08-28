@@ -327,7 +327,7 @@ jobs:
 
       - name: MPI+OpenMP Hello World
         run: |
-          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.C -fopenmp
+          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.cxx -fopenmp
           ldd ./hello_world_mpi
           export OMP_NUM_THREADS=2
           mpiexec -n 2 ${{ matrix.extra_mpiexec_args }} ./hello_world_mpi || true
