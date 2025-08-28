@@ -35,7 +35,7 @@ jobs:
     name: Build
     strategy:
       fail-fast: false
-      max-parallel: 16
+      max-parallel: 24
       matrix:
         compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
         mpi:      [ openmpi, mpich, mpich3 ]
