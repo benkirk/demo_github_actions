@@ -198,7 +198,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                            procps \
                            {gcc,g++,gfortran}-${gcc_v} gdb man man-db \
                            libc-dev linux-libc-dev libc6-dev file pkg-config patch \
-                           make autoconf automake libtool \
+                           make autoconf automake libtool libtool-bin \
                            git curl wget tar gzip bzip2 xz-utils \
                            emacs-nox \
                            python3 \
