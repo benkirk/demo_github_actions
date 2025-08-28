@@ -1,4 +1,4 @@
-name: Remove old GitHub Action logs
+name: Automatically Remove old GitHub Action logs (cron)
 
 on:
   workflow_dispatch:
