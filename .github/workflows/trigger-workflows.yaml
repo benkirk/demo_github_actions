@@ -30,12 +30,12 @@ jobs:
 
       - name: Almalinux9
         run: |
-          gh workflow run matrix-build-images.yaml -f os=almalinux9 -f test=true -f publish=true
+          gh workflow run refactor-build-images.yaml -f os=almalinux9 -f test=false -f publish=false
 
-      - name: Almalinux10
+      - name: Ubuntu Noble
         run: |
-          gh workflow run matrix-build-images.yaml -f os=almalinux10 -f test=true -f publish=true
+          gh workflow run refactor-build-images.yaml -f os=noble -f test=false -f publish=false
 
       - name: Leap
         run: |
-          gh workflow run matrix-build-images.yaml -f os=leap -f test=true -f publish=true
+          gh workflow run refactor-build-images.yaml -f os=leap -f test=false -f publish=false
