@@ -15,5 +15,5 @@ jobs:
       - uses: yanovation/delete-old-actions@v1
         with:
           token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
-          days-ago: 45
-          dry-run: true
+          days-ago: 3
+          dry-run: false
