@@ -42,12 +42,13 @@ jobs:
 
       - name: Interrogate Environment
         run: |
-          env | sort
           conda list
           df -h
           cat /etc/os-release 2>/dev/null || true
           uname -a
           nvidia-smi 2>/dev/null || true
+          free -g
+          lscpu
           echo && echo && echo
           echo '----------------------------------------------------------------'
           echo && echo && echo
@@ -71,5 +72,14 @@ jobs:
       - name: Hello World
         if: ${{ inputs.hello_world }}
         run: |
+          ${CC} -o ./hello_world src/hello_world.c
+          ldd ./hello_world
+          ./hello_world
+
+          ${FC} -o ./hello_world src/hello_world.f90
+          ldd ./hello_world
+          ./hello_world
+
           ${CXX} -o ./hello_world_openmp src/hello_world_openmp.C -fopenmp
+          ldd ./hello_world_openmp
           OMP_NUM_THREADS=4 ./hello_world_openmp
