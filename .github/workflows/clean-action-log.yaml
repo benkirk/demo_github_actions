@@ -1,3 +1,5 @@
+name: Remove old GitHub Action logs
+
 on:
   workflow_dispatch:
   schedule:
@@ -13,5 +15,5 @@ jobs:
       - uses: yanovation/delete-old-actions@v1
         with:
           token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
-          days-ago: 3
+          days-ago: 45
           dry-run: true
