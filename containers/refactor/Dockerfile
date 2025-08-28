@@ -263,7 +263,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
@@ -363,6 +363,12 @@ LABEL rocm="${ROCM_VERSION}"
 # miniforge stage
 # MINIFORGE_PREREQ could be cuda/rocm, or base_os
 FROM ${MINIFORGE_PREREQ} AS miniforge
+# clean with the --force-pkgs-dirs option now, while we know there are no danlging
+# symbolic links.  Because, later, conda clean --all will not get these.
+#   -f, --force-pkgs-dirs
+#       Remove *all* writable package caches. This option is not included with the
+#       --all flag. WARNING: This will break environments with packages installed
+#       using symlinks back to the package cache.
 #-------------------------------------------------------------------------------
 RUN exec &> >(tee /container/logs/miniforge.log) \
     && mkdir -p /container/miniforge \
@@ -374,6 +380,7 @@ RUN exec &> >(tee /container/logs/miniforge.log) \
     && add_conf "source /container/miniforge/etc/profile.d/conda.sh" \
     && source /container/init-conda.sh \
     && conda --version \
+    && conda clean --all --force-pkgs-dirs --yes --verbose \
     && docker-clean
 
 
@@ -618,7 +625,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -Wno-deprecated-gpu-targets\"" \
     && docker-clean
 
 LABEL compiler="nvhpc"
