@@ -759,8 +759,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
             export FFLAGS="-fallow-argument-mismatch ${FFLAGS}" && export FCFLAGS="-fallow-argument-mismatch ${FCFLAGS}" \
             ;; \
         "nvhpc") \
-            sed -i 's/f08_works=yes/f08_works=no/g' configure.ac \
-            && ./autogen.sh \
+            sed -i 's/f08_works=yes/f08_works=no/g' configure \
             && export CC="/usr/bin/gcc" \
             && export CXX="/usr/bin/g++" \
             && export CXXFLAGS="-fPIC ${MARCH_FLAGS}" \
@@ -769,8 +768,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
             && export FCFLAGS="-fPIC ${MARCH_FLAGS}" \
             ;; \
         "clang") \
-            sed -i 's/f08_works=yes/f08_works=no/g' configure.ac \
-            && ./autogen.sh \
+            sed -i 's/f08_works=yes/f08_works=no/g' configure \
             ;; \
        esac \
     && ./configure --help \
