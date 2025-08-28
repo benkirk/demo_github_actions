@@ -72,6 +72,7 @@ jobs:
       - name: Hello World
         if: ${{ inputs.hello_world }}
         run: |
+          set -x
           ${CC} -o ./hello_world src/hello_world.c
           ldd ./hello_world
           ./hello_world

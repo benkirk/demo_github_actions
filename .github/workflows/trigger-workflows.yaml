@@ -36,6 +36,6 @@ jobs:
         run: |
           gh workflow run refactor-build-images.yaml -f os=noble -f test=false -f publish=false
 
-      # - name: OpenSUSE Leap
-      #   run: |
-      #     gh workflow run refactor-build-images.yaml -f os=leap -f test=false -f publish=false
+      - name: OpenSUSE Leap
+        run: |
+          gh workflow run refactor-build-images.yaml -f os=leap -f test=false -f publish=false
