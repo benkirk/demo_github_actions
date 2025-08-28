@@ -141,7 +141,7 @@ jobs:
 
 
 
-    uses: ./.github/workflows/refactor-hpc-development-image.yaml
+    uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
       os: ${{ inputs.os }}
       arch: ${{ matrix.arch }}
