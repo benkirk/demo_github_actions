@@ -22,26 +22,26 @@ echo "${id_tag}"
 case "${id_tag}" in
 
     *"almalinux"*|*"|rocky|"*|*"|rhel|"*)
-        dnf -y --enablerepo crb install \
-            cmake \
-            csh time file hostname perl \
+        ${PKG_INSTALL_CMD} --enablerepo crb \
+            tcsh time file hostname \
             file flex byacc \
             libtirpc-devel \
-            libpng-devel \
-            || true
+            libpng-devel
         ;;
-    *"|leap|"*)
+    *"-leap|"*|"-tumbleweed|")
         ${PKG_INSTALL_CMD} \
-            cmake \
-            csh time file hostname perl \
+            tcsh time file hostname \
             file flex byacc \
             libtirpc-devel \
-            libpng16-devel \
-            || true
+            libpng16-devel
         ;;
-    *"|noble|"*)
-        ${PKG_INSTALL_CMD} wget curl csh m4 gcc g++ gfortran file make cmake \
-            || true
+    *"|ubuntu|"*)
+        apt-get update
+        ${PKG_INSTALL_CMD} \
+            wget curl \
+            tcsh m4 file file flex byacc \
+            libtirpc-dev \
+            libpng-dev
         ;;
     *)
         echo "Unrecognized base operating system!!"

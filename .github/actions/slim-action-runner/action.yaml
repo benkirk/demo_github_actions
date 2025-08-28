@@ -14,7 +14,7 @@ runs:
     - name: Free Disk Space
       shell: bash
       run: |
-        # Determine if we have Ubuntu, CentOS, or other distro as our runner OS
+        # Relentlessly remove unneeded software from runner
         os_id=$(grep '^ID=' /etc/os-release | cut -d "=" -f2)
 
         TIMEFORMAT=$'--> Real time: %3R seconds'

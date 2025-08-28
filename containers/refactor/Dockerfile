@@ -33,9 +33,7 @@ ARG FFTLIBS_PREREQ="mpi-iolibs"
 
 ARG FINAL_TARGET="fftlibs"
 
-ARG TOGGLE_ENABLE_PARALLEL="--disable-parallel"
-ARG TOGGLE_WITH_CUDA="--without-cuda"
-ARG TOGGLE_WITH_ROCM="--without-rocm --without-hip"
+
 
 ################################################################################
 # Part 1: support for various Base Operating Systems
@@ -66,8 +64,34 @@ FROM rocm/dev-ubuntu-24.04:6.4.2-complete AS noble-rocm
 FROM ${BASE_OS} AS base_os
 #-------------------------------------------------------------------------------
 
+# Use a bash login shell for all subsequent RUN commands. This will ultimately source the file
+# /container/config_env.sh; which we build up incrementally; and defines the configuration of all
+# the software installed in a particular image variant.
+SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
+
 # An OS-independent helper script for removing caches and temporary files to reduce layer size
-RUN cat <<'EOF' > /usr/bin/docker-clean
+RUN mkdir -p /container/{bin,extras,logs} && \
+    <<FILE1   cat > /container/config_env.sh && \
+    <<'FILE2' cat > /container/bin/docker-clean && \
+    <<'FILE3' cat > /container/bin/list-large-directories && \
+    <<'FILE4' cat > /container/bin/add_conf \
+    && chmod a+rx /container/bin/* \
+    && cat /container/config_env.sh \
+    && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
+#-------------------------------------------------------
+# Container Environment Configuration
+#  (source this script to configure installed software)
+#-------------------------------------------------------
+export PATH=${PATH}:/container/bin
+export CPATH=${CPATH}
+export LIBRARY_PATH=${LIBRARY_PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+
+export MAKE_J_PROCS=\${MAKE_J_PROCS:-\$(nproc)}
+TOGGLE_ENABLE_PARALLEL="--disable-parallel"
+TOGGLE_WITH_CUDA="--without-cuda"
+TOGGLE_WITH_ROCM="--without-rocm --without-hip"
+FILE1
 #!/bin/bash
 echo "[${0}]: cleaning temporary files from container image to reduce layer size"
 [ -x "$(command -v yum)" ] && yum clean all
@@ -75,18 +99,15 @@ echo "[${0}]: cleaning temporary files from container image to reduce layer size
 [ -x "$(command -v zypper)" ] && zypper clean -a
 [ -x "$(command -v conda)" ] && conda clean --all --yes
 for dir in /tmp/* /var/tmp/* /home/jupyter/{.ccache,.cache/pip,conda-bld,.conda} /root/* /root/.[^.]* /var/lib/apt/lists /var/log/* ; do
-	[ -e ${dir} ] && rm -rf ${dir} 2>/dev/null || true
+    [ -e ${dir} ] && rm -rf ${dir} 2>/dev/null || true
 done
 rm -rf /tmp/*
-EOF
-
-# A utility script to find large files & directories, potentially as targets for cleanup
-RUN cat <<'EOF' > /usr/bin/list-large-directories
+FILE2
 #!/bin/bash
 
 dirs="/home /mnt /tmp /opt /usr /var /container"
 if [ ${#} -ge 1 ]; then
-   dirs=${@}
+    dirs=${@}
 fi
 
 THRESHOLD_SIZE_MB=4
@@ -99,10 +120,7 @@ for dir in ${dirs}; do
         du 2>/dev/null --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs ${dir} | sort -n
     fi
 done
-EOF
-
-# Common configuration script
-RUN cat <<'EOF' > /usr/bin/add_conf
+FILE3
 #!/bin/bash
 
 set -e
@@ -112,25 +130,10 @@ if [[ ${#} -ne 1 ]]; then
     exit 1
 fi
 
-if [[ ! -s /container/config_env.sh ]]; then
-    cat <<'EOF2' >/container/config_env.sh
-#-------------------------------------------------------
-# Container Environment Configuration
-#  (source this script to configure installed software)
-#-------------------------------------------------------
-EOF2
-    ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
-else
-    echo -e "${1}" >> /container/config_env.sh
-fi
-EOF
+echo -e "${1}" >> /container/config_env.sh
+FILE4
 
 
-
-# Use a bash login shell for all subsequent RUN commands. This will ultimately source the file
-# /container/config_env.sh; which we build up incrementally; and defines the configuration of all
-# the software installed in a particular image variant.
-SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
 # a common development environment
@@ -138,19 +141,19 @@ SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 # we initialize /container/config_env.sh here via add_conf,
 # setting variables like PATH etc. to whatever they are preconfigured from the OS.
 # (We set rather than append at initialization; we will occasionally re-source this file repeatedly)
-RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.log) \
-    && chmod a+rx /usr/bin/{docker-clean,list-large-directories,add_conf} \
+RUN exec &> >(tee /container/logs/base-os.log) \
     && cat /etc/*-release \
     && source /etc/os-release \
     && id_tag="|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" \
-    && echo -e "Installing Base OS Packages\${id_tag}" \
+    && echo -e "Installing Base OS Packages\n${id_tag}" \
     && case "${id_tag}" in \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
-            yum -y install dnf dnf-plugins-core \
+                add_conf 'export PKG_INSTALL_CMD="dnf -y install"' \
+                && yum -y install dnf dnf-plugins-core \
                 && dnf group list \
                 && dnf -y install \
                        procps \
-                       gcc gcc-c++ gcc-gfortran gdb man \
+                       gcc{,-c++,-gfortran} gdb man \
                        glibc-devel file pkgconf patch \
                        make autoconf automake libtool \
                        git wget which tar gzip bzip2 xz \
@@ -160,14 +163,15 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                        cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
                        libxml2-devel curl-devel \
                        sudo \
-                && add_conf 'export PKG_INSTALL_CMD="dnf -y install"' \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
-                zypper --non-interactive refresh \
+                add_conf 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' \
+                && gcc_v=14 \
+                && zypper --non-interactive refresh \
                 && zypper --non-interactive update \
                 && zypper --non-interactive install \
                           procps \
-                          gcc gcc-c++ gcc-fortran gdb man \
+                          gcc${gcc_v}{,-c++,-fortran} gdb man \
                           glibc-devel file pkgconf patch \
                           gmake autoconf automake libtool \
                           git wget which tar gzip bzip2 xz \
@@ -177,23 +181,22 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                           cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
                           libxml2-devel libedit-devel curl-devel \
                           sudo \
-                && add_conf 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' \
-                && case "${id_tag}" in \
-                    *"leap|"*) \
-                        zypper --non-interactive install \
-                               gcc12{,-c++,-fortran} \
-                            && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 50 \
-                            && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 50 \
-                            && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-12 50 \
-                       ;; \
-                   esac \
+                && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
+                && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
+                && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
             ;; \
         *"|ubuntu|"*) \
-                apt-get update \
+                add_conf 'export PKG_INSTALL_CMD="apt-get install -y"' \
+                && case "${id_tag}" in \
+                    *"|jammy|"*) gcc_v=12 ;; \
+                    *"|noble|"*) gcc_v=14 ;; \
+                   esac \
+                && (echo -e 'y\n' | unminimize) \
+                && apt-get update \
                 && apt-get autoclean \
                 && apt-get install -y \
                            procps \
-                           gcc g++ gfortran gdb man \
+                           {gcc,g++,gfortran}-${gcc_v} gdb man man-db \
                            libc-dev linux-libc-dev libc6-dev file pkg-config patch \
                            make autoconf automake libtool \
                            git curl wget tar gzip bzip2 xz-utils \
@@ -202,12 +205,9 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
                            libxml2-dev libcurl4-openssl-dev \
                            sudo \
-                && add_conf 'export PKG_INSTALL_CMD="apt-get install -y"' \
-                && case "${id_tag}" in \
-                    *"|noble|"*) \
-                        apt-get install -y g++-14 gcc-14 gfortran-14 \
-                    ;; \
-                   esac \
+                && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
+                && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
+                && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
@@ -215,11 +215,6 @@ RUN mkdir -p /container/{logs,extras} && exec &> >(tee /container/logs/base-os.l
                 && exit 1 \
             ;; \
        esac \
-    && add_conf "export PATH=$(echo "$PATH" | awk -v RS=: -v ORS=: '!/root/' | sed 's/:$//')" \
-    && add_conf "export CPATH=${CPATH}" \
-    && add_conf "export LIBRARY_PATH=${LIBRARY_PATH}" \
-    && add_conf "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" \
-    && add_conf "export MAKE_J_PROCS=\${MAKE_J_PROCS:-\$(nproc)}"\
     && docker-clean
 
 
@@ -242,7 +237,7 @@ ARG CUDA_VERSION="12.9"
 ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
+RUN exec &> >(tee /container/logs/cuda.log) \
     && cd /tmp \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
@@ -269,6 +264,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
     && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler\"" \
+    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
@@ -307,7 +303,6 @@ case "${MPI_FAMILY}" in
 esac
 EOF
 
-ARG TOGGLE_WITH_CUDA="--with-cuda=${CUDA_HOME}"
 LABEL cuda="${CUDA_VERSION}"
 
 
@@ -319,7 +314,7 @@ FROM base_os AS rocm
 ARG ROCM_VERSION="6.2.3"
 ARG ROCM_HOME="/opt/rocm-${ROCM_VERSION}"
 ENV ROCM_HOME="${ROCM_HOME}"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
+RUN exec &> >(tee /container/logs/rocm.log) \
     && echo "ROCm - amdgpu-install installer (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/amdgpu-install.html)" \
     && echo "ROCm: https://rocm.docs.amd.com/en/latest/about/license.html" >> /container/EULAs.txt \
     && source /etc/os-release \
@@ -355,10 +350,11 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/rocm.log) \
     && add_conf "export PATH=${ROCM_HOME}/bin:\${PATH}" \
     && add_conf "export CPATH=${ROCM_HOME}/include:\${CPATH}" \
     && add_conf "export LIBRARY_PATH=${ROCM_HOME}/lib:\${LIBRARY_PATH}" \
+    && add_conf "TOGGLE_WITH_ROCM=\"--with-rocm=${ROCM_HOME} --with-hip=${ROCM_HOME}\"" \
     && echo "${ROCM_HOME}/lib" >> /etc/ld.so.conf.d/rocm-${ROCM_VERSION}.conf \
     && ldconfig --verbose \
     && docker-clean
-ARG TOGGLE_WITH_ROCM="--with-rocm=${ROCM_HOME} --with-hip=${ROCM_HOME}"
+
 LABEL rocm="${ROCM_VERSION}"
 
 
@@ -368,7 +364,7 @@ LABEL rocm="${ROCM_VERSION}"
 # MINIFORGE_PREREQ could be cuda/rocm, or base_os
 FROM ${MINIFORGE_PREREQ} AS miniforge
 #-------------------------------------------------------------------------------
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/miniforge.log) \
+RUN exec &> >(tee /container/logs/miniforge.log) \
     && mkdir -p /container/miniforge \
     && env \
     && cd /tmp && wget --quiet "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" \
@@ -428,7 +424,7 @@ LABEL gcc="os-gcc"
 FROM toolkits AS gcc
 #-------------------------------------------------------------------------------
 ARG GCC_VERSION="13.3.0"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
+RUN exec &> >(tee /container/logs/gcc.log) \
     && echo "Building gcc-${GCC_VERSION}" \
     && unset LIBRARY_PATH CPATH C_INCLUDE_PATH PKG_CONFIG_PATH \
     && env \
@@ -438,7 +434,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
                 || curl --retry 3 --retry-delay 5 -sSL https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx \
                 || curl --retry 3 --retry-delay 5 -sSL https://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz | tar Jx) \
     && cd /tmp/gcc-${GCC_VERSION} \
-    && mkdir -p /container/logs/ \
     && ./configure --help \
     && ./contrib/download_prerequisites \
     && mkdir /tmp/gcc-build && cd /tmp/gcc-build \
@@ -449,7 +444,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/gcc.log) \
                  --disable-bootstrap \
                  --disable-multilib \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && add_conf "\n# GCC compilers" \
     && add_conf "export COMPILER_FAMILY=gcc" \
@@ -485,7 +480,7 @@ FROM toolkits AS oneapi
 ARG ONEAPI_VERSION="2025.2.0"
 ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh"
 ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/oneapi.log) \
+RUN exec &> >(tee /container/logs/oneapi.log) \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
     && ONEAPI_INSTALL_PATH="/container/intel-oneapi" \
@@ -521,7 +516,7 @@ FROM toolkits AS aocc
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/aocc/package.py
 ARG AOCC_VERSION="5.0.0"
 ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-0/aocc-compiler-5.0.0.tar"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/aocc.log) \
+RUN exec &> >(tee /container/logs/aocc.log) \
     && echo "Installing AMD AOCC-${AOCC_VERSION}" \
     && echo "AMD AOCC: https://www.amd.com/en/developer/aocc/aocc-compiler/eula.html" >> /container/EULAs.txt \
     && AOCC_INSTALL_PATH="/container/aocc/${AOCC_VERSION}" \
@@ -561,7 +556,7 @@ FROM toolkits AS nvhpc
 ARG NVHPC_VERSION="25.1"
 ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
 ARG MARCH_FLAGS=""
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/nvhpc.log) \
+RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "Installing NVIDIA HPC Toolkit ${NVHPC_VERSION}" \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
     && cd /tmp \
@@ -639,22 +634,23 @@ FROM toolkits AS clang
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 # ref. https://llvm.org/docs/CMake.html
 ARG LLVM_VERSION="20.1.8"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
+RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
     && id_tag="|${PLATFORM_ID}|${VERSION_CODENAME}|${ID}|" \
     && case "${id_tag}" in \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
-            dnf -y --enablerepo crb install \
+            ${PKG_INSTALL_CMD} --enablerepo crb \
                 libedit-devel ninja-build \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
-                libedit-devel ninja python311 \
+                libedit-devel ninja \
             ;; \
         *"|ubuntu|"*) \
-            ${PKG_INSTALL_CMD} \
-                libedit2-dev ninja-build \
+            apt-get update \
+            && ${PKG_INSTALL_CMD} \
+                libedit-dev ninja-build \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
@@ -662,9 +658,8 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
                 && exit 1 \
             ;; \
        esac \
-    && cd /tmp \
-    && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git \
-    && du -hs /tmp/*/ \
+    && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git /tmp/llvm-project \
+    && df -h && du -hs /tmp/*/ \
     && mkdir -p /tmp/BUILD_ALL && cd /tmp/BUILD_ALL \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
@@ -683,13 +678,11 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
            -DLLVM_INCLUDE_TESTS=OFF \
            -DLLVM_LINK_LLVM_DYLIB=ON \
            -DLLVM_LIT_ARGS=-v \
-           -DLLVM_RAM_PER_COMPILE_JOB=10000 \
            -DLLVM_RAM_PER_LINK_JOB=10000 \
-           -DLLVM_RAM_PER_TABLEGEN_JOB=10000 \
            -DLLVM_TARGETS_TO_BUILD=host \
            ../llvm-project/llvm \
-    && (ninja || ninja || ninja ) \
-    && du -hs /tmp/*/ \
+    && (ninja || ninja || ninja -j 2) \
+    && df -h && du -hs /tmp/*/ \
     && ninja install \
     && add_conf "\n# LLVM clang compilers" \
     && add_conf "export COMPILER_FAMILY=clang" \
@@ -702,9 +695,9 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/llvm.log) \
     && add_conf "export clang_F77=$(which flang) && export F77=\${clang_F77}" \
     && add_conf "export clang_FC=$(which flang) && export FC=\${clang_FC}" \
     && echo "${LLVM_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/llvm.conf \
-    && ls -d ${LLVM_INSTALL_PATH}/lib/$(uname -m)-*  >> /etc/ld.so.conf.d/llvm.conf \
+    && ls -d ${LLVM_INSTALL_PATH}/lib/$(uname -m)-* >> /etc/ld.so.conf.d/llvm.conf \
     && ldconfig --verbose \
-    && du -hs /tmp/*/ ${LLVM_INSTALL_PATH} \
+    && df -h && du -hs /tmp/*/ ${LLVM_INSTALL_PATH} \
     && docker-clean
 LABEL compiler="clang"
 LABEL clang="${LLVM_VERSION}"
@@ -749,12 +742,11 @@ FROM compilers AS mpich3
 #    since we would not then be able to override them. - final sed step
 #-------------------------------------------------------------------------------
 ARG MPICH_VERSION="3.4.3"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
+RUN exec &> >(tee /container/logs/mpich.log) \
     && echo "building MPICH-${MPICH_VERSION}" \
     && MPICH_INSTALL_PATH="/container/mpich/${MPICH_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
-    && mkdir -p /container/logs/ \
     && case "${COMPILER_FAMILY}" in \
         "gcc") \
             export FFLAGS="-fallow-argument-mismatch ${FFLAGS}" && export FCFLAGS="-fallow-argument-mismatch ${FCFLAGS}" \
@@ -786,7 +778,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
            ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install \
     && add_conf "\n# MPICH ${MPICH_VERSION}" \
     && add_conf "export MPI_FAMILY=mpich" \
@@ -818,13 +810,12 @@ FROM compilers AS mpich
 ARG MPICH_VERSION="4.3.1"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
 ARG MPICH_DEVICE="ch4:ucx"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
+RUN exec &> >(tee /container/logs/mpich.log) \
     && echo "building MPICH-${MPICH_VERSION}" \
     && env \
     && MPICH_INSTALL_PATH="/container/mpich/${MPICH_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
-    && mkdir -p /container/logs/ \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
         "gcc:15."*) \
             export CFLAGS="-std=gnu17 -Wno-incompatible-pointer-types ${CFLAGS}" \
@@ -842,7 +833,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpich.log) \
            ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install \
     && add_conf "\n# MPICH ${MPICH_VERSION}" \
     && add_conf "export MPI_FAMILY=mpich" \
@@ -876,12 +867,11 @@ FROM compilers AS openmpi
 #-------------------------------------------------------------------------------
 ARG OPENMPI_VERSION="5.0.8"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
+RUN exec &> >(tee /container/logs/openmpi.log) \
     && echo "building OpenMPI-${OPENMPI_VERSION}" \
     && OPENMPI_INSTALL_PATH="/container/openmpi/${OPENMPI_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://download.open-mpi.org/release/open-mpi/v$(echo ${OPENMPI_VERSION} | cut -d . -f -2)/openmpi-${OPENMPI_VERSION}.tar.bz2 | tar xj \
     && cd ./openmpi-${OPENMPI_VERSION} \
-    && mkdir -p /container/logs/ \
     && case "${COMPILER_FAMILY}" in \
         "aocc") extra_config_args="--disable-alt-short-float" ;; \
        esac \
@@ -893,7 +883,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/openmpi.log) \
            --disable-static --enable-shared \
            --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install \
     && cd ${OPENMPI_INSTALL_PATH} \
     && rm_paths="share/doc/" \
@@ -928,8 +918,9 @@ RUN echo "Setting ${MPI_FAMILY} MPI layer" \
     && add_conf "export MPICC=$(which mpicc)" \
     && add_conf "export MPIFC=$(which mpifort)" \
     && add_conf "export MPIF77=$(which mpif77)" \
+    && add_conf "TOGGLE_ENABLE_PARALLEL=\"--enable-parallel\"" \
     && docker-clean
-ARG TOGGLE_ENABLE_PARALLEL="--enable-parallel"
+
 ENV CC="mpicc"
 ENV CXX="mpicxx"
 ENV F77="mpif77"
@@ -946,13 +937,15 @@ ENV FC="mpifort"
 # HDF5 & NetCDF
 FROM ${IOLIBS_PREREQ} AS iolibs
 # (ref: https://github.com/Unidata/netcdf-fortran/issues/309 for aocc libtool fix)
+# BLOSC / -DCMAKE_POLICY_VERSION_MINIMUM=3.5: required for building with cmake4
+#                                             (first encountered on tumbleweed)
 #-------------------------------------------------------------------------------
 ARG SZIP_VERSION="2.1.1"
-ARG BLOSC_VERSION="1.21.5"
+ARG BLOSC_VERSION="1.21.6"
 ARG HDF5_VERSION="1.14.6"
 ARG NETCDF_C_VERSION="4.9.3"
 ARG NETCDF_FORTRAN_VERSION="4.6.2"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
+RUN exec &> >(tee /container/logs/iolibs.log) \
     && echo "building IO libraries" \
     && echo "building libszip-${SZIP_VERSION}" \
     && env \
@@ -965,7 +958,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
             --disable-static --enable-shared \
             --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && echo "#include <stddef.h>" >> ${SZIP_INSTALL_PATH}/include/ricehdf.h \
     && add_conf "\n# SZIP ${SZIP_VERSION}" \
@@ -988,11 +981,12 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
        esac \
     && cmake \
            -DCMAKE_INSTALL_PREFIX=${BLOSC_INSTALL_PATH} \
+           -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
            -DCMAKE_INSTALL_DO_STRIP=1 \
            -DPREFER_EXTERNAL_ZLIB=ON \
            -DPREFER_EXTERNAL_ZSTD=ON \
            -DPREFER_EXTERNAL_LZ4=ON \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install \
     && add_conf "\n# BLOSC ${BLOSC_VERSION}" \
     && add_conf "export BLOSC_VERSION=${BLOSC_VERSION}" \
@@ -1029,7 +1023,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && case "${COMPILER_FAMILY}" in \
         "clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
     && add_conf "\n# HDF5 ${HDF5_VERSION}" \
@@ -1040,7 +1034,6 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && echo "${HDF5_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/hdf5.conf \
     && ldconfig --verbose \
     && source /container/config_env.sh \
-    && echo "Installing additional NetCDF dependencies" \
     && echo "building NetCDF-${NETCDF_C_VERSION}" \
     && NETCDF_INSTALL_PATH="/container/netcdf" \
     && HDF5_PLUGIN_PATH="${NETCDF_INSTALL_PATH}/lib/plugins" \
@@ -1056,7 +1049,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
             --with-plugin-dir=${HDF5_PLUGIN_PATH} \
             --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
     && add_conf "\n# NetCDF libraries" \
@@ -1065,7 +1058,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && add_conf "export NETCDF_FORTRAN_VERSION=${NETCDF_FORTRAN_VERSION}" \
     && add_conf "export PATH=${NETCDF_INSTALL_PATH}/bin:\${PATH}" \
     && add_conf "export CPATH=${NETCDF_INSTALL_PATH}/include:\${CPATH}" \
-    && add_conf "export LIBRARY_PATH=${NETCDF_INSTALL_PATH}/lib:${HDF5_PLUGIN_PATH}\${LIBRARY_PATH}" \
+    && add_conf "export LIBRARY_PATH=${NETCDF_INSTALL_PATH}/lib:${HDF5_PLUGIN_PATH}:\${LIBRARY_PATH}" \
     && add_conf "export HDF5_PLUGIN_PATH=${HDF5_PLUGIN_PATH}" \
     && echo "${NETCDF_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/netcdf.conf \
     && echo "${HDF5_PLUGIN_PATH}" >> /etc/ld.so.conf.d/netcdf.conf \
@@ -1085,7 +1078,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/iolibs.log) \
     && case "${COMPILER_FAMILY}" in \
         "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && make --silent --no-print-directory installcheck \
     && ldconfig --verbose \
@@ -1105,7 +1098,7 @@ FROM iolibs AS mpi-iolibs
 ARG PNETCDF_VERSION="1.14.0"
 ARG PIO_VERSION="2.6.6"
 ARG PIO_TAG="pio2_6_6"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
+RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && echo "building parallel IO libraries" \
     && echo "building pnetcdf-${PNETCDF_VERSION}" \
     && env \
@@ -1124,7 +1117,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
             --disable-static --enable-shared \
             --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && add_conf "\n# PNetCDF ${PNETCDF_VERSION}" \
     && add_conf "export PNETCDF=${PNETCDF_INSTALL_PATH}" \
@@ -1156,7 +1149,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/mpi-iolibs.log) \
     && case "${COMPILER_FAMILY}" in \
         "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && add_conf "\n# PIO ${PIO_VERSION}" \
     && add_conf "export PIO=${PIO_INSTALL_PATH}" \
@@ -1173,13 +1166,13 @@ LABEL pio="${PIO_VERSION}"
 
 
 #-------------------------------------------------------------------------------
-# FFTW & HEFFTE
+# FFTW & HEFFTE (with MPI support)
 #  (sufficient to build MuRAM)
 FROM ${FFTLIBS_PREREQ} AS fftlibs
 #-------------------------------------------------------------------------------
 ARG FFTW_VERSION="3.3.10"
 ARG HEFFTE_VERSION="2.4.1"
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
+RUN exec &> >(tee /container/logs/fftlibs.log) \
     && echo "building fftw-${FFTW_VERSION}" \
     && env \
     && FFTW_INSTALL_PATH="/container/fftw/${FFTW_VERSION}" \
@@ -1193,7 +1186,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
             --enable-mpi --enable-threads \
             --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && make --no-print-directory distclean \
     && (./configure \
@@ -1203,7 +1196,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
             --enable-mpi --enable-threads \
             --disable-dependency-tracking \
             || cat config.log) \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
     && add_conf "\n# FFTW ${FFTW_VERSION}" \
     && add_conf "export FFTW_VERSION=${FFTW_VERSION}" \
@@ -1231,7 +1224,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
            -DCMAKE_CXX_COMPILER=${CXX} \
            -DMPI_CXX_COMPILER=${CXX} \
            .. \
-    && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+    && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install \
     && case "|${CUDA_HOME}|${ROCM_HOME}|" in \
         "|"*"cuda"*"|") \
@@ -1253,7 +1246,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/fftlibs.log) \
                        -DCMAKE_CXX_COMPILER=${CXX} \
                        -DMPI_CXX_COMPILER=${CXX} \
                        .. \
-                && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
+                && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
                 && make --no-print-directory --silent install \
           ;; \
        esac \
@@ -1278,10 +1271,10 @@ LABEL heffte="${HEFFTE_VERSION}"
 ################################################################################
 FROM ${FINAL_TARGET} AS final
 ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
-RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
+RUN exec &> >(tee /container/logs/final.log) \
     && list-large-directories \
-    && add_conf "export LD_LIBRARY_PATH=$(echo "${LD_LIBRARY_PATH}" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/:$//')" \
     && add_conf "\n# Final configuration:" | tee -a /container/config_env.sh \
+    && add_conf "export LD_LIBRARY_PATH=$(echo "${LD_LIBRARY_PATH}" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/:$//')" \
     && add_conf "\n# (container image build completed at $(date))" \
     && useradd plainuser -d /home/plainuser \
     && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
@@ -1289,7 +1282,7 @@ RUN mkdir -p /container/logs && exec &> >(tee /container/logs/final.log) \
     && cat /container/config_env.sh
 
 # ref: https://spack.readthedocs.io/en/latest/containers.html
-ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login", "-c", "$*", "--" ]
+ENTRYPOINT ["/bin/bash", "--rcfile", "/container/config_env.sh", "--login", "-c", "${*}", "--" ]
 CMD [ "/bin/bash" ]
 
 # Many github actions do not work as a regular user -- alas, stay root for now.
