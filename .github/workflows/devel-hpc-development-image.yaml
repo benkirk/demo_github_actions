@@ -233,7 +233,7 @@ jobs:
         uses: peter-evans/dockerhub-description@v4
         with:
           username: benjaminkirk
-          password: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
+          password: ${{ secrets.dockerhub_token }}
           repository: peterevans/dockerhub-description
           readme-filepath: ./container/devenv/README.md
           short-description: "NCAR HPC Development Container Images"
