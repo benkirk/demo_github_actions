@@ -1,0 +1,108 @@
+name: Devel - Build HPC Development Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Base OS'
+        type: choice
+        required: true
+        default: almalinux9
+        options:
+          - almalinux8
+          - almalinux9
+          - almalinux10
+          - jammy
+          - noble
+          - leap
+          - tumbleweed
+
+      docker_repo:
+        description: "Docker Repository for Deployment"
+        type: choice
+        required: true
+        default: "benjaminkirk/gh-ci"
+        options:
+          - "benjaminkirk/gh-ci"
+          - "ncarcisl/hpcdev"
+
+      test:
+        description: 'Test Image'
+        type: boolean
+        required: false
+        default: true
+
+      publish:
+        description: 'Publish Image'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+
+  build-matrix:
+    name: Build
+    strategy:
+      fail-fast: false
+      max-parallel: 24
+      matrix:
+        compiler: [ gcc ]
+        mpi:      [ openmpi, mpich ]
+        gpu:      [ nogpu, cuda ]
+        arch:     [ x86_64, aarch64 ]
+
+        include:
+          # gpu architecture-dependent build arg specifications
+          - arch: x86_64
+            gpu: cuda
+            gpu_build_args: |
+              CUDA_VERSION=12.9
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
+
+          - arch: aarch64
+            gpu: cuda
+            gpu_build_args: |
+              CUDA_VERSION=12.9
+              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
+
+          # compiler build arg specifications
+          - compiler: gcc
+            compiler_build_args: |
+              COMPILER_FAMILY=os-gcc
+
+          # mpi build arg specifications
+          - mpi: openmpi
+            mpi_build_args: |
+              MPI_FAMILY=openmpi
+              OPENMPI_VERSION=5.0.8
+
+
+
+    uses: ./.github/workflows/build-hpc-development-image.yaml
+    with:
+      docker_repo: ${{ inputs.docker_repo }}
+      os: ${{ inputs.os }}
+      arch: ${{ matrix.arch }}
+      runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+      free_runner_space: true
+      conda: true
+      gpu: ${{ matrix.gpu }}
+      gpu_build_args: ${{ matrix.gpu_build_args }}
+      compiler: ${{ matrix.compiler }}
+      compiler_build_args: ${{ matrix.compiler_build_args }}
+      mpi: ${{ matrix.mpi }}
+      mpi_build_args: ${{ matrix.mpi_build_args }}
+      test: ${{ inputs.test }}
+      publish: ${{ inputs.publish }}
+      extra_build_args: |
+        HDF5_VERSION=1.14.6
+        NETCDF_C_VERSION=4.9.3
+        NETCDF_FORTRAN_VERSION=4.6.2
+        PNETCDF_VERSION=1.14.0
+        PIO_VERSION=2.6.6
+        PIO_TAG=pio2_6_6
+        FFTW_VERSION=3.3.10
+        HEFFTE_VERSION=2.4.1
+
+    secrets:
+      dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
