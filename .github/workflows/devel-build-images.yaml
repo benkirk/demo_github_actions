@@ -78,7 +78,7 @@ jobs:
 
 
 
-    uses: ./.github/workflows/build-hpc-development-image.yaml
+    uses: ./.github/workflows/devel-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
       os: ${{ inputs.os }}
