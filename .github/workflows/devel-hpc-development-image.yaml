@@ -229,13 +229,14 @@ jobs:
         with:
           images: ${{ env.CI_REPO }}
 
+      # ref: https://github.com/peter-evans/dockerhub-description
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
         with:
           username: benjaminkirk
           password: ${{ secrets.dockerhub_token }}
           repository: peterevans/dockerhub-description
-          readme-filepath: ./container/devenv/README.md
+          readme-filepath: ./containers/devenv/README.md
           short-description: "NCAR HPC Development Container Images"
 
       - name: BaseOS + Toolkits + Compiler + MPI Image
