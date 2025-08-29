@@ -1,3 +1,3 @@
-# Sample Multi-layer `Dockerfile` for Bootstrapping a Development Environment Container
+# NCAR HPC Development Container Image
 
-Synchronized occasionally from the [NCAR HPC Benchmarks](https://github.com/NCAR/hpc-benchmarks) repository.
+This repository contains a suite of container images suitable for building many NCAR HPC Applications.

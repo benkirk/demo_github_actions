@@ -229,6 +229,15 @@ jobs:
         with:
           images: ${{ env.CI_REPO }}
 
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: benjaminkirk
+          password: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
+          repository: peterevans/dockerhub-description
+          readme-filepath: ./container/devenv/README.md
+          short-description: "NCAR HPC Development Container Images"
+
       - name: BaseOS + Toolkits + Compiler + MPI Image
         uses: docker/build-push-action@v6
         with:

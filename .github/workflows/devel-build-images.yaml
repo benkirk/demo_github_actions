@@ -49,7 +49,7 @@ jobs:
         compiler: [ gcc ]
         mpi:      [ openmpi, mpich ]
         gpu:      [ nogpu, cuda ]
-        arch:     [ x86_64, aarch64 ]
+        arch:     [ x86_64 ]
 
         include:
           # gpu architecture-dependent build arg specifications
@@ -59,11 +59,11 @@ jobs:
               CUDA_VERSION=12.9
               CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
 
-          - arch: aarch64
-            gpu: cuda
-            gpu_build_args: |
-              CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
+          # - arch: aarch64
+          #   gpu: cuda
+          #   gpu_build_args: |
+          #     CUDA_VERSION=12.9
+          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
           # compiler build arg specifications
           - compiler: gcc
