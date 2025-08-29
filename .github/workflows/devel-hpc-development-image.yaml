@@ -229,16 +229,6 @@ jobs:
         with:
           images: ${{ env.CI_REPO }}
 
-      # ref: https://github.com/peter-evans/dockerhub-description
-      - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: benjaminkirk
-          password: ${{ secrets.dockerhub_token }}
-          repository: ${{ env.CI_REPO }}
-          readme-filepath: ./containers/devenv/README.md
-          short-description: "NCAR HPC Development Container Images"
-
       - name: BaseOS + Toolkits + Compiler + MPI Image
         uses: docker/build-push-action@v6
         with:
@@ -261,6 +251,16 @@ jobs:
             ${{ inputs.gpu_build_args }}
             ${{ inputs.compiler_build_args }}
             ${{ inputs.mpi_build_args }}
+
+      # # ref: https://github.com/peter-evans/dockerhub-description
+      # - name: Update Docker Hub Description
+      #   uses: peter-evans/dockerhub-description@v4
+      #   with:
+      #     username: benjaminkirk
+      #     password: ${{ secrets.dockerhub_token }}
+      #     repository: ${{ env.CI_REPO }}
+      #     readme-filepath: ./containers/devenv/README.md
+      #     short-description: "NCAR HPC Development Container Images"
 
       - name: Done Build - Clean Up
         uses: ./.github/actions/docker-cleanup
