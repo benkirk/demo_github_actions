@@ -201,7 +201,7 @@ jobs:
               GPU_LABEL=
           fi
 
-          CI_REPO=${ inputs.docker_repo }}-${{ inputs.arch }}
+          CI_REPO=${{ inputs.docker_repo }}-${{ inputs.arch }}
 
           CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
 
