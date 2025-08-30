@@ -146,6 +146,8 @@ dir=$(realpath ${1})
 
 [ -d "${dir}" ] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
+echo "Before: $(du -hs ${dir})"
+
 # ref: https://spack.readthedocs.io/en/latest/containers.html
 find -L ${dir} -type f -exec readlink -f '{}' \; | \
     xargs file -i | \
@@ -153,6 +155,7 @@ find -L ${dir} -type f -exec readlink -f '{}' \; | \
     grep 'x-executable\|x-archive\|x-sharedlib' | \
     awk -F: '{print $1}' | xargs strip -s
 
+echo "After: $(du -hs ${dir})"
 FILE5
 
 
@@ -275,9 +278,10 @@ RUN exec &> >(tee /container/logs/cuda.log) && \
     && rm -f ./cuda_*_linux*.run \
     && cd ${CUDA_HOME} \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
-    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
+    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && remove-cuda-static-libs \
+    && cat README.whered_stuff_go \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
     && add_conf "export CUDA_VERSION=${CUDA_VERSION}" \
@@ -548,6 +552,7 @@ RUN exec &> >(tee /container/logs/oneapi.log) \
     && add_conf "export oneapi_CXX=$(which icpx) && export CXX=\${oneapi_CXX}" \
     && add_conf "export oneapi_F77=$(which ifx) && export F77=\${oneapi_F77}" \
     && add_conf "export oneapi_FC=$(which ifx) && export FC=\${oneapi_FC}" \
+    && strip-binaries ${ONEAPI_INSTALL_PATH} \
     && echo ${LD_LIBRARY_PATH} | tr ':' '\n' | grep ${ONEAPI_INSTALL_PATH} >> /etc/ld.so.conf.d/intel-oneapi.conf \
     && ldconfig --verbose \
     && docker-clean
