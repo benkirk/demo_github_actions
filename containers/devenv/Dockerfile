@@ -77,6 +77,7 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<'FILE4' cat > /container/bin/add_conf && \
     <<'FILE5' cat > /container/bin/strip-binaries &&\
     <<'FILE6' cat > /container/bin/remove-redundant-static-libs && \
+    <<'FILE7' cat > /container/bin/remove-cuda-static-libs && \
     chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
@@ -191,6 +192,37 @@ while read -r static_lib; do
     fi
 done < <(find ${dir} -readable -type f -name "lib*.a")
 FILE6
+#!/bin/bash
+
+set -eu
+
+if [[ ${#} -ne 1 ]]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[[ -d "${dir}" ]] \
+  && echo "[${BASH_SOURCE[0]}]: Removing redundant CUDA toolkit static libraries from ${dir}..." \
+  || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+while read -r static_lib; do
+
+    if [[ ! -f "${static_lib}" ]]; then
+        continue
+    fi
+
+    # Check CUDA/NVHPC-style libcufoo.so / libcufoo_static.a}
+    shared_lib=${static_lib//'_static.a'/'.so'}
+
+    if [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib}
+    fi
+done < <(find ${dir} -readable -type f -name "lib*.a")
+FILE7
 
 
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
@@ -296,8 +328,7 @@ ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) \
-    && cd /tmp && \
-    <<'FILE1' cat > /container/bin/remove-cuda-static-libs && chmod +x /container/bin/* \
+    && cd /tmp \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
     && echo "CUDA: https://docs.nvidia.com/cuda/eula/index.html" >> /container/EULAs.txt \
@@ -330,37 +361,6 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
-#!/bin/bash
-
-set -eu
-
-if [[ ${#} -ne 1 ]]; then
-    echo "Usage: ${0} <directory path>"
-    exit 1
-fi
-
-dir=$(realpath ${1})
-
-[[ -d "${dir}" ]] \
-  && echo "[${BASH_SOURCE[0]}]: Removing redundant CUDA toolkit static libraries from ${dir}..." \
-  || { echo "ERROR: no such directory: ${dir}"; exit 1; }
-
-while read -r static_lib; do
-
-    if [[ ! -f "${static_lib}" ]]; then
-        continue
-    fi
-
-    # Check CUDA-stylee libcufoo.so / libcufoo_static.a}
-    shared_lib=${static_lib//'_static.a'/'.so'}
-
-    if [[ -f ${shared_lib} ]]; then
-        shared_lib=$(realpath ${shared_lib})
-        ls -lh ${static_lib} ${shared_lib}
-        rm -vf ${static_lib}
-    fi
-done < <(find ${dir} -readable -type f -name "libcu*.a")
-FILE1
 
 # # A sourceable script to query the CUDA configuration at runtime.
 # # (intended to simplify setting compatibility variables for
@@ -701,8 +701,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
            add_conf "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" ;\
            add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" ;\
            for dir in {cuda,math_libs}/${NVHPC_CUDA_VERSION}; do \
-               dir=$(realpath ${dir}) ;\
-               find ${dir} -type f -name "lib*_static.a" -print0 | xargs -0 -n1 --no-run-if-empty rm -vf >> README.whered_stuff_go ;\
+               remove-cuda-static-libs >> README.whered_stuff_go ;\
            done ;\
        fi \
     && find ${NVCOMPILERS} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
