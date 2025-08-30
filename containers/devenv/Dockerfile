@@ -146,7 +146,7 @@ fi
 
 dir=$(realpath ${1})
 
-[ -d "${dir}" ] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+[[ -d "${dir}" ]] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
 TIMEFORMAT=$'--> Real time: %3R seconds'
 
