@@ -300,7 +300,7 @@ ARG CUDA_VERSION="12.9"
 ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
-RUN exec &> >(tee /container/logs/cuda.log) && \
+RUN exec &> >(tee /container/logs/cuda.log) \
     && cd /tmp \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
