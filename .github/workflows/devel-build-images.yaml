@@ -46,29 +46,41 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
-        compiler: [ gcc ]
-        mpi:      [ openmpi, mpich ]
+        compiler: [ gcc, oneapi, nvhc, aocc ]
+        mpi:      [ openmpi ]
         gpu:      [ nogpu, cuda ]
         arch:     [ x86_64 ]
 
         include:
           # gpu architecture-dependent build arg specifications
-          - arch: x86_64
-            gpu: cuda
+          - gpu: cuda
+            arch: x86_64
             gpu_build_args: |
               CUDA_VERSION=12.9
               CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
-
-          # - arch: aarch64
-          #   gpu: cuda
-          #   gpu_build_args: |
-          #     CUDA_VERSION=12.9
-          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
 
           # compiler build arg specifications
           - compiler: gcc
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
+          - compiler: oneapi
+            compiler_build_args: |
+              COMPILER_FAMILY=oneapi
+              ONEAPI_VERSION=2025.2.0
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh
+
+          - compiler: aocc
+            compiler_build_args: |
+              COMPILER_FAMILY=aocc
+
+          - compiler: nvhpc
+            gpu: cuda
+            compiler_build_args: |
+              COMPILER_FAMILY=nvhpc
+              MARCH_FLAGS=-march=x86-64-v3
+              NVHPC_VERSION=25.7
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -76,6 +88,16 @@ jobs:
               MPI_FAMILY=openmpi
               OPENMPI_VERSION=5.0.8
 
+          # - mpi: mpich
+          #   mpi_build_args: |
+          #     MPI_FAMILY=mpich
+          #     MPICH_VERSION=4.3.1
+
+        exclude:
+          - arch: aarch64
+            compiler: oneapi
+          - arch: aarch64
+            compiler: aocc
 
 
     uses: ./.github/workflows/devel-hpc-development-image.yaml
