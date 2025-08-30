@@ -75,9 +75,9 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<'FILE2' cat > /container/bin/docker-clean && \
     <<'FILE3' cat > /container/bin/list-large-directories && \
     <<'FILE4' cat > /container/bin/add_conf && \
-    <<'FILE5' cat > /container/bin/strip-binaries \
-    <<'FILE6' cat > /container/bin/remove-redundant-static-libs \
-    && chmod a+rx /container/bin/* \
+    <<'FILE5' cat > /container/bin/strip-binaries &&\
+    <<'FILE6' cat > /container/bin/remove-redundant-static-libs && \
+    chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
 #-------------------------------------------------------
@@ -145,7 +145,7 @@ fi
 
 dir=$(realpath ${1})
 
-[ -d "${dir}" ] && echo "Stripping all libraries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+[ -d "${dir}" ] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
 TIMEFORMAT=$'--> Real time: %3R seconds'
 
@@ -155,7 +155,7 @@ echo "Before: $(du -hs ${dir})"
 time find -L ${dir} -type f -exec readlink -f '{}' \; | \
     xargs file -i | \
     grep 'charset=binary' | \
-    grep 'x-archive\|x-sharedlib' | \
+    grep 'x-executable\|x-archive\|x-sharedlib' | \
     awk -F: '{print $1}' | xargs --no-run-if-empty strip --strip-debug --preserve-dates
 
 echo "After: $(du -hs ${dir})"
