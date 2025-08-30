@@ -7,7 +7,7 @@ on:
         description: 'Base OS'
         type: choice
         required: true
-        default: almalinux9
+        default: almalinux10
         options:
           - almalinux8
           - almalinux9
@@ -36,7 +36,7 @@ on:
         description: 'Publish Image'
         type: boolean
         required: false
-        default: false
+        default: true
 
 jobs:
 
