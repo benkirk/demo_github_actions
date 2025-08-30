@@ -177,6 +177,10 @@ dir=$(realpath ${1})
 
 while read -r static_lib; do
 
+    if [[ ! -f "${static_lib}" ]]; then
+        continue
+    fi
+
     # Check CUDA-stylee libcufoo.so / libcufoo_static.a}
     shared_lib=${static_lib//'_static.a'/'.so'}
 
@@ -194,7 +198,7 @@ while read -r static_lib; do
         ls -lh ${static_lib} ${shared_lib}
         rm -vf ${static_lib}
     fi
-done < <(find ${dir} -type f -name "lib*.a")
+done < <(find ${dir} -readable -type f -name "lib*.a")
 FILE6
 
 
