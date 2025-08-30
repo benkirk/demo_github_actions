@@ -24,7 +24,8 @@ on:
         default: "benjaminkirk/gh-ci"
         options:
           - "benjaminkirk/gh-ci"
-          - "ncarcisl/hpcdev"
+          - "benjaminkirk/hpcdev"
+          - "ncarcisl/gh-ci"
 
       test:
         description: 'Test Image'

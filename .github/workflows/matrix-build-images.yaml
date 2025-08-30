@@ -17,6 +17,17 @@ on:
           - leap
           - tumbleweed
 
+      docker_repo:
+        description: "Docker Repository for Deployment"
+        type: choice
+        required: true
+        default: "ncarcisl/hpcdev"
+        options:
+          - "benjaminkirk/gh-ci"
+          - "benjaminkirk/hpcdev"
+          - "ncarcisl/gh-ci"
+          - "ncarcisl/hpcdev"
+
       test:
         description: 'Test Image'
         type: boolean
@@ -143,6 +154,7 @@ jobs:
 
     uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
+      docker_repo: ${{ inputs.docker_repo }}
       os: ${{ inputs.os }}
       arch: ${{ matrix.arch }}
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}

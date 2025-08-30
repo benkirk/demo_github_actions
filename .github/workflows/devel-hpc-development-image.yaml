@@ -303,6 +303,14 @@ jobs:
             ${{ env.CI_TAG }} \
             /container/extras/build_dart.sh
 
+      - name: Test Image - FastEddy
+        if: ${{ inputs.test && inputs.gpu != 'nogpu' }}
+        continue-on-error: true
+        run: |
+          docker run --rm --env-file test_env.cfg \
+            ${{ env.CI_TAG }} \
+            /container/extras/build_fasteddy.sh
+
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
         continue-on-error: ${{ inputs.gpu == 'nogpu' && false || true }}
