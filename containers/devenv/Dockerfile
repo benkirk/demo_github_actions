@@ -679,7 +679,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
     && rm_paths="comm_libs profilers" \
-    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
+    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
     && echo -e "\nNVHPC-Provided CUDA: ${NVHPC_CUDA_VERSION}" \
@@ -704,6 +704,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
                remove-cuda-static-libs >> README.whered_stuff_go ;\
            done ;\
        fi \
+    && cat README.whered_stuff_go \
     && find ${NVCOMPILERS} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && echo "Configuring ld.so.conf.d..." \
     && echo "${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION}/compilers/lib" >> /etc/ld.so.conf.d/nvhpc.conf \
