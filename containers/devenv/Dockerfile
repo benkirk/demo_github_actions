@@ -176,6 +176,7 @@ dir=$(realpath ${1})
   && echo "[${BASH_SOURCE[0]}]: Removing redundant static libraries from ${dir}..." \
   || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
+echo "Before: $(du -hs ${dir})"
 while read -r static_lib; do
 
     if [[ ! -f "${static_lib}" ]]; then
@@ -195,6 +196,7 @@ while read -r static_lib; do
         rm -vf ${static_lib}
     fi
 done < <(find ${dir} -readable -type f -name "lib*.a")
+echo "After: $(du -hs ${dir})"
 FILE6
 #!/bin/bash
 
@@ -210,6 +212,8 @@ dir=$(realpath ${1})
 [[ -d "${dir}" ]] \
   && echo "[${BASH_SOURCE[0]}]: Removing redundant CUDA toolkit static libraries from ${dir}..." \
   || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+echo "Before: $(du -hs ${dir})"
 
 while read -r static_lib; do
 
@@ -230,6 +234,7 @@ while read -r static_lib; do
         rm -vf ${static_lib}
     fi
 done < <(find ${dir} -readable -type f -name "lib*_static.a")
+echo "After: $(du -hs ${dir})"
 FILE7
 
 
