@@ -258,7 +258,9 @@ ARG CUDA_VERSION="12.9"
 ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
-RUN exec &> >(tee /container/logs/cuda.log) \
+RUN exec &> >(tee /container/logs/cuda.log) && \
+    <<'FILE1' cat > /container/bin/remove-cuda-static-libs && \
+    && chmod +x /container/bin/* \
     && cd /tmp \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
@@ -273,9 +275,9 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && rm -f ./cuda_*_linux*.run \
     && cd ${CUDA_HOME} \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
-    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \&& cat README.whered_stuff_go \
+    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} \
-    && find ${CUDA_HOME} -type -f -name "libcu*_static.a" -print0 | xargs -0 --no-run-if-empty rm -vf >> README.whered_stuff_go \
+    && remove-cuda-static-libs \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
     && add_conf "export CUDA_VERSION=${CUDA_VERSION}" \
@@ -291,39 +293,56 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
-
-# A sourceable script to query the CUDA configuration at runtime.
-# (intended to simplify setting compatibility variables for
-# testing on hosts without a CUDA driver.)
-RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
 #!/bin/bash
-echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
+echo "[${BASH_SOURCE[0]}]: Removing CUDA Toolkit static libraries when a suitable shared library exists..."
 
-nvidia-smi 2>/dev/null && found_gpu=true || found_gpu=false
+while read -r static_lib; do
 
-# quick return when a GPU is found
-if [ "${found_gpu}" = true ]; then
-    echo "Found a GPU..."
-    exit 0
-else
-    echo "No GPU Found..."
-fi
 
-# otherwise,
-if [ -d "${CUDA_STUBDIR}" ]; then
-    find ${CUDA_STUBDIR} -name "libnvidia-ml.so.*" | xargs --no-run-if-empty rm -v
-fi
+    shared_lib=${static_lib//'_static.a'/'.so'}
 
-echo "Disabling CUDA-Aware MPI Features..."
-case "${MPI_FAMILY}" in
-    "openmpi")
-        export OMPI_MCA_opal_cuda_support=false
-        ;;
-    "mpich")
-        export MPIR_CVAR_ENABLE_GPU=0
-        ;;
-esac
-EOF
+    if [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib} >> README.whered_stuff_go
+        #ln -sf ${shared_lib} ${static_lib}
+    fi
+
+done < <(find ${CUDA_HOME} -type f -name "lib*_static.a")
+FILE1
+
+# # A sourceable script to query the CUDA configuration at runtime.
+# # (intended to simplify setting compatibility variables for
+# # testing on hosts without a CUDA driver.)
+# RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
+# #!/bin/bash
+# echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
+
+# nvidia-smi 2>/dev/null && found_gpu=true || found_gpu=false
+
+# # quick return when a GPU is found
+# if [ "${found_gpu}" = true ]; then
+#     echo "Found a GPU..."
+#     exit 0
+# else
+#     echo "No GPU Found..."
+# fi
+
+# # otherwise,
+# if [ -d "${CUDA_STUBDIR}" ]; then
+#     find ${CUDA_STUBDIR} -name "libnvidia-ml.so.*" | xargs --no-run-if-empty rm -v
+# fi
+
+# echo "Disabling CUDA-Aware MPI Features..."
+# case "${MPI_FAMILY}" in
+#     "openmpi")
+#         export OMPI_MCA_opal_cuda_support=false
+#         ;;
+#     "mpich")
+#         export MPIR_CVAR_ENABLE_GPU=0
+#         ;;
+# esac
+# EOF
 
 LABEL cuda="${CUDA_VERSION}"
 
