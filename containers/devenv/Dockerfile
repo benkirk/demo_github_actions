@@ -601,7 +601,7 @@ RUN exec &> >(tee /container/logs/oneapi.log) \
     && curl --retry 3 --retry-delay 5 -s ${ONEAPI_CC_URL} -o cpp-installer.sh && ls -ltrh cpp-installer.sh && chmod +x ./cpp-installer.sh && ./cpp-installer.sh ${installer_opts} && rm -rf cpp-installer.sh \
     && curl --retry 3 --retry-delay 5 -s ${ONEAPI_FC_URL} -o fortran-installer.sh && ls -ltrh fortran-installer.sh && chmod +x ./fortran-installer.sh && ./fortran-installer.sh ${installer_opts} && rm -rf fortran-installer.sh \
     && cd ${ONEAPI_INSTALL_PATH} \
-    && rm_paths="mpi debugger tbb conda_channel compiler/*/linux/lib/oclfpga /opt/intel" \
+    && rm_paths="mpi debugger conda_channel compiler/*/linux/lib/oclfpga /opt/intel" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
     && rm -rf ${rm_paths} /tmp/intel_installers /var/intel \
     && add_conf "\n# Intel OneAPI compilers" \
