@@ -144,7 +144,7 @@ fi
 
 dir=$(realpath ${1})
 
-[ -d "${dir}" ] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+[ -d "${dir}" ] && echo "Stripping all libraries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
 echo "Before: $(du -hs ${dir})"
 
@@ -152,8 +152,15 @@ echo "Before: $(du -hs ${dir})"
 find -L ${dir} -type f -exec readlink -f '{}' \; | \
     xargs file -i | \
     grep 'charset=binary' | \
-    grep 'x-executable\|x-archive\|x-sharedlib' | \
-    awk -F: '{print $1}' | xargs strip -s
+    grep 'x-archive\|x-sharedlib' | \
+    awk -F: '{print $1}' | xargs --no-run-if-empty strip -s
+
+echo "Re-indexing static libraries with ranlib..."
+find -L ${dir} -type f -exec readlink -f '{}' \; | \
+    xargs file -i | \
+    grep 'charset=binary' | \
+    grep 'x-archive' | \
+    awk -F: '{print $1}' | xargs -n1 --no-run-if-empty ranlib
 
 echo "After: $(du -hs ${dir})"
 FILE5
