@@ -224,8 +224,8 @@ while read -r static_lib; do
     # Check CUDA/NVHPC-style libcufoo.so / libcufoo_static.a}
     shared_lib=${static_lib}
     shared_lib=${shared_lib//'_static.a'/'.so'}
+    shared_lib=${shared_lib//'_static_nocallback.a'/'.so'}
     shared_lib=$(realpath ${shared_lib})
-
 
     if cmp -s ${static_lib} ${shared_lib}; then
         # in case suffix match fails...
@@ -356,7 +356,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
             --no-man-page \
     && rm -f ./cuda_*_linux*.run \
     && cd ${CUDA_HOME} \
-    && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
+    && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/ nsightee_plugins/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && remove-cuda-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
@@ -615,7 +615,6 @@ RUN exec &> >(tee /container/logs/oneapi.log) \
     && add_conf "export oneapi_CXX=$(which icpx) && export CXX=\${oneapi_CXX}" \
     && add_conf "export oneapi_F77=$(which ifx) && export F77=\${oneapi_F77}" \
     && add_conf "export oneapi_FC=$(which ifx) && export FC=\${oneapi_FC}" \
-    && strip-binaries ${ONEAPI_INSTALL_PATH} \
     && echo ${LD_LIBRARY_PATH} | tr ':' '\n' | grep ${ONEAPI_INSTALL_PATH} >> /etc/ld.so.conf.d/intel-oneapi.conf \
     && ldconfig --verbose \
     && docker-clean
