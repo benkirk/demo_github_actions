@@ -185,12 +185,14 @@ while read -r static_lib; do
     # Check typical libfoo.so / libfoo.a}
     shared_lib=${static_lib//'.a'/'.so'}
     shared_lib=$(realpath ${shared_lib})
-    if [[ "${static_lib}" != "${shared_lib}" ]]; then
-        if [[ -f ${shared_lib} ]]; then
-            shared_lib=$(realpath ${shared_lib})
-            ls -lh ${static_lib} ${shared_lib}
-            rm -vf ${static_lib}
-        fi
+
+    # in case suffix match fails...
+    if cmp -s ${static_lib} ${shared_lib}; then
+       continue
+    elif [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib}
     fi
 done < <(find ${dir} -readable -type f -name "lib*.a")
 FILE6
@@ -218,11 +220,14 @@ while read -r static_lib; do
     # Check CUDA/NVHPC-style libcufoo.so / libcufoo_static.a}
     shared_lib=${static_lib//'_static.a'/'.so'}
     shared_lib=$(realpath ${shared_lib})
-    if [[ "${static_lib}" != "${shared_lib}" ]]; then
-        if [[ -f ${shared_lib} ]]; then
-            ls -lh ${static_lib} ${shared_lib}
-            rm -vf ${static_lib}
-        fi
+
+    # in case suffix match fails...
+    if cmp -s ${static_lib} ${shared_lib}; then
+       continue
+    elif [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib}
     fi
 done < <(find ${dir} -readable -type f -name "lib*_static.a")
 FILE7
