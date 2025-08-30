@@ -24,6 +24,8 @@ on:
         default: "ncarcisl/hpcdev"
         options:
           - "benjaminkirk/gh-ci"
+          - "benjaminkirk/hpcdev"
+          - "ncarcisl/gh-ci"
           - "ncarcisl/hpcdev"
 
       test:
