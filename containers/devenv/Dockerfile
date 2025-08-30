@@ -259,7 +259,7 @@ ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) && \
-    <<'FILE1' cat > /container/bin/remove-cuda-static-libs && \
+    <<'FILE1' cat > /container/bin/remove-cuda-static-libs \
     && chmod +x /container/bin/* \
     && cd /tmp \
     && env \
@@ -297,7 +297,6 @@ RUN exec &> >(tee /container/logs/cuda.log) && \
 echo "[${BASH_SOURCE[0]}]: Removing CUDA Toolkit static libraries when a suitable shared library exists..."
 
 while read -r static_lib; do
-
 
     shared_lib=${static_lib//'_static.a'/'.so'}
 
