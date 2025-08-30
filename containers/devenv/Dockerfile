@@ -76,6 +76,7 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<'FILE3' cat > /container/bin/list-large-directories && \
     <<'FILE4' cat > /container/bin/add_conf && \
     <<'FILE5' cat > /container/bin/strip-binaries \
+    <<'FILE6' cat > /container/bin/remove-redundant-static-libs \
     && chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
@@ -95,19 +96,19 @@ unset TOGGLE_WITH_ROCM
 FILE1
 #!/bin/bash
 echo "[${0}]: cleaning temporary files from container image to reduce layer size"
-[ -x "$(command -v yum)" ] && yum clean all
-[ -x "$(command -v apt)" ] && apt clean
-[ -x "$(command -v zypper)" ] && zypper clean -a
-[ -x "$(command -v conda)" ] && conda clean --all --yes
+[[ -x "$(command -v yum)" ]] && yum clean all
+[[ -x "$(command -v apt)" ]] && apt clean
+[[ -x "$(command -v zypper)" ]] && zypper clean -a
+[[ -x "$(command -v conda)" ]] && conda clean --all --yes
 for dir in /tmp/* /var/tmp/* /home/jupyter/{.ccache,.cache/pip,conda-bld,.conda} /root/* /root/.[^.]* /var/lib/apt/lists /var/log/* ; do
-    [ -e ${dir} ] && rm -rf ${dir} 2>/dev/null || true
+    [[ -e ${dir} ]] && rm -rf ${dir} 2>/dev/null || true
 done
 rm -rf /tmp/*
 FILE2
 #!/bin/bash
 
 dirs="/home /mnt /tmp /opt /usr /var /container"
-if [ ${#} -ge 1 ]; then
+if [[ ${#} -ge 1 ]]; then
     dirs=${@}
 fi
 
@@ -116,7 +117,7 @@ THRESHOLD_SIZE_MB=4
 echo "[${0}]: Finding large files & directories >${THRESHOLD_SIZE_MB}MiB in ${dirs} - output is MiB"
 for dir in ${dirs}; do
     dir=$(realpath ${dir})
-    if [ -d ${dir} ]; then
+    if [[ -d ${dir} ]]; then
         find 2>/dev/null ${dir} -type f -size +${THRESHOLD_SIZE_MB}M -print0 | xargs -0 --no-run-if-empty du --block-size=1MiB | sort -n
         du 2>/dev/null --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs ${dir} | sort -n
     fi
@@ -137,7 +138,7 @@ FILE4
 
 set -eu
 
-if [ ${#} -ne 1 ]; then
+if [[ ${#} -ne 1 ]]; then
     echo "Usage: ${0} <directory path>"
     exit 1
 fi
@@ -155,17 +156,46 @@ time find -L ${dir} -type f -exec readlink -f '{}' \; | \
     xargs file -i | \
     grep 'charset=binary' | \
     grep 'x-archive\|x-sharedlib' | \
-    awk -F: '{print $1}' | xargs --no-run-if-empty strip -s
-
-echo "Re-indexing static libraries with ranlib..."
-time find -L ${dir} -type f -exec readlink -f '{}' \; | \
-    xargs file -i | \
-    grep 'charset=binary' | \
-    grep 'x-archive' | \
-    awk -F: '{print $1}' | xargs -n1 --no-run-if-empty ranlib
+    awk -F: '{print $1}' | xargs --no-run-if-empty strip --strip-debug --preserve-dates
 
 echo "After: $(du -hs ${dir})"
 FILE5
+#!/bin/bash
+
+set -eu
+
+if [[ ${#} -ne 1 ]]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[[ -d "${dir}" ]] \
+  && echo "[${BASH_SOURCE[0]}]: Removing redundant static libraries from ${dir}..." \
+  || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+while read -r static_lib; do
+
+    # Check CUDA-stylee libcufoo.so / libcufoo_static.a}
+    shared_lib=${static_lib//'_static.a'/'.so'}
+
+    if [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib}
+    fi
+
+    # Check typical libfoo.so / libfoo.a}
+    shared_lib=${static_lib//'.a'/'.so'}
+
+    if [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib}
+    fi
+done < <(find ${dir} -type f -name "lib*.a")
+FILE6
 
 
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
@@ -271,8 +301,6 @@ ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) && \
-    <<'FILE1' cat > /container/bin/remove-cuda-static-libs \
-    && chmod +x /container/bin/* \
     && cd /tmp \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
@@ -289,7 +317,7 @@ RUN exec &> >(tee /container/logs/cuda.log) && \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
-    && remove-cuda-static-libs \
+    && remove-redundant-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
     && cat README.whered_stuff_go \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
@@ -306,22 +334,6 @@ RUN exec &> >(tee /container/logs/cuda.log) && \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
-#!/bin/bash
-echo "[${BASH_SOURCE[0]}]: Removing CUDA Toolkit static libraries when a suitable shared library exists..."
-
-while read -r static_lib; do
-
-    shared_lib=${static_lib//'_static.a'/'.so'}
-
-    if [[ -f ${shared_lib} ]]; then
-        shared_lib=$(realpath ${shared_lib})
-        ls -lh ${static_lib} ${shared_lib}
-        rm -vf ${static_lib} >> README.whered_stuff_go
-        #ln -sf ${shared_lib} ${static_lib}
-    fi
-
-done < <(find ${CUDA_HOME} -type f -name "lib*_static.a")
-FILE1
 
 # # A sourceable script to query the CUDA configuration at runtime.
 # # (intended to simplify setting compatibility variables for
