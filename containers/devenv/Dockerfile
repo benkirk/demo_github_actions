@@ -75,6 +75,7 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<'FILE2' cat > /container/bin/docker-clean && \
     <<'FILE3' cat > /container/bin/list-large-directories && \
     <<'FILE4' cat > /container/bin/add_conf \
+    <<'FILE5' cat > /container/bin/strip-binaries \
     && chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
@@ -132,7 +133,25 @@ fi
 
 echo -e "${1}" >> /container/config_env.sh
 FILE4
+#!/bin/bash
 
+if [ ${#} -ne 1 ]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[ -d "${dir}" ] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+# ref: https://spack.readthedocs.io/en/latest/containers.html
+find -L ${dir} -type f -exec readlink -f '{}' \; | \
+    xargs file -i | \
+    grep 'charset=binary' | \
+    grep 'x-executable\|x-archive\|x-sharedlib' | \
+    awk -F: '{print $1}' | xargs strip -s
+
+FILE5
 
 
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
