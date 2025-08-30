@@ -146,17 +146,19 @@ dir=$(realpath ${1})
 
 [ -d "${dir}" ] && echo "Stripping all libraries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
+TIMEFORMAT=$'--> Real time: %3R seconds'
+
 echo "Before: $(du -hs ${dir})"
 
 # ref: https://spack.readthedocs.io/en/latest/containers.html
-find -L ${dir} -type f -exec readlink -f '{}' \; | \
+time find -L ${dir} -type f -exec readlink -f '{}' \; | \
     xargs file -i | \
     grep 'charset=binary' | \
     grep 'x-archive\|x-sharedlib' | \
     awk -F: '{print $1}' | xargs --no-run-if-empty strip -s
 
 echo "Re-indexing static libraries with ranlib..."
-find -L ${dir} -type f -exec readlink -f '{}' \; | \
+time find -L ${dir} -type f -exec readlink -f '{}' \; | \
     xargs file -i | \
     grep 'charset=binary' | \
     grep 'x-archive' | \
