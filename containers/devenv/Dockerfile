@@ -187,9 +187,9 @@ while read -r static_lib; do
     shared_lib=${static_lib//'.a'/'.so'}
     shared_lib=$(realpath ${shared_lib})
 
-    # in case suffix match fails...
     if cmp -s ${static_lib} ${shared_lib}; then
-       continue
+        # in case suffix match fails...
+        continue
     elif [[ -f ${shared_lib} ]]; then
         shared_lib=$(realpath ${shared_lib})
         ls -lh ${static_lib} ${shared_lib}
@@ -222,18 +222,20 @@ while read -r static_lib; do
     fi
 
     # Check CUDA/NVHPC-style libcufoo.so / libcufoo_static.a}
-    shared_lib=${static_lib//'_static.a'/'.so'}
+    shared_lib=${static_lib}
+    shared_lib=${shared_lib//'_static.a'/'.so'}
     shared_lib=$(realpath ${shared_lib})
 
-    # in case suffix match fails...
+
     if cmp -s ${static_lib} ${shared_lib}; then
-       continue
+        # in case suffix match fails...
+        continue
     elif [[ -f ${shared_lib} ]]; then
         shared_lib=$(realpath ${shared_lib})
         ls -lh ${static_lib} ${shared_lib}
         rm -vf ${static_lib}
     fi
-done < <(find ${dir} -readable -type f -name "lib*_static.a")
+done < <(find ${dir} -readable -type f -name "lib*_static*.a")
 echo "After: $(du -hs ${dir})"
 FILE7
 
