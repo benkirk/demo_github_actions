@@ -181,15 +181,6 @@ while read -r static_lib; do
         continue
     fi
 
-    # Check CUDA-stylee libcufoo.so / libcufoo_static.a}
-    shared_lib=${static_lib//'_static.a'/'.so'}
-
-    if [[ -f ${shared_lib} ]]; then
-        shared_lib=$(realpath ${shared_lib})
-        ls -lh ${static_lib} ${shared_lib}
-        rm -vf ${static_lib}
-    fi
-
     # Check typical libfoo.so / libfoo.a}
     shared_lib=${static_lib//'.a'/'.so'}
 
@@ -305,7 +296,8 @@ ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) \
-    && cd /tmp \
+    && cd /tmp && \
+    <<'FILE1' cat > /container/bin/remove-cuda-static-libs && chmod +x /container/bin/* \
     && env \
     && echo "Cuda v${CUDA_VERSION} - runfile installer" \
     && echo "CUDA: https://docs.nvidia.com/cuda/eula/index.html" >> /container/EULAs.txt \
@@ -321,7 +313,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
-    && remove-redundant-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
+    && remove-cuda-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
     && cat README.whered_stuff_go \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
@@ -338,6 +330,37 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
+#!/bin/bash
+
+set -eu
+
+if [[ ${#} -ne 1 ]]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[[ -d "${dir}" ]] \
+  && echo "[${BASH_SOURCE[0]}]: Removing redundant CUDA toolkit static libraries from ${dir}..." \
+  || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+while read -r static_lib; do
+
+    if [[ ! -f "${static_lib}" ]]; then
+        continue
+    fi
+
+    # Check CUDA-stylee libcufoo.so / libcufoo_static.a}
+    shared_lib=${static_lib//'_static.a'/'.so'}
+
+    if [[ -f ${shared_lib} ]]; then
+        shared_lib=$(realpath ${shared_lib})
+        ls -lh ${static_lib} ${shared_lib}
+        rm -vf ${static_lib}
+    fi
+done < <(find ${dir} -readable -type f -name "libcu*.a")
+FILE1
 
 # # A sourceable script to query the CUDA configuration at runtime.
 # # (intended to simplify setting compatibility variables for
