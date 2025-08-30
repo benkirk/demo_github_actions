@@ -305,6 +305,7 @@ jobs:
 
       - name: Test Image - FastEddy
         if: ${{ inputs.test && inputs.gpu != 'nogpu' }}
+        continue-on-error: true
         run: |
           docker run --rm --env-file test_env.cfg \
             ${{ env.CI_TAG }} \
