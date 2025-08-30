@@ -184,11 +184,13 @@ while read -r static_lib; do
 
     # Check typical libfoo.so / libfoo.a}
     shared_lib=${static_lib//'.a'/'.so'}
-
-    if [[ -f ${shared_lib} ]]; then
-        shared_lib=$(realpath ${shared_lib})
-        ls -lh ${static_lib} ${shared_lib}
-        rm -vf ${static_lib}
+    shared_lib=$(realpath ${shared_lib})
+    if [[ "${static_lib}" != "${shared_lib}" ]]; then
+        if [[ -f ${shared_lib} ]]; then
+            shared_lib=$(realpath ${shared_lib})
+            ls -lh ${static_lib} ${shared_lib}
+            rm -vf ${static_lib}
+        fi
     fi
 done < <(find ${dir} -readable -type f -name "lib*.a")
 FILE6
@@ -204,7 +206,7 @@ fi
 dir=$(realpath ${1})
 
 [[ -d "${dir}" ]] \
-  && echo "[${BASH_SOURCE[0]}]: Removing larger, redundant CUDA toolkit static libraries from ${dir}..." \
+  && echo "[${BASH_SOURCE[0]}]: Removing redundant CUDA toolkit static libraries from ${dir}..." \
   || { echo "ERROR: no such directory: ${dir}"; exit 1; }
 
 while read -r static_lib; do
@@ -215,13 +217,14 @@ while read -r static_lib; do
 
     # Check CUDA/NVHPC-style libcufoo.so / libcufoo_static.a}
     shared_lib=${static_lib//'_static.a'/'.so'}
-
-    if [[ -f ${shared_lib} ]]; then
-        shared_lib=$(realpath ${shared_lib})
-        ls -lh ${static_lib} ${shared_lib}
-        rm -vf ${static_lib}
+    shared_lib=$(realpath ${shared_lib})
+    if [[ "${static_lib}" != "${shared_lib}" ]]; then
+        if [[ -f ${shared_lib} ]]; then
+            ls -lh ${static_lib} ${shared_lib}
+            rm -vf ${static_lib}
+        fi
     fi
-done < <(find ${dir} -readable -type f -size +10M -name "lib*.a")
+done < <(find ${dir} -readable -type f -name "lib*_static.a")
 FILE7
 
 
