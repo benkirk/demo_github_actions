@@ -701,7 +701,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
            add_conf "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" ;\
            add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" ;\
            for dir in {cuda,math_libs}/${NVHPC_CUDA_VERSION}; do \
-               remove-cuda-static-libs >> README.whered_stuff_go ;\
+               remove-cuda-static-libs ${dir} >> README.whered_stuff_go ;\
            done ;\
        fi \
     && cat README.whered_stuff_go \
