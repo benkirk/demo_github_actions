@@ -74,8 +74,11 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<FILE1   cat > /container/config_env.sh && \
     <<'FILE2' cat > /container/bin/docker-clean && \
     <<'FILE3' cat > /container/bin/list-large-directories && \
-    <<'FILE4' cat > /container/bin/add_conf \
-    && chmod a+rx /container/bin/* \
+    <<'FILE4' cat > /container/bin/add_conf && \
+    <<'FILE5' cat > /container/bin/strip-binaries &&\
+    <<'FILE6' cat > /container/bin/remove-redundant-static-libs && \
+    <<'FILE7' cat > /container/bin/remove-cuda-static-libs && \
+    chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
 #-------------------------------------------------------
@@ -94,19 +97,19 @@ unset TOGGLE_WITH_ROCM
 FILE1
 #!/bin/bash
 echo "[${0}]: cleaning temporary files from container image to reduce layer size"
-[ -x "$(command -v yum)" ] && yum clean all
-[ -x "$(command -v apt)" ] && apt clean
-[ -x "$(command -v zypper)" ] && zypper clean -a
-[ -x "$(command -v conda)" ] && conda clean --all --yes
+[[ -x "$(command -v yum)" ]] && yum clean all
+[[ -x "$(command -v apt)" ]] && apt clean
+[[ -x "$(command -v zypper)" ]] && zypper clean -a
+[[ -x "$(command -v conda)" ]] && conda clean --all --yes
 for dir in /tmp/* /var/tmp/* /home/jupyter/{.ccache,.cache/pip,conda-bld,.conda} /root/* /root/.[^.]* /var/lib/apt/lists /var/log/* ; do
-    [ -e ${dir} ] && rm -rf ${dir} 2>/dev/null || true
+    [[ -e ${dir} ]] && rm -rf ${dir} 2>/dev/null || true
 done
 rm -rf /tmp/*
 FILE2
 #!/bin/bash
 
 dirs="/home /mnt /tmp /opt /usr /var /container"
-if [ ${#} -ge 1 ]; then
+if [[ ${#} -ge 1 ]]; then
     dirs=${@}
 fi
 
@@ -115,7 +118,7 @@ THRESHOLD_SIZE_MB=4
 echo "[${0}]: Finding large files & directories >${THRESHOLD_SIZE_MB}MiB in ${dirs} - output is MiB"
 for dir in ${dirs}; do
     dir=$(realpath ${dir})
-    if [ -d ${dir} ]; then
+    if [[ -d ${dir} ]]; then
         find 2>/dev/null ${dir} -type f -size +${THRESHOLD_SIZE_MB}M -print0 | xargs -0 --no-run-if-empty du --block-size=1MiB | sort -n
         du 2>/dev/null --block-size=1MiB --threshold=${THRESHOLD_SIZE_MB}MiB --separate-dirs ${dir} | sort -n
     fi
@@ -132,7 +135,97 @@ fi
 
 echo -e "${1}" >> /container/config_env.sh
 FILE4
+#!/bin/bash
 
+set -eu
+
+if [[ ${#} -ne 1 ]]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[ -d "${dir}" ] && echo "Stripping all binaries in ${dir}..." || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+TIMEFORMAT=$'--> Real time: %3R seconds'
+
+echo "Before: $(du -hs ${dir})"
+
+# ref: https://spack.readthedocs.io/en/latest/containers.html
+time find -L ${dir} -type f -exec readlink -f '{}' \; | \
+    xargs file -i | \
+    grep 'charset=binary' | \
+    grep 'x-executable\|x-archive\|x-sharedlib' | \
+    awk -F: '{print $1}' | xargs --no-run-if-empty strip --strip-debug --preserve-dates
+
+echo "After: $(du -hs ${dir})"
+FILE5
+#!/bin/bash
+
+set -eu
+
+if [[ ${#} -ne 1 ]]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[[ -d "${dir}" ]] \
+  && echo "[${BASH_SOURCE[0]}]: Removing redundant static libraries from ${dir}..." \
+  || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+while read -r static_lib; do
+
+    if [[ ! -f "${static_lib}" ]]; then
+        continue
+    fi
+
+    # Check typical libfoo.so / libfoo.a}
+    shared_lib=${static_lib//'.a'/'.so'}
+    shared_lib=$(realpath ${shared_lib})
+    if [[ "${static_lib}" != "${shared_lib}" ]]; then
+        if [[ -f ${shared_lib} ]]; then
+            shared_lib=$(realpath ${shared_lib})
+            ls -lh ${static_lib} ${shared_lib}
+            rm -vf ${static_lib}
+        fi
+    fi
+done < <(find ${dir} -readable -type f -name "lib*.a")
+FILE6
+#!/bin/bash
+
+set -eu
+
+if [[ ${#} -ne 1 ]]; then
+    echo "Usage: ${0} <directory path>"
+    exit 1
+fi
+
+dir=$(realpath ${1})
+
+[[ -d "${dir}" ]] \
+  && echo "[${BASH_SOURCE[0]}]: Removing redundant CUDA toolkit static libraries from ${dir}..." \
+  || { echo "ERROR: no such directory: ${dir}"; exit 1; }
+
+while read -r static_lib; do
+
+    if [[ ! -f "${static_lib}" ]]; then
+        continue
+    fi
+
+    # Check CUDA/NVHPC-style libcufoo.so / libcufoo_static.a}
+    shared_lib=${static_lib//'_static.a'/'.so'}
+    shared_lib=$(realpath ${shared_lib})
+    if [[ "${static_lib}" != "${shared_lib}" ]]; then
+        if [[ -f ${shared_lib} ]]; then
+            ls -lh ${static_lib} ${shared_lib}
+            rm -vf ${static_lib}
+        fi
+    fi
+done < <(find ${dir} -readable -type f -name "lib*_static.a")
+FILE7
 
 
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
@@ -252,8 +345,10 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && rm -f ./cuda_*_linux*.run \
     && cd ${CUDA_HOME} \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/" \
-    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
+    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
+    && remove-cuda-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
+    && cat README.whered_stuff_go \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
     && add_conf "export CUDA_VERSION=${CUDA_VERSION}" \
@@ -270,38 +365,38 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && ldconfig --verbose \
     && docker-clean
 
-# A sourceable script to query the CUDA configuration at runtime.
-# (intended to simplify setting compatibility variables for
-# testing on hosts without a CUDA driver.)
-RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
-#!/bin/bash
-echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
+# # A sourceable script to query the CUDA configuration at runtime.
+# # (intended to simplify setting compatibility variables for
+# # testing on hosts without a CUDA driver.)
+# RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
+# #!/bin/bash
+# echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
 
-nvidia-smi 2>/dev/null && found_gpu=true || found_gpu=false
+# nvidia-smi 2>/dev/null && found_gpu=true || found_gpu=false
 
-# quick return when a GPU is found
-if [ "${found_gpu}" = true ]; then
-    echo "Found a GPU..."
-    exit 0
-else
-    echo "No GPU Found..."
-fi
+# # quick return when a GPU is found
+# if [ "${found_gpu}" = true ]; then
+#     echo "Found a GPU..."
+#     exit 0
+# else
+#     echo "No GPU Found..."
+# fi
 
-# otherwise,
-if [ -d "${CUDA_STUBDIR}" ]; then
-    find ${CUDA_STUBDIR} -name "libnvidia-ml.so.*" | xargs --no-run-if-empty rm -v
-fi
+# # otherwise,
+# if [ -d "${CUDA_STUBDIR}" ]; then
+#     find ${CUDA_STUBDIR} -name "libnvidia-ml.so.*" | xargs --no-run-if-empty rm -v
+# fi
 
-echo "Disabling CUDA-Aware MPI Features..."
-case "${MPI_FAMILY}" in
-    "openmpi")
-        export OMPI_MCA_opal_cuda_support=false
-        ;;
-    "mpich")
-        export MPIR_CVAR_ENABLE_GPU=0
-        ;;
-esac
-EOF
+# echo "Disabling CUDA-Aware MPI Features..."
+# case "${MPI_FAMILY}" in
+#     "openmpi")
+#         export OMPI_MCA_opal_cuda_support=false
+#         ;;
+#     "mpich")
+#         export MPIR_CVAR_ENABLE_GPU=0
+#         ;;
+# esac
+# EOF
 
 LABEL cuda="${CUDA_VERSION}"
 
@@ -508,6 +603,7 @@ RUN exec &> >(tee /container/logs/oneapi.log) \
     && add_conf "export oneapi_CXX=$(which icpx) && export CXX=\${oneapi_CXX}" \
     && add_conf "export oneapi_F77=$(which ifx) && export F77=\${oneapi_F77}" \
     && add_conf "export oneapi_FC=$(which ifx) && export FC=\${oneapi_FC}" \
+    && strip-binaries ${ONEAPI_INSTALL_PATH} \
     && echo ${LD_LIBRARY_PATH} | tr ':' '\n' | grep ${ONEAPI_INSTALL_PATH} >> /etc/ld.so.conf.d/intel-oneapi.conf \
     && ldconfig --verbose \
     && docker-clean
@@ -586,7 +682,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
     && rm_paths="comm_libs profilers" \
-    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
+    && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
     && echo -e "\nNVHPC-Provided CUDA: ${NVHPC_CUDA_VERSION}" \
@@ -608,10 +704,10 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
            add_conf "export NVHPC_CUDA_STUBDIR=$(find ${NVHPC_CUDA_HOME} -type d -name stubs)" ;\
            add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" ;\
            for dir in {cuda,math_libs}/${NVHPC_CUDA_VERSION}; do \
-               dir=$(realpath ${dir}) ;\
-               find ${dir} -type f -name "lib*_static.a" -print0 | xargs -0 -n1 --no-run-if-empty rm -vf >> README.whered_stuff_go ;\
+               remove-cuda-static-libs ${dir} >> README.whered_stuff_go ;\
            done ;\
        fi \
+    && cat README.whered_stuff_go \
     && find ${NVCOMPILERS} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && echo "Configuring ld.so.conf.d..." \
     && echo "${NVHPC_INSTALL_DIR}/$(uname -s)_$(uname -m)/${NVHPC_VERSION}/compilers/lib" >> /etc/ld.so.conf.d/nvhpc.conf \
@@ -782,7 +878,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install \
+    && make --no-print-directory --silent install-strip \
     && add_conf "\n# MPICH ${MPICH_VERSION}" \
     && add_conf "export MPI_FAMILY=mpich" \
     && add_conf "export MPI_ROOT=${MPICH_INSTALL_PATH}"  \
@@ -835,7 +931,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install \
+    && make --no-print-directory --silent install-strip \
     && add_conf "\n# MPICH ${MPICH_VERSION}" \
     && add_conf "export MPI_FAMILY=mpich" \
     && add_conf "export MPI_ROOT=${MPICH_INSTALL_PATH}" \
@@ -883,7 +979,7 @@ RUN exec &> >(tee /container/logs/openmpi.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install \
+    && make --no-print-directory --silent install-strip \
     && cd ${OPENMPI_INSTALL_PATH} \
     && rm_paths="share/doc/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
