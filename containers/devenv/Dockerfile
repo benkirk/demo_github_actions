@@ -135,6 +135,8 @@ echo -e "${1}" >> /container/config_env.sh
 FILE4
 #!/bin/bash
 
+set -eu
+
 if [ ${#} -ne 1 ]; then
     echo "Usage: ${0} <directory path>"
     exit 1
