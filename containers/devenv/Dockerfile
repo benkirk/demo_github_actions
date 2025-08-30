@@ -74,7 +74,7 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<FILE1   cat > /container/config_env.sh && \
     <<'FILE2' cat > /container/bin/docker-clean && \
     <<'FILE3' cat > /container/bin/list-large-directories && \
-    <<'FILE4' cat > /container/bin/add_conf \
+    <<'FILE4' cat > /container/bin/add_conf && \
     <<'FILE5' cat > /container/bin/strip-binaries \
     && chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
@@ -804,7 +804,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install \
+    && make --no-print-directory --silent install-strip \
     && add_conf "\n# MPICH ${MPICH_VERSION}" \
     && add_conf "export MPI_FAMILY=mpich" \
     && add_conf "export MPI_ROOT=${MPICH_INSTALL_PATH}"  \
@@ -857,7 +857,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install \
+    && make --no-print-directory --silent install-strip \
     && add_conf "\n# MPICH ${MPICH_VERSION}" \
     && add_conf "export MPI_FAMILY=mpich" \
     && add_conf "export MPI_ROOT=${MPICH_INSTALL_PATH}" \
@@ -905,7 +905,7 @@ RUN exec &> >(tee /container/logs/openmpi.log) \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install \
+    && make --no-print-directory --silent install-strip \
     && cd ${OPENMPI_INSTALL_PATH} \
     && rm_paths="share/doc/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) && cat README.whered_stuff_go \
