@@ -16,6 +16,17 @@ on:
           - tumbleweed
           - noble
 
+      docker_repo:
+        description: "Docker Repository"
+        type: choice
+        required: true
+        default: "ncarcisl/hpcdev"
+        options:
+          - "benjaminkirk/gh-ci"
+          - "benjaminkirk/hpcdev"
+          - "ncarcisl/gh-ci"
+          - "ncarcisl/hpcdev"
+
 jobs:
 
   run-matrix:
@@ -40,7 +51,7 @@ jobs:
         shell: bash -elo pipefail {0}
 
     container:
-      image: ncarcisl/hpcdev-${{ matrix.arch }}:${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}-latest
+      image: ${{ inputs.docker_repo }}-${{ matrix.arch }}:${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -77,7 +88,7 @@ jobs:
 
       - name: MPI+OpenMP Hello World
         run: |
-          mpicxx -o ./hello_world_mpi /container/extras/hello_world_mpi.cxx -fopenmp
+          mpicxx -o ./hello_world_mpi ./scripts/hello_world_mpi.cxx -fopenmp
           ldd ./hello_world_mpi
           export OMP_NUM_THREADS=2
           export OMPI_MCA_opal_cuda_support=false
@@ -88,7 +99,7 @@ jobs:
         continue-on-error: true
         run: |
           export DART_VERSION="v11.10.9"
-          timeout 25m /container/extras/build_dart.sh
+          timeout 25m ./scripts/build_dart.sh
 
       - name: WRF
         continue-on-error: true
@@ -96,22 +107,22 @@ jobs:
           export WRF_VERSION="4.7.0"
           export EXTRA_CMAKE_ARGS="-DCMAKE_BUILD_TYPE=DEBUG"
           export MAKE_J_PROCS=2
-          timeout 25m /container/extras/build_wrf.sh
+          timeout 25m ./scripts/build_wrf.sh
 
       - name: MPAS
         continue-on-error: true
         run: |
           export MPAS_VERSION="8.2.2"
           export DEBUG=true
-          timeout 25m /container/extras/build_mpas.sh
+          timeout 25m ./scripts/build_mpas.sh
 
       - name: ESMF
         continue-on-error: true
         run: |
           export ESMF_VERSION="8.8.1"
-          timeout 25m /container/extras/build_esmf.sh
+          timeout 25m ./scripts/build_esmf.sh
 
       - name: Kokkos
         continue-on-error: true
         run: |
-          timeout 25m /container/extras/build_kokkos.sh
+          timeout 25m ./scripts/build_kokkos.sh
