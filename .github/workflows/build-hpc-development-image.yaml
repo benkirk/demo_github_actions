@@ -39,6 +39,12 @@ on:
         type: string
         default: ''
 
+      buildx_cloud:
+        description: 'Docker buildx-action - use buildcloud'
+        required: false
+        type: boolean
+        default: false
+
       conda:
         description: 'Include Conda (Miniforge)'
         type: boolean
