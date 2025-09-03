@@ -32,6 +32,10 @@ jobs:
         run: |
           gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=almalinux9 -f test=true -f publish=true
 
+      - name: Almalinux10
+        run: |
+          gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=almalinux10 -f test=true -f publish=true
+
       - name: Ubuntu Noble
         run: |
           gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=noble -f test=true -f publish=true
