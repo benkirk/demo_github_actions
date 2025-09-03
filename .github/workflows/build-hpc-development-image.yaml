@@ -173,6 +173,7 @@ jobs:
         if: ${{ inputs.buildx_cloud }}
         uses: docker/setup-buildx-action@v3
         with:
+          platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
           driver: cloud
           endpoint: 'ncarcisl/benkirk'
           install: true
