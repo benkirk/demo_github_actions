@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
-        compiler: [ gcc, oneapi, nvhpc, aocc ]
+        compiler: [ clang, gcc, oneapi, nvhpc, aocc ]
         mpi:      [ openmpi ]
         gpu:      [ nogpu, cuda ]
 
@@ -80,6 +80,11 @@ jobs:
               NVHPC_VERSION=25.7
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
 
+          - compiler: clang
+            compiler_build_args: |
+              COMPILER_FAMILY=clang
+              LLVM_VERSION=20.1.8
+
           # mpi build arg specifications
           - mpi: openmpi
             mpi_build_args: |
@@ -92,9 +97,11 @@ jobs:
           #     MPICH_VERSION=4.3.1
 
 
+    # (use a cloud builder for clang -- too resource intensive for free GHA runners)
     uses: ./.github/workflows/devel-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
+      buildx_cloud: ${{ matrix.compiler == 'clang' }}
       os: ${{ inputs.os }}
       arch: 'x86_64'
       runner: 'ubuntu-latest'
