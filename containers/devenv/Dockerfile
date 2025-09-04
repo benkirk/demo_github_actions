@@ -830,11 +830,12 @@ RUN exec &> >(tee /container/logs/llvm.log) \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && mkdir -p ${LLVM_INSTALL_PATH} \
     && cd ${LLVM_INSTALL_PATH} \
-    && curl --retry 3 --retry-delay 5 -sSL ${LLVM_URL} | tar Jxv --strip-components=1 \
+    && curl --retry 3 --retry-delay 5 -sSL ${LLVM_URL} | tar Jx --strip-components=1 \
     && add_conf "\n# LLVM clang compilers" \
     && add_conf "export COMPILER_FAMILY=clang" \
     && add_conf "export LLVM_VERSION=${LLVM_VERSION}"  \
     && add_conf "export PATH=${LLVM_INSTALL_PATH}/bin:\${PATH}" \
+    && add_conf "export LD_LIBRARY_PATH=${LLVM_INSTALL_PATH}/lib64:${LLVM_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" \
     && source /container/config_env.sh \
     && add_conf "export clang_CC=$(which clang) && export CC=\${clang_CC}" \
     && add_conf "export clang_CXX=$(which clang++) && export CXX=\${clang_CXX}" \
