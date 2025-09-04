@@ -158,7 +158,7 @@ jobs:
             arch: aarch64
             mpi: mpich
 
-          = compiler: clang
+          - compiler: clang
             gpu: cuda
 
 
