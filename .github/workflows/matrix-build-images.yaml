@@ -158,6 +158,9 @@ jobs:
             arch: aarch64
             mpi: mpich
 
+          = compiler: clang
+            gpu: cuda
+
 
 
     uses: ./.github/workflows/build-hpc-development-image.yaml
