@@ -369,7 +369,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"-allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
@@ -731,7 +731,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"-Wno-deprecated-gpu-targets\"" \
     && docker-clean
 
 LABEL compiler="nvhpc"
