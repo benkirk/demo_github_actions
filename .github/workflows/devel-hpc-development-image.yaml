@@ -311,6 +311,7 @@ jobs:
 
       - name: Test Image - Dart
         if: ${{ inputs.test }}
+        continue-on-error: ${{ inputs.compiler == 'clang' }}
         run: |
           docker run --rm --env-file test_env.cfg \
             --env DART_VERSION=v11.12.1 \

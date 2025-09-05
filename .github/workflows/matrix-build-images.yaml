@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       max-parallel: 16
       matrix:
-        compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
+        compiler: [ clang, nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
         mpi:      [ openmpi, mpich, mpich3 ]
         gpu:      [ nogpu, cuda ]
         arch:     [ x86_64, aarch64 ]
@@ -108,13 +108,28 @@ jobs:
               NVHPC_VERSION=25.7
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_aarch64_cuda_12.9.tar.gz
 
-          # # clang+flang always seems to fail on GHA public runners -
-          # # 16GB of RAM simply isn't enough for flang as of 20.1.8.
-          # # Need build cloud - see below
+          # clang+flang from source always seems to fail on GHA public runners -
+          # 16GB of RAM simply isn't enough for flang as of 20.1.8.
+          # Need build cloud - see below
+          - compiler: clang
+            compiler_build_args: |
+              COMPILER_FAMILY=clang
+              LLVM_VERSION=21.1.0
+
+          # clang binary packages don't have OpenMP, and X86 requires pretty new libc.so
           # - compiler: clang
+          #   arch: x86_64
           #   compiler_build_args: |
           #     COMPILER_FAMILY=clang
-          #     LLVM_VERSION=20.1.8
+          #     LLVM_VERSION=21.1.0
+          #     LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
+
+          # - compiler: clang
+          #   arch: aarch64
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=clang
+          #     LLVM_VERSION=21.1.0
+          #     LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -144,12 +159,14 @@ jobs:
             arch: aarch64
             mpi: mpich
 
+          - compiler: clang
+            arch: aarch64
+
 
 
     uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
-      buildx_cloud: ${{ matrix.compiler == 'clang' }}
       os: ${{ inputs.os }}
       arch: ${{ matrix.arch }}
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}

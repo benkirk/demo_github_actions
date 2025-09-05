@@ -83,7 +83,8 @@ jobs:
           - compiler: clang
             compiler_build_args: |
               COMPILER_FAMILY=clang
-              LLVM_VERSION=20.1.8
+              LLVM_VERSION=21.1.0
+              LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
 
           # mpi build arg specifications
           - mpi: openmpi

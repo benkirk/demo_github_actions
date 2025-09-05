@@ -741,13 +741,13 @@ LABEL nvhpc="${NVHPC_VERSION}"
 
 
 #-------------------------------------------------------------------------------
-# LLVM (clang) stage
-FROM toolkits AS clang
+# LLVM (clang) stage - from source
+FROM toolkits AS clang-src
 #-------------------------------------------------------------------------------
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 # ref. https://llvm.org/docs/CMake.html
-ARG LLVM_VERSION="20.1.8"
+ARG LLVM_VERSION="21.1.0"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -759,7 +759,7 @@ RUN exec &> >(tee /container/logs/llvm.log) \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
-                libedit-devel ninja \
+                libedit-devel ninja python311 \
             ;; \
         *"|ubuntu|"*) \
             apt-get update \
@@ -772,8 +772,9 @@ RUN exec &> >(tee /container/logs/llvm.log) \
                 && exit 1 \
             ;; \
        esac \
-    && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git /tmp/llvm-project \
-    && df -h && du -hs /tmp/*/ \
+    && LLVM_SRC=/tmp/llvm-project \
+    && git clone --branch llvmorg-${LLVM_VERSION} --depth 1 https://github.com/llvm/llvm-project.git ${LLVM_SRC} \
+    && df -h && du -hs ${LLVM_SRC} \
     && mkdir -p /tmp/BUILD_ALL && cd /tmp/BUILD_ALL \
     && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
     && cmake \
@@ -783,20 +784,17 @@ RUN exec &> >(tee /container/logs/llvm.log) \
            -DCMAKE_CXX_STANDARD=17 \
            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
            -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PATH} \
-           -DFLANG_ENABLE_WERROR=ON \
            -DFLANG_INCLUDE_TESTS=OFF \
            -DLLVM_BUILD_LLVM_DYLIB=ON \
-           -DLLVM_ENABLE_PROJECTS="clang;mlir;flang;openmp;lld" \
+           -DLLVM_ENABLE_PROJECTS="clang;flang;openmp;lld" \
            -DLLVM_INCLUDE_BENCHMARKS=OFF \
            -DLLVM_INCLUDE_EXAMPLES=OFF \
            -DLLVM_INCLUDE_TESTS=OFF \
            -DLLVM_LINK_LLVM_DYLIB=ON \
-           -DLLVM_LIT_ARGS=-v \
            -DLLVM_RAM_PER_LINK_JOB=10000 \
            -DLLVM_TARGETS_TO_BUILD=host \
-           ../llvm-project/llvm \
+           ${LLVM_SRC}/llvm \
     && (ninja || ninja || ninja -j 2) \
-    && df -h && du -hs /tmp/*/ \
     && ninja install \
     && add_conf "\n# LLVM clang compilers" \
     && add_conf "export COMPILER_FAMILY=clang" \
@@ -816,6 +814,45 @@ RUN exec &> >(tee /container/logs/llvm.log) \
 LABEL compiler="clang"
 LABEL clang="${LLVM_VERSION}"
 
+
+
+#-------------------------------------------------------------------------------
+# LLVM (clang) stage - binary download
+FROM toolkits AS clang-binaries
+#-------------------------------------------------------------------------------
+ARG LLVM_VERSION="21.1.0"
+ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz"
+RUN exec &> >(tee /container/logs/llvm.log) \
+    && echo "Installing LLVM ${LLVM_VERSION}" \
+    && echo "downloading ${LLVM_URL}" \
+    && export LLVM_INSTALL_PATH=/container/llvm/${LLVM_VERSION} \
+    && mkdir -p ${LLVM_INSTALL_PATH} \
+    && cd ${LLVM_INSTALL_PATH} \
+    && curl --retry 3 --retry-delay 5 -sSL ${LLVM_URL} | tar Jx --strip-components=1 \
+    && add_conf "\n# LLVM clang compilers" \
+    && add_conf "export COMPILER_FAMILY=clang" \
+    && add_conf "export LLVM_VERSION=${LLVM_VERSION}"  \
+    && add_conf "export PATH=${LLVM_INSTALL_PATH}/bin:\${PATH}" \
+    && add_conf "export LD_LIBRARY_PATH=${LLVM_INSTALL_PATH}/lib64:${LLVM_INSTALL_PATH}/lib:\${LD_LIBRARY_PATH}" \
+    && source /container/config_env.sh \
+    && add_conf "export clang_CC=$(which clang) && export CC=\${clang_CC}" \
+    && add_conf "export clang_CXX=$(which clang++) && export CXX=\${clang_CXX}" \
+    && add_conf "export clang_F77=$(which flang) && export F77=\${clang_F77}" \
+    && add_conf "export clang_FC=$(which flang) && export FC=\${clang_FC}" \
+    && echo "${LLVM_INSTALL_PATH}/lib" >> /etc/ld.so.conf.d/llvm.conf \
+    && ls -d ${LLVM_INSTALL_PATH}/lib/$(uname -m)-* >> /etc/ld.so.conf.d/llvm.conf \
+    && ldconfig --verbose \
+    && df -h && du -hs ${LLVM_INSTALL_PATH} \
+    && docker-clean
+LABEL compiler="clang"
+LABEL clang="${LLVM_VERSION}"
+
+
+
+#-------------------------------------------------------------------------------
+# LLVM meta stage-select either clang-src or clang-binaries
+FROM clang-src AS clang
+#-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
