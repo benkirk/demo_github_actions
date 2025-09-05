@@ -1084,7 +1084,7 @@ FROM ${IOLIBS_PREREQ} AS iolibs
 #-------------------------------------------------------------------------------
 ARG SZIP_VERSION="2.1.1"
 ARG BLOSC_VERSION="1.21.6"
-ARG HDF5_VERSION="1.12.3"
+ARG HDF5_VERSION="1_12_3"
 ARG NETCDF_C_VERSION="4.9.3"
 ARG NETCDF_FORTRAN_VERSION="4.6.2"
 RUN exec &> >(tee /container/logs/iolibs.log) \
@@ -1213,6 +1213,7 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
             CXXFLAGS="${CXXFLAGS}" \
             FCFLAGS="${FCFLAGS}" \
             --disable-static --enable-shared \
+            -–enable-nczarr \
             --enable-zstandard-plugin \
             --disable-dependency-tracking \
             || cat config.log) \

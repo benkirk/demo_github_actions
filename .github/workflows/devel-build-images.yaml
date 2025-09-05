@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
-        compiler: [ clang, gcc, oneapi, nvhpc, aocc ]
+        compiler: [ gcc, oneapi, nvhpc, aocc ]
         mpi:      [ openmpi ]
         gpu:      [ nogpu, cuda ]
 
@@ -80,11 +80,11 @@ jobs:
               NVHPC_VERSION=25.7
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
 
-          - compiler: clang
-            compiler_build_args: |
-              COMPILER_FAMILY=clang
-              LLVM_VERSION=21.1.0
-              LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
+          # - compiler: clang
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=clang
+          #     LLVM_VERSION=21.1.0
+          #     LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -102,7 +102,6 @@ jobs:
     uses: ./.github/workflows/devel-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
-      buildx_cloud: ${{ matrix.compiler == 'clang' }}
       os: ${{ inputs.os }}
       arch: 'x86_64'
       runner: 'ubuntu-latest'
@@ -117,7 +116,7 @@ jobs:
       test: ${{ inputs.test }}
       publish: ${{ inputs.publish }}
       extra_build_args: |
-        HDF5_VERSION=1.12.3
+        HDF5_VERSION=1_12_3
         NETCDF_C_VERSION=4.9.3
         NETCDF_FORTRAN_VERSION=4.6.2
         PNETCDF_VERSION=1.14.0
