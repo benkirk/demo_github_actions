@@ -359,7 +359,6 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/ nsightee_plugins/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
-    && remove-cuda-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
     && cat README.whered_stuff_go \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
