@@ -51,7 +51,7 @@ jobs:
       matrix:
         compiler: [ gcc, oneapi, nvhpc, aocc ]
         mpi:      [ openmpi, mpich, mpich3 ]
-        os:       [ rocky9, rocky9-cuda, noble, noble-cuda ]
+        os:       [ rocky9-cuda, rocky9, noble-cuda, noble ]
 
         include:
           # compiler build arg specifications
