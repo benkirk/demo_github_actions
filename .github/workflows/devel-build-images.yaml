@@ -57,6 +57,7 @@ jobs:
           - compiler: gcc
             compiler_build_args: |
               COMPILER_FAMILY=os-gcc
+
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
@@ -102,8 +103,6 @@ jobs:
       runner: 'ubuntu-latest'
       free_runner_space: true
       conda: true
-      gpu: ${{ matrix.gpu }}
-      gpu_build_args: ${{ matrix.gpu_build_args }}
       compiler: ${{ matrix.compiler }}
       compiler_build_args: ${{ matrix.compiler_build_args }}
       mpi: ${{ matrix.mpi }}

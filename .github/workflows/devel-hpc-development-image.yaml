@@ -260,11 +260,13 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=fftlibs
-            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+            MINIFORGE_PREREQ=${{ contains(inputs.os,'cuda') && 'cuda' || 'base_os' }}
             ${{ inputs.extra_build_args }}
             ${{ inputs.gpu_build_args }}
             ${{ inputs.compiler_build_args }}
             ${{ inputs.mpi_build_args }}
+
+#            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
 
       # # ref: https://github.com/peter-evans/dockerhub-description
       # - name: Update Docker Hub Description
@@ -319,7 +321,7 @@ jobs:
             /container/extras/build_dart.sh
 
       - name: Test Image - FastEddy
-        if: ${{ inputs.test && inputs.gpu != 'nogpu' }}
+        if: ${{ inputs.test && contains(inputs.os, 'cuda') }}
         continue-on-error: true
         run: |
           docker run --rm --env-file test_env.cfg \
@@ -328,7 +330,7 @@ jobs:
 
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
-        continue-on-error: ${{ inputs.gpu == 'nogpu' && false || true }}
+        continue-on-error: ${{ contains(inputs.os, 'cuda') }}
         run: |
           docker run --rm --env-file test_env.cfg \
             --env KOKKOS_VERSION=4.6.02 \
