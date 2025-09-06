@@ -44,6 +44,7 @@ export FASTEDDY_INSTALL_PATH=${INSTALL_ROOT}/fasteddy/${FASTEDDY_VERSION}
 mkdir -p ${FASTEDDY_INSTALL_PATH}/bin
 rsync -axv \
       --exclude 'docs/' \
+      --exclude '.git/' \
       ${FASTEDDY_DIR}/ ${FASTEDDY_INSTALL_PATH}/
 cd ${FASTEDDY_INSTALL_PATH}/bin
 ln -s ../SRC/FEMAIN/FastEddy
