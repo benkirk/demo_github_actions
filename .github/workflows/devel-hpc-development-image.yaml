@@ -214,18 +214,20 @@ jobs:
 
           PUBLISH_TAG=${PUBLISH_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-latest
 
-          cat << EOF > tags.sh
+          cat << EOF > env.sh
           CI_REPO=${CI_REPO}
           CI_TAG=${CI_TAG}
           CI_CACHE=${CI_CACHE}
           PUBLISH_REPO=${PUBLISH_REPO}
           PUBLISH_TAG=${PUBLISH_TAG}
           MINIFORGE_PREREQ=${MINIFORGE_PREREQ}
+          HAVE_CUDA=${{ contains(inputs.os, '-cuda') }}
+          CONTINUE_ON_GPU_ERROR=${{ contains(inputs.os, '-cuda') }}
           EOF
 
-          cat tags.sh
-          cat tags.sh >> ${GITHUB_ENV}
-          cat tags.sh >> ${GITHUB_OUTPUT}
+          cat env.sh
+          cat env.sh >> ${GITHUB_ENV}
+          cat env.sh >> ${GITHUB_OUTPUT}
 
       - name: Extract Docker image metadata
         id: meta
@@ -308,7 +310,7 @@ jobs:
             /container/extras/build_dart.sh
 
       - name: Test Image - FastEddy
-        if: ${{ inputs.test }} && contains( ${{ inputs.os }}, 'cuda')
+        if: ${{ inputs.test && env.HAVE_CUDA == 'true' }}
         continue-on-error: true
         run: |
           docker run --rm --env-file test_env.cfg \
@@ -317,7 +319,7 @@ jobs:
 
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
-        continue-on-error: contains( ${{ inputs.os }}, 'cuda')
+        continue-on-error: ${{ env.CONTINUE_ON_GPU_ERROR == 'true' }}
         run: |
           docker run --rm --env-file test_env.cfg \
             --env KOKKOS_VERSION=4.6.02 \
