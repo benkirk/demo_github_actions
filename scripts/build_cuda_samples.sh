@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
 #----------------------------------------------------------------------------
 
-export CUDA_SAMPLES_VERSION="${CUDA_SAMPLES_VERSION:v${CUDA_VERSION}}}"
+export CUDA_SAMPLES_VERSION="${CUDA_SAMPLES_VERSION:-v${CUDA_VERSION}}"
 
 CUDA_SAMPLES_SRC="${STAGE_DIR}/cuda_samples-${CUDA_SAMPLES_VERSION}"
 CUDA_SAMPLES_BUILD_DIR="${CUDA_SAMPLES_SRC}/BUILD"
