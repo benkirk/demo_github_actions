@@ -3,21 +3,21 @@ name: Devel - Build HPC Development Images
 on:
   workflow_dispatch:
     inputs:
-      os:
-        description: 'Base OS'
-        type: choice
-        required: true
-        default: almalinux10
-        options:
-          - almalinux8
-          - almalinux9
-          - almalinux10
-          - jammy
-          - noble
-          - leap
-          - tumbleweed
-          - rockylinux9-cuda
-          - noble-cuda
+      # os:
+      #   description: 'Base OS'
+      #   type: choice
+      #   required: true
+      #   default: almalinux10
+      #   options:
+      #     - almalinux8
+      #     - almalinux9
+      #     - almalinux10
+      #     - jammy
+      #     - noble
+      #     - leap
+      #     - tumbleweed
+      #     - rockylinux9-cuda
+      #     - noble-cuda
 
       docker_repo:
         description: "Docker Repository for Deployment"
@@ -49,6 +49,7 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
+        os:       [ rockylinux9, rockylinux9-cuda, noble, noble-cuda ]
         compiler: [ gcc, oneapi, nvhpc, aocc ]
         mpi:      [ openmpi, mpich, mpich3 ]
 
@@ -103,7 +104,7 @@ jobs:
     uses: ./.github/workflows/devel-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
-      os: ${{ inputs.os }}
+      os: ${{ marix.os }}
       arch: 'x86_64'
       runner: 'ubuntu-latest'
       free_runner_space: true
