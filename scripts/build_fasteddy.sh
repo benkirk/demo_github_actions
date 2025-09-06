@@ -8,7 +8,7 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPTDIR}/build_common.cfg || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
 #----------------------------------------------------------------------------
 
-export FASTEDDY_VERSION="${FASTEDDY_VERSION:-v2.0.0}"
+export FASTEDDY_VERSION="${FASTEDDY_VERSION:-v3.0.0}"
 
 FASTEDDY_DIR="${STAGE_DIR}/fasteddy-${FASTEDDY_VERSION}"
 
@@ -44,6 +44,7 @@ export FASTEDDY_INSTALL_PATH=${INSTALL_ROOT}/fasteddy/${FASTEDDY_VERSION}
 mkdir -p ${FASTEDDY_INSTALL_PATH}/bin
 rsync -axv \
       --exclude 'docs/' \
+      --exclude '.git/' \
       ${FASTEDDY_DIR}/ ${FASTEDDY_INSTALL_PATH}/
 cd ${FASTEDDY_INSTALL_PATH}/bin
 ln -s ../SRC/FEMAIN/FastEddy
