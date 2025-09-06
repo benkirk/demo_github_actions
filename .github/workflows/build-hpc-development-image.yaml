@@ -7,7 +7,7 @@ on:
         description: 'Base OS'
         required: false
         type: string
-        default: almalinux9
+        default: alma9
 
       arch:
         description: 'CPU Architecture'
@@ -70,17 +70,6 @@ on:
 
       mpi_build_args:
         description: 'MPI Docker BUILD_ARGS'
-        type: string
-        required: false
-
-      gpu:
-        description: 'GPU / Accelerator framework'
-        type: string
-        required: false
-        default: 'nogpu'
-
-      gpu_build_args:
-        description: 'GPU Docker BUILD_ARGS'
         type: string
         required: false
 
@@ -173,7 +162,6 @@ jobs:
         if: ${{ inputs.buildx_cloud }}
         uses: docker/setup-buildx-action@v3
         with:
-          platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
           driver: cloud
           endpoint: 'ncarcisl/benkirk'
           install: true
@@ -191,10 +179,6 @@ jobs:
       #----------------------------------------------
       - name: Set Image Build Environment & Tag Variables
         run: |
-          COMPILER_LABEL="-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}"
-          GPU_LABEL="-${{ inputs.gpu }}"
-          MPI_LABEL="-${{ inputs.mpi }}"
-
           cat << EOF > build_inputs.txt
           arch: '${{ inputs.arch }}'
           os: '${{ inputs.os }}'
@@ -202,8 +186,6 @@ jobs:
           ${{ inputs.compiler_build_args }}
           mpi: '${{ inputs.mpi }}'
           ${{ inputs.mpi_build_args }}
-          gpu: '${{ inputs.gpu }}'
-          ${{ inputs.gpu_build_args }}
           ${{ inputs.extra_build_args }}
           EOF
 
@@ -212,31 +194,40 @@ jobs:
           shasum build_inputs.txt > inputs_sha.txt
           cat inputs_sha.txt
           INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)
-          if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
-              GPU_LABEL=
+
+          COMPILER_LABEL="-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}"
+          MPI_LABEL="-${{ inputs.mpi }}"
+
+          if [[ "${{ inputs.os }}" == *"-cuda"* ]]; then
+              MINIFORGE_PREREQ="cuda"
+          else
+              MINIFORGE_PREREQ="base_os"
           fi
 
           CI_REPO=${{ inputs.docker_repo }}-${{ inputs.arch }}
 
-          CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
+          CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-devel
 
-          CI_CACHE=${CI_REPO}-cache:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
+          CI_CACHE=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-cache
 
           PUBLISH_REPO=${CI_REPO}
 
-          PUBLISH_TAG=${PUBLISH_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-latest
+          PUBLISH_TAG=${PUBLISH_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-latest
 
-          cat << EOF > tags.sh
+          cat << EOF > env.sh
           CI_REPO=${CI_REPO}
           CI_TAG=${CI_TAG}
           CI_CACHE=${CI_CACHE}
           PUBLISH_REPO=${PUBLISH_REPO}
           PUBLISH_TAG=${PUBLISH_TAG}
+          MINIFORGE_PREREQ=${MINIFORGE_PREREQ}
+          HAVE_CUDA=${{ contains(inputs.os, '-cuda') }}
+          CONTINUE_ON_GPU_ERROR=${{ contains(inputs.os, '-cuda') }}
           EOF
 
-          cat tags.sh
-          cat tags.sh >> ${GITHUB_ENV}
-          cat tags.sh >> ${GITHUB_OUTPUT}
+          cat env.sh
+          cat env.sh >> ${GITHUB_ENV}
+          cat env.sh >> ${GITHUB_OUTPUT}
 
       - name: Extract Docker image metadata
         id: meta
@@ -261,11 +252,20 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=fftlibs
-            MINIFORGE_PREREQ=${{ inputs.gpu == 'cuda' && 'cuda' || 'base_os' }}
+            MINIFORGE_PREREQ=${{ env.MINIFORGE_PREREQ }}
             ${{ inputs.extra_build_args }}
-            ${{ inputs.gpu_build_args }}
             ${{ inputs.compiler_build_args }}
             ${{ inputs.mpi_build_args }}
+
+      # # ref: https://github.com/peter-evans/dockerhub-description
+      # - name: Update Docker Hub Description
+      #   uses: peter-evans/dockerhub-description@v4
+      #   with:
+      #     username: benjaminkirk
+      #     password: ${{ secrets.dockerhub_token }}
+      #     repository: ${{ env.CI_REPO }}
+      #     readme-filepath: ./containers/devenv/README.md
+      #     short-description: "NCAR HPC Development Container Images"
 
       - name: Done Build - Clean Up
         uses: ./.github/actions/docker-cleanup
@@ -309,9 +309,17 @@ jobs:
             ${{ env.CI_TAG }} \
             /container/extras/build_dart.sh
 
+      - name: Test Image - FastEddy
+        if: ${{ inputs.test && env.HAVE_CUDA == 'true' }}
+        continue-on-error: true
+        run: |
+          docker run --rm --env-file test_env.cfg \
+            ${{ env.CI_TAG }} \
+            /container/extras/build_fasteddy.sh
+
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
-        continue-on-error: ${{ inputs.gpu == 'nogpu' && false || true }}
+        continue-on-error: ${{ env.CONTINUE_ON_GPU_ERROR == 'true' }}
         run: |
           docker run --rm --env-file test_env.cfg \
             --env KOKKOS_VERSION=4.6.02 \
