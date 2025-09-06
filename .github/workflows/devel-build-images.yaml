@@ -3,22 +3,6 @@ name: Devel - Build HPC Development Images
 on:
   workflow_dispatch:
     inputs:
-      # os:
-      #   description: 'Base OS'
-      #   type: choice
-      #   required: true
-      #   default: alma10
-      #   options:
-      #     - alma8
-      #     - alma9
-      #     - alma10
-      #     - jammy
-      #     - noble
-      #     - leap
-      #     - tumbleweed
-      #     - rocky9-cuda
-      #     - noble-cuda
-
       docker_repo:
         description: "Docker Repository for Deployment"
         type: choice
