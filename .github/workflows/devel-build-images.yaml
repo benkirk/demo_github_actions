@@ -7,16 +7,16 @@ on:
       #   description: 'Base OS'
       #   type: choice
       #   required: true
-      #   default: almalinux10
+      #   default: alma10
       #   options:
-      #     - almalinux8
-      #     - almalinux9
-      #     - almalinux10
+      #     - alma8
+      #     - alma9
+      #     - alma10
       #     - jammy
       #     - noble
       #     - leap
       #     - tumbleweed
-      #     - rockylinux9-cuda
+      #     - rocky9-cuda
       #     - noble-cuda
 
       docker_repo:
@@ -49,7 +49,7 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
-        os:       [ rockylinux9, rockylinux9-cuda, noble, noble-cuda ]
+        os:       [ rocky9, rocky9-cuda, noble, noble-cuda ]
         compiler: [ gcc, oneapi, nvhpc, aocc ]
         mpi:      [ openmpi, mpich, mpich3 ]
 

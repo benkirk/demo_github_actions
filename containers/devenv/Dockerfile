@@ -18,7 +18,7 @@
 #
 ################################################################################
 
-ARG BASE_OS="almalinux9"
+ARG BASE_OS="alma9"
 
 ARG COMPILER_FAMILY="os-gcc"
 ARG MPI_FAMILY="openmpi"
@@ -42,13 +42,13 @@ ARG FINAL_TARGET="fftlibs"
 #-------------------------------------------------------------------------------
 # Any of these upstream base images can be used as a ${BASE_OS}
 #-------------------------------------------------------------------------------
-FROM docker.io/almalinux:8 AS almalinux8
-FROM docker.io/almalinux:9 AS almalinux9
-FROM docker.io/almalinux:10 AS almalinux10
+FROM docker.io/almalinux:8 AS alma8
+FROM docker.io/almalinux:9 AS alma9
+FROM docker.io/almalinux:10 AS alma10
 
-FROM rockylinux/rockylinux:8 AS rockylinux8
-FROM rockylinux/rockylinux:9 AS rockylinux9
-FROM rockylinux/rockylinux:10 AS rockylinux10
+FROM rockylinux/rockylinux:8 AS rocky8
+FROM rockylinux/rockylinux:9 AS rocky9
+FROM rockylinux/rockylinux:10 AS rocky10
 
 FROM docker.io/opensuse/leap AS leap
 FROM docker.io/opensuse/tumbleweed AS tumbleweed
@@ -60,10 +60,10 @@ FROM ubuntu:noble AS noble
 # preconfigured vendor image; leaving these here for reference.
 # (since the vendors don't support the same array of OS images, usually this is not the approach taken)
 FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu24.04 AS noble-cuda
-FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux9 AS rockylinux9-cuda
-FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux8 AS rockylinux8-cuda
+FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux9 AS rocky9-cuda
+FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux8 AS rocky8-cuda
 
-FROM rocm/dev-almalinux-8:6.4.2-complete AS almalinux8-rocm
+FROM rocm/dev-almalinux-8:6.4.2-complete AS alma8-rocm
 FROM rocm/dev-ubuntu-24.04:6.4.2-complete AS noble-rocm
 
 #-------------------------------------------------------------------------------
