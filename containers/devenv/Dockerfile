@@ -328,7 +328,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
 ################################################################################
 
 #-------------------------------------------------------------------------------
-# CUDA stages
+# CUDA stages - runfile installer
 # about stubs & LD_LIBRARY_PATH:
 #   on a host with no NVIDIA device, libcuda.so etc will be provided by the stubs.
 #   these need to be overloaded at runtime by a proper libcuda.so which necessarily
@@ -336,7 +336,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
 #   into the LD_LIBRARY_PATH ahead of the stubs.  And we use ldconfig to resolve the stubs
 #   stubs as last resort.  This allows us to link and run on non-GPU hosts; and the
 #   LD_LIBRARY_PATH precedence should find the host libcuda.so should there be one.
-FROM base_os AS cuda
+FROM base_os AS cuda-runfile
 #-------------------------------------------------------------------------------
 ARG CUDA_VERSION="12.9"
 ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
@@ -359,6 +359,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/ nsightee_plugins/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
+    && remove-cuda-static-libs ${CUDA_HOME} >> README.whered_stuff_go \
     && cat README.whered_stuff_go \
     && find ${CUDA_HOME} ! -readable -print0 | xargs -0 --no-run-if-empty rm -vf \
     && add_conf "\n# CUDA ${CUDA_VERSION}" \
@@ -369,49 +370,43 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"-allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda*.conf \
     && ldconfig --verbose \
     && docker-clean
 
-# # A sourceable script to query the CUDA configuration at runtime.
-# # (intended to simplify setting compatibility variables for
-# # testing on hosts without a CUDA driver.)
-# RUN cat <<'EOF' > ${CUDA_HOME}/cuda-host-config.sh
-# #!/bin/bash
-# echo "[${BASH_SOURCE[0]}]: Checking host GPU capabilities..."
+LABEL cuda="${CUDA_VERSION}"
 
-# nvidia-smi 2>/dev/null && found_gpu=true || found_gpu=false
-
-# # quick return when a GPU is found
-# if [ "${found_gpu}" = true ]; then
-#     echo "Found a GPU..."
-#     exit 0
-# else
-#     echo "No GPU Found..."
-# fi
-
-# # otherwise,
-# if [ -d "${CUDA_STUBDIR}" ]; then
-#     find ${CUDA_STUBDIR} -name "libnvidia-ml.so.*" | xargs --no-run-if-empty rm -v
-# fi
-
-# echo "Disabling CUDA-Aware MPI Features..."
-# case "${MPI_FAMILY}" in
-#     "openmpi")
-#         export OMPI_MCA_opal_cuda_support=false
-#         ;;
-#     "mpich")
-#         export MPIR_CVAR_ENABLE_GPU=0
-#         ;;
-# esac
-# EOF
+#-------------------------------------------------------------------------------
+# CUDA stages - base image
+FROM base_os AS cuda-baseimage
+#-------------------------------------------------------------------------------
+RUN exec &> >(tee /container/logs/cuda.log) \
+    && CUDA_HOME=$(ls -d /usr/local/cuda-??.?) \
+    && CUDA_MAJOR_MINOR=${CUDA_HOME//'/usr/local/cuda-'/} \
+    && echo "Cuda v${CUDA_VERSION} - from base image" \
+    && echo "CUDA: https://docs.nvidia.com/cuda/eula/index.html" >> /container/EULAs.txt \
+    && add_conf "\n# CUDA ${CUDA_MAJOR_MINOR}" \
+    && add_conf "export CUDA_VERSION=${CUDA_MAJOR_MINOR}" \
+    && add_conf "export CUDA_HOME=${CUDA_HOME}" \
+    && add_conf "export PATH=${CUDA_HOME}/bin:\${PATH}" \
+    && add_conf "export CPATH=${CUDA_HOME}/include:\${CPATH}" \
+    && add_conf "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" \
+    && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
+    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
+    && docker-clean
 
 LABEL cuda="${CUDA_VERSION}"
 
 
+
+#-------------------------------------------------------------------------------
+# CUDA meta stage-select either cuda-runfile or cuda-baseimage
+FROM cuda-baseimage AS cuda
+#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # ROCm stages
@@ -731,7 +726,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"-Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -Wno-deprecated-gpu-targets\"" \
     && docker-clean
 
 LABEL compiler="nvhpc"
@@ -1411,7 +1406,7 @@ LABEL heffte="${HEFFTE_VERSION}"
 #  remove duplicates from the front of the LD_LIBRARY_PATH
 ################################################################################
 FROM ${FINAL_TARGET} AS final
-ADD extras/Dockerfile.* extras/build*.sh extras/*.cfg extras/install*.sh extras/hello*.* /container/extras/
+ADD extras/*.* /container/extras/
 RUN exec &> >(tee /container/logs/final.log) \
     && list-large-directories \
     && add_conf "\n# Final configuration:" | tee -a /container/config_env.sh \
