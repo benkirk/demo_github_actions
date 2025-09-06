@@ -190,10 +190,6 @@ jobs:
       #----------------------------------------------
       - name: Set Image Build Environment & Tag Variables
         run: |
-          COMPILER_LABEL="-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}"
-          GPU_LABEL="-${{ inputs.gpu }}"
-          MPI_LABEL="-${{ inputs.mpi }}"
-
           cat << EOF > build_inputs.txt
           arch: '${{ inputs.arch }}'
           os: '${{ inputs.os }}'
@@ -211,8 +207,18 @@ jobs:
           shasum build_inputs.txt > inputs_sha.txt
           cat inputs_sha.txt
           INPUTS_SHA=$(cat inputs_sha.txt | cut -c1-7)
+
+          COMPILER_LABEL="-${{ inputs.compiler == 'os-gcc' && 'gcc' || inputs.compiler }}"
+          GPU_LABEL="-${{ inputs.gpu }}"
+          MPI_LABEL="-${{ inputs.mpi }}"
+
           if [[ "${{ inputs.gpu }}" == "nogpu" ]]; then
               GPU_LABEL=
+              MINIFORGE_PREREQ="base_os"
+          fi
+          if [[ "${{ inputs.os }}" == *"-cuda"* ]]; then
+              GPU_LABEL=
+              MINIFORGE_PREREQ="cuda"
           fi
 
           CI_REPO=${{ inputs.docker_repo }}-${{ inputs.arch }}
@@ -231,6 +237,7 @@ jobs:
           CI_CACHE=${CI_CACHE}
           PUBLISH_REPO=${PUBLISH_REPO}
           PUBLISH_TAG=${PUBLISH_TAG}
+          MINIFORGE_PREREQ=${MINIFORGE_PREREQ}
           EOF
 
           cat tags.sh
@@ -260,7 +267,7 @@ jobs:
           build-args: |
             BASE_OS=${{ inputs.os }}
             FINAL_TARGET=fftlibs
-            MINIFORGE_PREREQ=${{ contains(inputs.os,'cuda') && 'cuda' || 'base_os' }}
+            MINIFORGE_PREREQ=${{ env.MINIFORGE_PREREQ }}
             ${{ inputs.extra_build_args }}
             ${{ inputs.gpu_build_args }}
             ${{ inputs.compiler_build_args }}

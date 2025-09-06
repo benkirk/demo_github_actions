@@ -256,6 +256,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 add_conf 'export PKG_INSTALL_CMD="dnf -y install"' \
                 && yum -y install dnf dnf-plugins-core \
                 && dnf group list \
+                && dnf -y update \
                 && dnf -y install \
                        procps \
                        gcc{,-c++,-gfortran} gdb man \
@@ -298,6 +299,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                    esac \
                 && (echo -e 'y\n' | unminimize) \
                 && apt-get update \
+                && apt-get upgrade \
                 && apt-get autoclean \
                 && apt-get install -y \
                            procps \
