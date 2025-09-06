@@ -23,7 +23,7 @@ on:
         description: "Docker Repository for Deployment"
         type: choice
         required: true
-        default: "benjaminkirk/gh-ci"
+        default: "benjaminkirk/hpcdev"
         options:
           - "benjaminkirk/gh-ci"
           - "benjaminkirk/hpcdev"
@@ -44,14 +44,14 @@ on:
 jobs:
 
   build-matrix:
-    name: Build
+    name: Bld
     strategy:
       fail-fast: false
       max-parallel: 24
       matrix:
-        os:       [ rocky9, rocky9-cuda, noble, noble-cuda ]
         compiler: [ gcc, oneapi, nvhpc, aocc ]
         mpi:      [ openmpi, mpich, mpich3 ]
+        os:       [ rocky9, rocky9-cuda, noble, noble-cuda ]
 
         include:
           # compiler build arg specifications
