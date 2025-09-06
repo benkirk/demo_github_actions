@@ -7,13 +7,13 @@ on:
         description: 'Base OS'
         type: choice
         required: true
-        default: almalinux9
+        default: rockylinux9
         options:
-          - almalinux8
-          - almalinux9
-          - almalinux10
-          - jammy
+          - rockylinux9
+          - rockylinux9-cuda
+          - rockylinux10
           - noble
+          - noble-cuda
           - leap
           - tumbleweed
 
@@ -50,23 +50,9 @@ jobs:
       matrix:
         compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
         mpi:      [ openmpi, mpich, mpich3 ]
-        gpu:      [ nogpu, cuda ]
         arch:     [ x86_64, aarch64 ]
 
         include:
-          # gpu architecture-dependent build arg specifications
-          - arch: x86_64
-            gpu: cuda
-            gpu_build_args: |
-              CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
-
-          - arch: aarch64
-            gpu: cuda
-            gpu_build_args: |
-              CUDA_VERSION=12.9
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux_sbsa.run
-
           # compiler build arg specifications
           - compiler: gcc
             compiler_build_args: |
@@ -172,8 +158,6 @@ jobs:
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
       free_runner_space: true
       conda: true
-      gpu: ${{ matrix.gpu }}
-      gpu_build_args: ${{ matrix.gpu_build_args }}
       compiler: ${{ matrix.compiler }}
       compiler_build_args: ${{ matrix.compiler_build_args }}
       mpi: ${{ matrix.mpi }}
