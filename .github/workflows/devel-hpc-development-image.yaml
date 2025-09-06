@@ -328,7 +328,7 @@ jobs:
             /container/extras/build_dart.sh
 
       - name: Test Image - FastEddy
-        if: ${{ inputs.test && contains(inputs.os, 'cuda') }}
+        if: ${{ inputs.test }} && contains( ${{ inputs.os }}, 'cuda')
         continue-on-error: true
         run: |
           docker run --rm --env-file test_env.cfg \
@@ -337,7 +337,7 @@ jobs:
 
       - name: Test Image - Kokkos
         if: ${{ inputs.test }}
-        continue-on-error: ${{ contains(inputs.os, 'cuda') }}
+        continue-on-error: contains( ${{ inputs.os }}, 'cuda')
         run: |
           docker run --rm --env-file test_env.cfg \
             --env KOKKOS_VERSION=4.6.02 \
