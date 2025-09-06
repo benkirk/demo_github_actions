@@ -208,7 +208,7 @@ jobs:
 
           CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-devel
 
-          CI_CACHE=${CI_REPO}-cache:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-cache
+          CI_CACHE=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}-cache
 
           PUBLISH_REPO=${CI_REPO}
 

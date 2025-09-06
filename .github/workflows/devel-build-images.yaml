@@ -104,7 +104,7 @@ jobs:
     uses: ./.github/workflows/devel-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
-      os: ${{ marix.os }}
+      os: ${{ matrix.os }}
       arch: 'x86_64'
       runner: 'ubuntu-latest'
       free_runner_space: true
