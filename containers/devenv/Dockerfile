@@ -45,8 +45,14 @@ ARG FINAL_TARGET="fftlibs"
 FROM docker.io/almalinux:8 AS almalinux8
 FROM docker.io/almalinux:9 AS almalinux9
 FROM docker.io/almalinux:10 AS almalinux10
+
+FROM rockylinux/rockylinux:8 AS rockylinux8
+FROM rockylinux/rockylinux:9 AS rockylinux9
+FROM rockylinux/rockylinux:10 AS rockylinux10
+
 FROM docker.io/opensuse/leap AS leap
 FROM docker.io/opensuse/tumbleweed AS tumbleweed
+
 FROM ubuntu:jammy AS jammy
 FROM ubuntu:noble AS noble
 
