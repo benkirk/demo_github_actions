@@ -50,7 +50,7 @@ jobs:
       max-parallel: 24
       matrix:
         compiler: [ gcc, oneapi, nvhpc, aocc ]
-        mpi:      [ openmpi ]
+        mpi:      [ openmpi, mpich, mpich3 ]
 
         include:
           # compiler build arg specifications
@@ -88,10 +88,15 @@ jobs:
               MPI_FAMILY=openmpi
               OPENMPI_VERSION=5.0.8
 
-          # - mpi: mpich
-          #   mpi_build_args: |
-          #     MPI_FAMILY=mpich
-          #     MPICH_VERSION=4.3.1
+          - mpi: mpich
+            mpi_build_args: |
+              MPI_FAMILY=mpich
+              MPICH_VERSION=4.3.1
+
+          - mpi: mpich3
+            mpi_build_args: |
+              MPI_FAMILY=mpich3
+              MPICH_VERSION=3.4.3
 
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
