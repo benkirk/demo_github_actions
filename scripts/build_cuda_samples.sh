@@ -45,9 +45,12 @@ cd ${CUDA_SAMPLES_BUILD_DIR}
 
 # special compiler flags
 case "${COMPILER_FAMILY}" in
-    "gcc")    ;;
-    "oneapi") EXTRA_CMAKE_ARGS='-DOpenMP_CXX_FLAGS="-fopenmp"' ;;
-    "nvhpc")  EXTRA_CMAKE_ARGS="-DOpenMP_CXX_FLAGS=\"-fopenmp\" -DOpenMP_CXX_LIB_NAMES=\"omp\" -DOpenMP_omp_LIBRARY=\"$(find /container/nvhpc -type f -name libomp.so)\"" ;;
+    "gcc") ;;
+    "oneapi")
+        EXTRA_CMAKE_ARGS="-DOpenMP_CXX_FLAGS=-fopenmp" ;;
+    "nvhpc")
+        libomp=$(ls ${NVCOMPILERS}/*/${NVHPC_VERSION}/*/lib/libomp.so)
+        EXTRA_CMAKE_ARGS="-DOpenMP_CXX_FLAGS=-fopenmp -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=${libomp}" ;;
     *)
         echo "ERROR: Unknown COMPILER_FAMILY=${COMPILER_FAMILY}"
         exit 1
