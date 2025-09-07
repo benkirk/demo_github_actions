@@ -18,7 +18,7 @@
 #
 ################################################################################
 
-ARG BASE_OS="alma9"
+ARG BASE_OS="almalinux9"
 
 ARG COMPILER_FAMILY="os-gcc"
 ARG MPI_FAMILY="openmpi"
@@ -42,13 +42,13 @@ ARG FINAL_TARGET="fftlibs"
 #-------------------------------------------------------------------------------
 # Any of these upstream base images can be used as a ${BASE_OS}
 #-------------------------------------------------------------------------------
-FROM docker.io/almalinux:8 AS alma8
-FROM docker.io/almalinux:9 AS alma9
-FROM docker.io/almalinux:10 AS alma10
+FROM docker.io/almalinux:8 AS almalinux8
+FROM docker.io/almalinux:9 AS almalinux9
+FROM docker.io/almalinux:10 AS almalinux10
 
-FROM rockylinux/rockylinux:8 AS rocky8
-FROM rockylinux/rockylinux:9 AS rocky9
-FROM rockylinux/rockylinux:10 AS rocky10
+FROM rockylinux/rockylinux:8 AS rockylinux8
+FROM rockylinux/rockylinux:9 AS rockylinux9
+FROM rockylinux/rockylinux:10 AS rockylinux10
 
 FROM docker.io/opensuse/leap AS leap
 FROM docker.io/opensuse/tumbleweed AS tumbleweed
@@ -60,10 +60,10 @@ FROM ubuntu:noble AS noble
 # preconfigured vendor image; leaving these here for reference.
 # (since the vendors don't support the same array of OS images, usually this is not the approach taken)
 FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu24.04 AS noble-cuda
-FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux9 AS rocky9-cuda
-FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux8 AS rocky8-cuda
+FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux9 AS rockylinux9-cuda
+FROM nvidia/cuda:12.9.1-cudnn-devel-rockylinux8 AS rockylinux8-cuda
 
-FROM rocm/dev-almalinux-8:6.4.2-complete AS alma8-rocm
+FROM rocm/dev-almalinux-8:6.4.2-complete AS almalinux8-rocm
 FROM rocm/dev-ubuntu-24.04:6.4.2-complete AS noble-rocm
 
 #-------------------------------------------------------------------------------
@@ -378,7 +378,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda-stubs.conf \
@@ -403,7 +403,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export CPATH=${CUDA_HOME}/include:\${CPATH}" \
     && add_conf "export CUDA_STUBDIR=$(find ${CUDA_HOME} -type d -name stubs)" \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && source /container/config_env.sh \
     && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-libdir=${CUDA_STUBDIR}\"" \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda-stubs.conf \
@@ -412,12 +412,12 @@ RUN exec &> >(tee /container/logs/cuda.log) \
 
 LABEL cuda="${CUDA_VERSION}"
 
-
-
 #-------------------------------------------------------------------------------
 # CUDA meta stage-select either cuda-runfile or cuda-baseimage
-FROM cuda-baseimage AS cuda
+FROM cuda-runfile AS cuda
 #-------------------------------------------------------------------------------
+
+
 
 #-------------------------------------------------------------------------------
 # ROCm stages
@@ -737,7 +737,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export CXXFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export F77FLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
     && add_conf "export FCFLAGS=\"-fPIC ${MARCH_FLAGS}\"" \
-    && add_conf "export NVCC_PREPEND_FLAGS=\"--cudart shared -Wno-deprecated-gpu-targets\"" \
+    && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -Wno-deprecated-gpu-targets\"" \
     && docker-clean
 
 LABEL compiler="nvhpc"
