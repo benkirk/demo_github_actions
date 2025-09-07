@@ -16,10 +16,32 @@ CUDA_SAMPLES_INSTALL_DIR="${INSTALL_ROOT}/cuda_samples/${CUDA_SAMPLES_VERSION}"
 
 #--------------------------------------------------------------------------------
 # prep source
+<<<<<<< HEAD
 [ -d "${CUDA_SAMPLES_SRC}" ] || \
     git clone --branch ${CUDA_SAMPLES_VERSION} --depth=1 \
         https://github.com/NVIDIA/cuda-samples.git \
         ${CUDA_SAMPLES_SRC}
+=======
+if [[ ! -d "${CUDA_SAMPLES_SRC}" ]]; then
+    git clone --branch ${CUDA_SAMPLES_VERSION} --depth=1 \
+        https://github.com/NVIDIA/cuda-samples.git \
+        ${CUDA_SAMPLES_SRC}
+    cd ${CUDA_SAMPLES_SRC}
+    patch -p1 <<'EOF'
+diff --git a/Samples/4_CUDA_Libraries/CMakeLists.txt b/Samples/4_CUDA_Libraries/CMakeLists.txt
+index e425989..306faba 100644
+--- a/Samples/4_CUDA_Libraries/CMakeLists.txt
++++ b/Samples/4_CUDA_Libraries/CMakeLists.txt
+@@ -30,5 +30,5 @@ add_subdirectory(simpleCUBLAS_LU)
+ add_subdirectory(simpleCUFFT)
+ add_subdirectory(simpleCUFFT_2d_MGPU)
+ add_subdirectory(simpleCUFFT_MGPU)
+-add_subdirectory(simpleCUFFT_callback)
++#add_subdirectory(simpleCUFFT_callback)
+ add_subdirectory(watershedSegmentationNPP)
+EOF
+fi
+>>>>>>> 4cc9251 (use my CUDA from binary installer again)
 
 cd ${CUDA_SAMPLES_SRC} && git clean -xdf .
 
