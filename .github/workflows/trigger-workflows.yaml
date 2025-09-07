@@ -28,22 +28,18 @@ jobs:
           token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
           github-server-url: https://github.com
 
-      - name: Rocky Linux 9
+      - name: Almalinux9
         run: |
-          gh workflow run matrix-build-images.yaml -f docker_repo=benjaminkirk/hpcdev -f os=rocky9 -f test=true -f publish=true
+          gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=almalinux9 -f test=true -f publish=true
 
-      - name: Rocky Linux 9 CUDA
+      - name: Almalinux10
         run: |
-          gh workflow run matrix-build-images.yaml -f docker_repo=benjaminkirk/hpcdev -f os=rocky9-cuda -f test=true -f publish=true
-
-      # - name: Alma Linux 10
-      #   run: |
-      #     gh workflow run matrix-build-images.yaml -f docker_repo=benjaminkirk/hpcdev -f os=alma10 -f test=true -f publish=true
+          gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=almalinux10 -f test=true -f publish=true
 
       - name: Ubuntu Noble
         run: |
-          gh workflow run matrix-build-images.yaml -f docker_repo=benjaminkirk/hpcdev -f os=noble -f test=true -f publish=true
+          gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=noble -f test=true -f publish=true
 
-      - name: Ubuntu Noble CUDA
+      - name: OpenSUSE Leap
         run: |
-          gh workflow run matrix-build-images.yaml -f docker_repo=benjaminkirk/hpcdev -f os=noble-cuda -f test=true -f publish=true
+          gh workflow run matrix-build-images.yaml -f docker_repo=ncarcisl/hpcdev -f os=leap -f test=true -f publish=true
