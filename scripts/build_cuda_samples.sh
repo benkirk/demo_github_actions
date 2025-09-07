@@ -16,12 +16,6 @@ CUDA_SAMPLES_INSTALL_DIR="${INSTALL_ROOT}/cuda_samples/${CUDA_SAMPLES_VERSION}"
 
 #--------------------------------------------------------------------------------
 # prep source
-<<<<<<< HEAD
-[ -d "${CUDA_SAMPLES_SRC}" ] || \
-    git clone --branch ${CUDA_SAMPLES_VERSION} --depth=1 \
-        https://github.com/NVIDIA/cuda-samples.git \
-        ${CUDA_SAMPLES_SRC}
-=======
 if [[ ! -d "${CUDA_SAMPLES_SRC}" ]]; then
     git clone --branch ${CUDA_SAMPLES_VERSION} --depth=1 \
         https://github.com/NVIDIA/cuda-samples.git \
@@ -41,7 +35,6 @@ index e425989..306faba 100644
  add_subdirectory(watershedSegmentationNPP)
 EOF
 fi
->>>>>>> 4cc9251 (use my CUDA from binary installer again)
 
 cd ${CUDA_SAMPLES_SRC} && git clean -xdf .
 
