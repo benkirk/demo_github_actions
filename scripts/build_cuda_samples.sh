@@ -21,17 +21,18 @@ if [[ ! -d "${CUDA_SAMPLES_SRC}" ]]; then
         https://github.com/NVIDIA/cuda-samples.git \
         ${CUDA_SAMPLES_SRC}
     cd ${CUDA_SAMPLES_SRC}
+    # remove sample program that depends on static CUFFT; we probably removed that library
+    # the container image.
     patch -p1 <<'EOF'
 diff --git a/Samples/4_CUDA_Libraries/CMakeLists.txt b/Samples/4_CUDA_Libraries/CMakeLists.txt
-index e425989..306faba 100644
+index e425989..69130ba 100644
 --- a/Samples/4_CUDA_Libraries/CMakeLists.txt
 +++ b/Samples/4_CUDA_Libraries/CMakeLists.txt
-@@ -30,5 +30,5 @@ add_subdirectory(simpleCUBLAS_LU)
+@@ -30,5 +30,4 @@ add_subdirectory(simpleCUBLAS_LU)
  add_subdirectory(simpleCUFFT)
  add_subdirectory(simpleCUFFT_2d_MGPU)
  add_subdirectory(simpleCUFFT_MGPU)
 -add_subdirectory(simpleCUFFT_callback)
-+#add_subdirectory(simpleCUFFT_callback)
  add_subdirectory(watershedSegmentationNPP)
 EOF
 fi
