@@ -46,6 +46,7 @@ cd ${CUDA_SAMPLES_BUILD_DIR}
 # special compiler flags
 case "${COMPILER_FAMILY}" in
     "gcc") ;;
+    "aocc") ;;
     "oneapi")
         EXTRA_CMAKE_ARGS="-DOpenMP_CXX_FLAGS=-fopenmp" ;;
     "nvhpc")
