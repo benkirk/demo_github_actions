@@ -1171,7 +1171,7 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && case "${COMPILER_FAMILY}" in \
-        "clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
+        "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
