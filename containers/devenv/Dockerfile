@@ -1090,7 +1090,10 @@ FROM ${IOLIBS_PREREQ} AS iolibs
 #-------------------------------------------------------------------------------
 ARG SZIP_VERSION="2.1.1"
 ARG BLOSC_VERSION="1.21.6"
-ARG HDF5_VERSION="1.14.6"
+#ARG HDF5_VERSION="1.14.6"
+#ARG HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz
+ARG HDF5_VERSION="1.12.3"
+ARG HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
 ARG NETCDF_C_VERSION="4.9.3"
 ARG NETCDF_FORTRAN_VERSION="4.6.2"
 RUN exec &> >(tee /container/logs/iolibs.log) \
@@ -1147,8 +1150,8 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
     && echo "building HDF5-${HDF5_VERSION}" \
     && env \
     && HDF5_INSTALL_PATH="/container/hdf5/${HDF5_VERSION}" \
-    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz | tar zx \
-    && cd ./hdf5-${HDF5_VERSION} \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL ${HDF5_URL} | tar zx \
+    && cd ./hdf*/ \
     && case "${COMPILER_FAMILY}" in \
         "nvhpc"|"aocc"|"clang") \
             extra_args="--disable-nonstandard-feature-float16 --disable-tests" \
