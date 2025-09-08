@@ -39,10 +39,19 @@ jobs:
         arch:     [ x86_64, aarch64 ]
 
         exclude:
-          - arch: arm64
+          - arch: aarch64
             compiler: oneapi
-          - arch: arm64
+          - arch: aarch64
             compiler: aocc
+          - arch: aarch64
+            mpi: mpich3
+
+          - compiler: nvhpc
+            arch: aarch64
+            mpi: mpich
+
+          - compiler: clang
+            arch: aarch64
 
     name: Build Apps
     runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
