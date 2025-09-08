@@ -162,6 +162,9 @@ jobs:
           - compiler: clang
             arch: aarch64
 
+          # easy disable all clang:
+          - compiler: clang
+
 
 
     uses: ./.github/workflows/build-hpc-development-image.yaml
