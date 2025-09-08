@@ -36,7 +36,7 @@ jobs:
         compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
         mpi:      [ openmpi, mpich ]
         gpu:      [ nogpu, cuda ]
-        arch:     [ x86_64 ]
+        arch:     [ x86_64, aarch64 ]
 
         exclude:
           - arch: arm64
@@ -45,7 +45,7 @@ jobs:
             compiler: aocc
 
     name: Build Apps
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     defaults:
       run:
         shell: bash -elo pipefail {0}
