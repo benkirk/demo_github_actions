@@ -34,6 +34,8 @@ if [ 0 -eq ${#} ]; then
         run \
         --nv \
         --cleanenv \
+        --env WORK=${WORK} \
+        --env SCRATCH=${SCRATCH} \
         --bind /glade ${extra_binds} \
         --bind ${workdir}/tmp:/tmp \
         --bind ${workdir}/var/tmp:/var/tmp \
@@ -46,6 +48,8 @@ else
         exec \
         --nv \
         --cleanenv \
+        --env WORK=${WORK} \
+        --env SCRATCH=${SCRATCH} \
         --bind /glade ${extra_binds} \
         --bind ${workdir}/tmp:/tmp \
         --bind ${workdir}/var/tmp:/var/tmp \

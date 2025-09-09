@@ -47,5 +47,5 @@ rsync -axv \
       --exclude '.git/' \
       ${FASTEDDY_DIR}/ ${FASTEDDY_INSTALL_PATH}/
 cd ${FASTEDDY_INSTALL_PATH}/bin
-ln -s ../SRC/FEMAIN/FastEddy
+ln -sf ../SRC/FEMAIN/FastEddy
 ldd ${FASTEDDY_INSTALL_PATH}/bin/FastEddy
