@@ -184,7 +184,7 @@ jobs:
       test: ${{ inputs.test }}
       publish: ${{ inputs.publish }}
       extra_build_args: |
-        HDF5_VERSION=1.14.6
+        HDF5_VERSION=1.12.3
         NETCDF_C_VERSION=4.9.3
         NETCDF_FORTRAN_VERSION=4.6.2
         PNETCDF_VERSION=1.14.0
