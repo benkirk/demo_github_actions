@@ -18,11 +18,12 @@ cd ${selfdir} || exit 1
 #esac
 
 container_img="$(basename ${0})"
-
 make ${container_img}.sif >/dev/null || exit 1
 
 cd ${topdir} || exit 1
 
+INSTALL_ROOT=${WORK}/CONTAINERS/${container_img}
+mkdir -p ${INSTALL_ROOT}
 unset extra_binds
 
 [ -d /local_scratch ] && extra_binds="--bind /local_scratch ${extra_binds}"
@@ -36,6 +37,7 @@ if [ 0 -eq ${#} ]; then
         --cleanenv \
         --env WORK=${WORK} \
         --env SCRATCH=${SCRATCH} \
+        --env INSTALL_ROOT=${INSTALL_ROOT} \
         --bind /glade ${extra_binds} \
         --bind ${workdir}/tmp:/tmp \
         --bind ${workdir}/var/tmp:/var/tmp \
@@ -50,6 +52,7 @@ else
         --cleanenv \
         --env WORK=${WORK} \
         --env SCRATCH=${SCRATCH} \
+        --env INSTALL_ROOT=${INSTALL_ROOT} \
         --bind /glade ${extra_binds} \
         --bind ${workdir}/tmp:/tmp \
         --bind ${workdir}/var/tmp:/var/tmp \
