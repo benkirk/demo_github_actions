@@ -19,23 +19,21 @@ nodes_list=$(cat $PBS_NODEFILE | sort | uniq)
 nodes_list=${nodes_list//.hpc.ucar.edu/}
 echo "NODES=\""${nodes_list}"\""
 
-export container_img="${container_img:-$(pwd)/libexec/cisldev-x86_64-almalinux9-aocc-mpich3-cuda.sif}"
-osu_root="/container/osu-micro-benchmarks/7.5"
+export container_img="${container_img:-$(pwd)/libexec/almalinux9-gcc14-openmpi-cuda.sif}"
 
 [ -f "${container_img}" ] || { echo "cannot locate requested image: ${container_img}"; exit 1; }
 
 apptainer_exec_mpi="apptainer-launch-${NCAR_HOST}-${LMOD_FAMILY_MPI}.sh"
 
-cat <<'EOF' > ${apptainer_exec_mpi}
+cat <<'EOF' > ${apptainer_exec_mpi} && chmod +x ${apptainer_exec_mpi}
 #!/bin/bash
 
 [ -f "${container_img}" ] || { echo "cannot locate requested image: ${container_img}"; exit 1; }
 
 # Set UCX_POSIX_USE_PROC_LINK=n: This environment variable can be set before running your
 # Apptainer container to disable the use of /proc links by the UCX POSIX transport.
-# This is a common workaround for this specific error and can resolve permission
-# denied issues by switching to an alternative communication mode that
-# does not require ptrace capabilities.
+# This is a common workaround to resolve permission denied issues by switching to
+# an alternative communication mode that does not require ptrace capabilities.
 export UCX_POSIX_USE_PROC_LINK=n
 
 $(which apptainer) \
@@ -48,12 +46,12 @@ $(which apptainer) \
     --bind /usr/lib64:/host/lib64 \
     --bind /usr/lpp/mmfs \
     --bind ${NCAR_ROOT_OPENMPI} \
-    --env LD_LIBRARY_PATH=${NCAR_ROOT_OPENMPI}/lib:${LD_LIBRARY_PATH}:/host/lib64:/usr/lpp/mmfs/lib \
+    --env LD_LIBRARY_PATH=${NCAR_ROOT_OPENMPI}/lib:/usr/lib64:/host/lib64:/usr/lpp/mmfs/lib \
    ${container_img} \
    "${@}"
 EOF
-chmod +x ${apptainer_exec_mpi}
 
+osu_root="/container/osu-micro-benchmarks/7.5"
 
 echo "-------------------------------------------------------------------------"
 echo "ldd, container native:"
