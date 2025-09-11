@@ -261,6 +261,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
                 add_conf 'export PKG_INSTALL_CMD="dnf -y install"' \
                 && yum -y install dnf dnf-plugins-core \
+                && dnf -y install epel-release \
                 && dnf group list \
                 && dnf -y update \
                 && dnf -y install \
@@ -274,7 +275,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                        python3 \
                        cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
                        libxml2-devel curl-devel \
-                       sudo \
+                       sudo fakeroot \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
                 add_conf 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' \
@@ -292,7 +293,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                           python3 \
                           cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
                           libxml2-devel libedit-devel curl-devel \
-                          sudo \
+                          sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
@@ -317,7 +318,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                            python3 \
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
                            libxml2-dev libcurl4-openssl-dev \
-                           sudo \
+                           sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
@@ -1090,7 +1091,10 @@ FROM ${IOLIBS_PREREQ} AS iolibs
 #-------------------------------------------------------------------------------
 ARG SZIP_VERSION="2.1.1"
 ARG BLOSC_VERSION="1.21.6"
-ARG HDF5_VERSION="1.14.6"
+#ARG HDF5_VERSION="1.14.6"
+#ARG HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz
+ARG HDF5_VERSION="1.12.3"
+ARG HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
 ARG NETCDF_C_VERSION="4.9.3"
 ARG NETCDF_FORTRAN_VERSION="4.6.2"
 RUN exec &> >(tee /container/logs/iolibs.log) \
@@ -1147,8 +1151,8 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
     && echo "building HDF5-${HDF5_VERSION}" \
     && env \
     && HDF5_INSTALL_PATH="/container/hdf5/${HDF5_VERSION}" \
-    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz | tar zx \
-    && cd ./hdf5-${HDF5_VERSION} \
+    && cd /tmp && curl --retry 3 --retry-delay 5 -sSL ${HDF5_URL} | tar zx \
+    && cd ./hdf*/ \
     && case "${COMPILER_FAMILY}" in \
         "nvhpc"|"aocc"|"clang") \
             extra_args="--disable-nonstandard-feature-float16 --disable-tests" \
@@ -1168,7 +1172,7 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
             --disable-dependency-tracking \
             || cat config.log) \
     && case "${COMPILER_FAMILY}" in \
-        "clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
+        "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
        esac \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
     && make --no-print-directory --silent install-strip \
