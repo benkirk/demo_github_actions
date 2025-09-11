@@ -185,6 +185,7 @@ jobs:
       publish: ${{ inputs.publish }}
       extra_build_args: |
         HDF5_VERSION=1.12.3
+        HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
         NETCDF_C_VERSION=4.9.3
         NETCDF_FORTRAN_VERSION=4.6.2
         PNETCDF_VERSION=1.14.0
