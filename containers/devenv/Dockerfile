@@ -791,6 +791,7 @@ RUN exec &> >(tee /container/logs/llvm.log) \
            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
            -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PATH} \
            -DFLANG_INCLUDE_TESTS=OFF \
+           -DFLANG_RUNTIME_F128_MATH_LIB=libquadmath \
            -DLLVM_BUILD_LLVM_DYLIB=ON \
            -DLLVM_ENABLE_PROJECTS="clang;flang;openmp;lld" \
            -DLLVM_INCLUDE_BENCHMARKS=OFF \
