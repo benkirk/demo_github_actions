@@ -261,6 +261,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
                 add_conf 'export PKG_INSTALL_CMD="dnf -y install"' \
                 && yum -y install dnf dnf-plugins-core \
+                && dnf -y install epel-release \
                 && dnf group list \
                 && dnf -y update \
                 && dnf -y install \
@@ -274,7 +275,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                        python3 \
                        cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
                        libxml2-devel curl-devel \
-                       sudo \
+                       sudo fakeroot \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
                 add_conf 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' \
@@ -292,7 +293,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                           python3 \
                           cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
                           libxml2-devel libedit-devel curl-devel \
-                          sudo \
+                          sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
@@ -317,7 +318,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                            python3 \
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
                            libxml2-dev libcurl4-openssl-dev \
-                           sudo \
+                           sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
