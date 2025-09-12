@@ -2,13 +2,13 @@
 
 set -ex
 
-#----------------------------------------------------------------------------
-# environment
+#-------------------------------------------------------------------------bh-
+# Common Configuration Environment
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
     || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
-#----------------------------------------------------------------------------
+#-------------------------------------------------------------------------eh-
 
 export WRF_VERSION="${WRF_VERSION:-4.6.1}"
 export WPS_VERSION="${WPS_VERSION:-4.6.0}"

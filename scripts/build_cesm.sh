@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 set -ex
-#----------------------------------------------------------------------------
-# environment
+#-------------------------------------------------------------------------bh-
+# Common Configuration Environment
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
     || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
-#----------------------------------------------------------------------------
+#-------------------------------------------------------------------------eh-
 
 ${PKG_INSTALL_CMD} perl-English perl-FindBin perl-Math-BigInt perl-App-cpanminus perl-XML-LibXML
 

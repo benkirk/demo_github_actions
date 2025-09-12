@@ -2,13 +2,13 @@
 
 set -ex
 
-#----------------------------------------------------------------------------
-# environment
+#-------------------------------------------------------------------------bh-
+# Common Configuration Environment
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
     || { echo "cannot locate ${SCRIPTDIR}/build_common.cfg!!"; exit 1; }
-#----------------------------------------------------------------------------
+#-------------------------------------------------------------------------eh-
 
 export DART_VERSION="${DART_VERSION:-v11.8.8}"
 DART_SRC="${STAGE_DIR}/DART-${DART_VERSION}"
