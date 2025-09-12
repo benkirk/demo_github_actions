@@ -251,7 +251,7 @@ jobs:
           tags: ${{ env.CI_TAG }}
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: mode=max
-          sbom: true
+          sbom: false
           cache-from: type=registry,ref=${{env.CI_CACHE }}
           cache-to: type=registry,ref=${{ env.CI_CACHE }},mode=max
           context: containers/devenv
