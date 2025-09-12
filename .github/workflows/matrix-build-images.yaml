@@ -155,7 +155,7 @@ jobs:
       os: ${{ inputs.os }}
       arch: ${{ matrix.arch }}
       runner: ${{ matrix.arch == 'x86_64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
-      free_runner_space: true
+      free_runner_space: ${{ matrix.gpu != 'nogpu' }}
       conda: true
       gpu: ${{ matrix.gpu }}
       gpu_build_args: ${{ matrix.gpu_build_args }}
