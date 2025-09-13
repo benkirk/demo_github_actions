@@ -5,10 +5,13 @@ set -ex
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+    || {
+        echo "cannot locate a suitable build_common.cfg!!"
+        exit 1
+    }
 #-------------------------------------------------------------------------eh-
 
 export KOKKOS_VERSION="${KOKKOS_VERSION:-4.5.01}"
@@ -64,8 +67,6 @@ cmake \
 find ${KOKKOS_BUILD_DIR} -type f -executable -ls
 
 cmake --install ${KOKKOS_BUILD_DIR}
-
-
 
 #--------------------------------------------------------------------------------
 # build an example

@@ -3,10 +3,13 @@
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+    || {
+        echo "cannot locate a suitable build_common.cfg!!"
+        exit 1
+    }
 #-------------------------------------------------------------------------eh-
 
 OMB_VERSION="${OMB_VERSION:-7.5}"
@@ -42,14 +45,14 @@ esac
 rm -rf ${STAGE_DIR}/*
 cd ${STAGE_DIR}/
 curl --retry 3 --retry-delay 5 -sSL https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-${OMB_VERSION}.tar.gz | tar xz \
-    &&  cd osu-micro-benchmarks-${OMB_VERSION} \
+    && cd osu-micro-benchmarks-${OMB_VERSION} \
     && ./configure --help \
     && set -x \
     && ./configure \
-           --prefix=${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION} ${extra_args} \
-           LIBS="${CUDA_LIBS} ${ROCM_LIBS}" \
+        --prefix=${INSTALL_ROOT}/osu-micro-benchmarks/${OMB_VERSION} ${extra_args} \
+        LIBS="${CUDA_LIBS} ${ROCM_LIBS}" \
     && make --no-print-directory --jobs ${MAKE_J_PROCS:-$(nproc)} V=0 \
-    && make --no-print-directory --silent install-strip  \
+    && make --no-print-directory --silent install-strip \
     && docker-clean
 
 cd ${topdir}

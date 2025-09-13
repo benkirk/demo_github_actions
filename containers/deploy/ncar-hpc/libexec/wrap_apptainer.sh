@@ -2,9 +2,12 @@
 
 #----------------------------------------------------------------------------
 # environment
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 selfdir="$(dirname $(readlink -f ${BASH_SOURCE[0]}))"
-source ${selfdir}/../config_env.sh || { echo "cannot locate config_env.sh!" ; exit 1; }
+source ${selfdir}/../config_env.sh || {
+    echo "cannot locate config_env.sh!"
+    exit 1
+}
 #----------------------------------------------------------------------------
 
 topdir="$(pwd)"
@@ -18,7 +21,7 @@ cd ${selfdir} || exit 1
 #esac
 
 container_img="$(basename ${0})"
-make ${container_img}.sif >/dev/null || exit 1
+make ${container_img}.sif > /dev/null || exit 1
 
 cd ${topdir} || exit 1
 

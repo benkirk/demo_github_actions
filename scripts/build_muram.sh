@@ -5,10 +5,13 @@ set -ex
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+    || {
+        echo "cannot locate a suitable build_common.cfg!!"
+        exit 1
+    }
 #-------------------------------------------------------------------------eh-
 
 export MURAM_VERSION="build_tweaks"
@@ -21,7 +24,6 @@ fi
 cd ${STAGE_DIR}/muram-${MURAM_VERSION}
 pwd
 git clean -xdf .
-
 
 export MURaM_HOME_DIR="$(pwd)"
 #export FFT_MODE="FFTW"

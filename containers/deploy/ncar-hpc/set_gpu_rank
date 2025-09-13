@@ -3,8 +3,9 @@
 my_name=set_gpu_rank
 my_host=$(hostname)
 
-function usage {
-cat << EOF
+function usage
+{
+    cat << EOF
 Usage: mpiexec [MPI_ARGS] $my_name ./application [APP_ARGS]
 
 A helpful launcher for GPU applications launched via MPI. Sets important
@@ -12,7 +13,8 @@ environment variables and maps GPUs to MPI ranks.
 EOF
 }
 
-function eecho {
+function eecho
+{
     if [[ $GLOBAL_RANK -eq 0 ]]; then
         >&2 echo -e "Error: $1"
     fi

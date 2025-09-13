@@ -5,10 +5,13 @@ set -ex
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+    || {
+        echo "cannot locate a suitable build_common.cfg!!"
+        exit 1
+    }
 #-------------------------------------------------------------------------eh-
 
 export FASTEDDY_VERSION="${FASTEDDY_VERSION:-v3.0.0}"
@@ -20,7 +23,7 @@ if [ ! -d ${FASTEDDY_DIR} ]; then
     rm -rf ${STAGE_DIR}/fasteddy*
     git clone --branch ${FASTEDDY_VERSION} --depth=1 https://github.com/NCAR/FastEddy-model ${FASTEDDY_DIR}
     cd ${FASTEDDY_DIR}
-    patch -p1 <<'EOF'
+    patch -p1 << 'EOF'
 diff --git a/SRC/FEMAIN/Makefile b/SRC/FEMAIN/Makefile
 index b86fd83..0a61e67 100644
 --- a/SRC/FEMAIN/Makefile
@@ -63,9 +66,9 @@ export FASTEDDY_INSTALL_PATH=${INSTALL_ROOT}/fasteddy/${FASTEDDY_VERSION}
 
 mkdir -p ${FASTEDDY_INSTALL_PATH}/bin
 rsync -axv \
-      --exclude 'docs/' \
-      --exclude '.git/' \
-      ${FASTEDDY_DIR}/ ${FASTEDDY_INSTALL_PATH}/
+    --exclude 'docs/' \
+    --exclude '.git/' \
+    ${FASTEDDY_DIR}/ ${FASTEDDY_INSTALL_PATH}/
 cd ${FASTEDDY_INSTALL_PATH}/bin
 ln -sf ../SRC/FEMAIN/FastEddy
 ldd ${FASTEDDY_INSTALL_PATH}/bin/FastEddy

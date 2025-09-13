@@ -5,10 +5,13 @@ set -ex
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+    || {
+        echo "cannot locate a suitable build_common.cfg!!"
+        exit 1
+    }
 #-------------------------------------------------------------------------eh-
 
 export ESMF_VERSION="${ESMF_VERSION:-8.8.0}"
@@ -23,11 +26,11 @@ pwd
 git clean -xdf .
 
 case "${COMPILER_FAMILY}" in
-    "aocc")   export ESMF_COMPILER="aocc";;
-    "gcc")    export ESMF_COMPILER="gfortran";;
-    "oneapi") export ESMF_COMPILER="intel";;
-    "nvhpc")  export ESMF_COMPILER="nvhpc";;
-    "clang")  export ESMF_COMPILER="llvm";;
+    "aocc") export ESMF_COMPILER="aocc" ;;
+    "gcc") export ESMF_COMPILER="gfortran" ;;
+    "oneapi") export ESMF_COMPILER="intel" ;;
+    "nvhpc") export ESMF_COMPILER="nvhpc" ;;
+    "clang") export ESMF_COMPILER="llvm" ;;
     *)
         echo "ERROR: Unknown COMPILER_FAMILY=${COMPILER_FAMILY}"
         exit 1
@@ -35,8 +38,8 @@ case "${COMPILER_FAMILY}" in
 esac
 
 case "${MPI_FAMILY}" in
-    "openmpi") export ESMF_COMM="openmpi";;
-    "mpich"*)   export ESMF_COMM="mpich3";;
+    "openmpi") export ESMF_COMM="openmpi" ;;
+    "mpich"*) export ESMF_COMM="mpich3" ;;
     *)
         echo "ERROR: Unknown MPI_FAMILY=${MPI_FAMILY}"
         exit 1
