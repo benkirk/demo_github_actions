@@ -4,7 +4,8 @@
 # linters documentation
 
 # all, none, or list of linter keys
-# APPLY_FIXES: all
+APPLY_FIXES:
+  - BASH_SHFMT
 
 # If you use ENABLE variable, all other languages/formats/tooling-formats will
 # be disabled by default
