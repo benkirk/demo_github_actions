@@ -25,4 +25,4 @@ SHOW_ELAPSED_TIME: true
 DISABLE_ERRORS: true
 
 BASH_FILTER_REGEX_EXCLUDE: "(Dockerfile)"
-BASH_SHFMT_ARGUMENTS: "--binary-next-line --case-indent --func-next-line --indent 4"
+BASH_SHFMT_ARGUMENTS: "--binary-next-line --case-indent --func-next-line --space-redirects --indent 4"
