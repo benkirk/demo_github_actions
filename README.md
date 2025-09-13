@@ -6,8 +6,8 @@ Demonstration of several GitHub Actions useful within CI/CD workflows.
 
 ### Building an Application Against a Matrix of Software Environments
 
-The file [`.github/workflows/container-build.yaml`](https://github.com/benkirk/demo_github_actions/blob/main/.github/workflows/container-build.yaml) 
-builds several applications within a matrix of compiler and MPI versions. The application builds can be enable and customized through inputs to the GitHub 
+The file [`.github/workflows/container-build.yaml`](https://github.com/benkirk/demo_github_actions/blob/main/.github/workflows/container-build.yaml)
+builds several applications within a matrix of compiler and MPI versions. The application builds can be enable and customized through inputs to the GitHub
 [`workfow_dispatch`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow#defining-inputs-for-manually-triggered-workflows)
 event.
 

@@ -2,9 +2,12 @@
 
 #----------------------------------------------------------------------------
 # environment
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 selfdir="$(dirname $(readlink -f ${BASH_SOURCE[0]}))"
-source ${selfdir}/../config_env.sh || { echo "cannot locate config_env.sh!" ; exit 1; }
+source ${selfdir}/../config_env.sh || {
+	echo "cannot locate config_env.sh!"
+	exit 1
+}
 #----------------------------------------------------------------------------
 
 topdir="$(pwd)"
@@ -30,36 +33,36 @@ unset extra_binds
 
 # interactive use
 if [ 0 -eq ${#} ]; then
-    apptainer \
-        --quiet \
-        run \
-        --nv \
-        --cleanenv \
-        --env WORK=${WORK} \
-        --env SCRATCH=${SCRATCH} \
-        --env INSTALL_ROOT=${INSTALL_ROOT} \
-        --bind /glade ${extra_binds} \
-        --bind ${workdir}/tmp:/tmp \
-        --bind ${workdir}/var/tmp:/var/tmp \
-        ${selfdir}/${container_img}.sif
+	apptainer \
+		--quiet \
+		run \
+		--nv \
+		--cleanenv \
+		--env WORK=${WORK} \
+		--env SCRATCH=${SCRATCH} \
+		--env INSTALL_ROOT=${INSTALL_ROOT} \
+		--bind /glade ${extra_binds} \
+		--bind ${workdir}/tmp:/tmp \
+		--bind ${workdir}/var/tmp:/var/tmp \
+		${selfdir}/${container_img}.sif
 else
-    #echo "args=""${@}"
-    #set -x
-    apptainer \
-        --quiet \
-        exec \
-        --nv \
-        --cleanenv \
-        --env WORK=${WORK} \
-        --env SCRATCH=${SCRATCH} \
-        --env INSTALL_ROOT=${INSTALL_ROOT} \
-        --bind /glade ${extra_binds} \
-        --bind ${workdir}/tmp:/tmp \
-        --bind ${workdir}/var/tmp:/var/tmp \
-        ${selfdir}/${container_img}.sif \
-        /bin/bash --noprofile --norc --login -c "${@}"
-    #set +x
-    #echo '$?='${?}
+	#echo "args=""${@}"
+	#set -x
+	apptainer \
+		--quiet \
+		exec \
+		--nv \
+		--cleanenv \
+		--env WORK=${WORK} \
+		--env SCRATCH=${SCRATCH} \
+		--env INSTALL_ROOT=${INSTALL_ROOT} \
+		--bind /glade ${extra_binds} \
+		--bind ${workdir}/tmp:/tmp \
+		--bind ${workdir}/var/tmp:/var/tmp \
+		${selfdir}/${container_img}.sif \
+		/bin/bash --noprofile --norc --login -c "${@}"
+	#set +x
+	#echo '$?='${?}
 fi
 
 remove_workdir

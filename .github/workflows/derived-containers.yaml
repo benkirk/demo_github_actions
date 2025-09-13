@@ -3,7 +3,7 @@ name: Build Derived Container Images
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ['Container Build']
+    workflows: ["Container Build"]
     types: [completed]
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       fail-fast: true
       matrix:
         compiler: [gcc12]
-        mpi:      [openmpi]
+        mpi: [openmpi]
 
     name: Build Inside Container
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
           fetch-depth: 0
 
       - name: Interrogate Environment

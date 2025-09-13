@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
-name: 'Free Docker Disk Space'
-description: 'Frees disk space on the runner'
-author: 'benkirk'
+name: "Free Docker Disk Space"
+description: "Frees disk space on the runner"
+author: "benkirk"
 runs:
   using: "composite"
   steps:
