@@ -22,7 +22,7 @@ jobs:
     name: Cancel duplicate jobs
     runs-on: ubuntu-latest
     steps:
-      - uses: fkirc/skip-duplicate-actions@main
+      - uses: fkirc/skip-duplicate-actions@v5
         with:
           github_token: ${{ secrets.BENKIRK_GITHUB_TOKEN }}
 
