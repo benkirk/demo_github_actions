@@ -128,7 +128,7 @@ jobs:
           ) &&
           !contains(github.event.head_commit.message, 'skip fix')
         with:
-          base: ${{ github.head_ref }}
+          base: ${{ github.head_ref || github.ref_name }}
           token: ${{ secrets.PAT || secrets.BENKIRK_GITHUB_TOKEN }}
           commit-message: "[MegaLinter] Apply linters automatic fixes"
           title: "[MegaLinter] Apply linters automatic fixes"
