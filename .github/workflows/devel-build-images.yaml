@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       os:
-        description: 'Base OS'
+        description: "Base OS"
         type: choice
         required: true
         default: almalinux10
@@ -28,28 +28,27 @@ on:
           - "ncarcisl/gh-ci"
 
       test:
-        description: 'Test Image'
+        description: "Test Image"
         type: boolean
         required: false
         default: true
 
       publish:
-        description: 'Publish Image'
+        description: "Publish Image"
         type: boolean
         required: false
         default: true
 
 jobs:
-
   build-matrix:
     name: Build
     strategy:
       fail-fast: false
       max-parallel: 24
       matrix:
-        compiler: [ clang, gcc, oneapi, nvhpc, aocc ]
-        mpi:      [ openmpi ]
-        gpu:      [ nogpu, cuda ]
+        compiler: [clang, gcc, oneapi, nvhpc, aocc]
+        mpi: [openmpi]
+        gpu: [nogpu, cuda]
 
         include:
           # gpu architecture-dependent build arg specifications
@@ -97,15 +96,14 @@ jobs:
           #     MPI_FAMILY=mpich
           #     MPICH_VERSION=4.3.1
 
-
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
     uses: ./.github/workflows/devel-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
       buildx_cloud: ${{ matrix.compiler == 'clang' }}
       os: ${{ inputs.os }}
-      arch: 'x86_64'
-      runner: 'ubuntu-latest'
+      arch: "x86_64"
+      runner: "ubuntu-latest"
       free_runner_space: true
       conda: true
       gpu: ${{ matrix.gpu }}

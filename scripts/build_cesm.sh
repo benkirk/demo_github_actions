@@ -4,16 +4,19 @@ set -ex
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source ${SCRIPTDIR}/build_common.cfg \
-    || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+source ${SCRIPTDIR}/build_common.cfg ||
+	source /container/extras/build_common.cfg ||
+	{
+		echo "cannot locate a suitable build_common.cfg!!"
+		exit 1
+	}
 #-------------------------------------------------------------------------eh-
 
 ${PKG_INSTALL_CMD} perl-English perl-FindBin perl-Math-BigInt perl-App-cpanminus perl-XML-LibXML
 
-find /container/esmf -name esmf.mk \
-    || /container/extras/build_esmf.sh
+find /container/esmf -name esmf.mk ||
+	/container/extras/build_esmf.sh
 
 export ESMFMKFILE="$(find /container/esmf -name esmf.mk)"
 
@@ -28,16 +31,15 @@ export USER="$(whoami)"
 #--------------------------------------------------------------------------------
 # prep source
 if [ ! -d "${CESM_SRC}" ]; then
-    #git clone --branch release-cesm${CESM_VERSION} --depth=1  https://github.com/ESCOMP/CESM.git ${CESM_SRC}
-    git clone --branch cesm3.0-alphabranch --depth=1  https://github.com/ESCOMP/CESM.git ${CESM_SRC}
-    cd ${CESM_SRC}
-    #./manage_externals/checkout_externals
-    ./bin/git-fleximod update
+	#git clone --branch release-cesm${CESM_VERSION} --depth=1  https://github.com/ESCOMP/CESM.git ${CESM_SRC}
+	git clone --branch cesm3.0-alphabranch --depth=1 https://github.com/ESCOMP/CESM.git ${CESM_SRC}
+	cd ${CESM_SRC}
+	#./manage_externals/checkout_externals
+	./bin/git-fleximod update
 fi
 cd ${CESM_SRC} && git clean -xdf .
 
-
-cat <<EOF > ccs_config/machines/container/config_machines.xml
+cat <<EOF >ccs_config/machines/container/config_machines.xml
   <machine MACH="container">
     <DESC>
       Containerized development environment (Docker/Singularity) for CESM w/ GNU compilers
@@ -73,7 +75,7 @@ cat <<EOF > ccs_config/machines/container/config_machines.xml
   </machine>
 EOF
 
-cat <<EOF > ccs_config/machines/container/container.cmake
+cat <<EOF >ccs_config/machines/container/container.cmake
 if (COMP_NAME STREQUAL gptl)
   string(APPEND CPPDEFS " -DHAVE_NANOTIME -DBIT64 -DHAVE_VPRINTF -DHAVE_BACKTRACE -DHAVE_SLASHPROC -DHAVE_COMM_F2C -DHAVE_TIMES -DHAVE_GETTIMEOFDAY")
 endif()
@@ -85,14 +87,11 @@ EOF
 
 git diff
 
-
-
 mkdir -p ${CESM_BUILD_DIR}
 
 ln -sf /usr/bin/python{3,}
 git config --global user.email "you@example.com"
 git config --global user.name "Your Name"
-
 
 rm -rf /tmp/foo-case
 ./cime/scripts/create_newcase --machine container --case /tmp/foo-case --compset FHIST --res f19_g17 --run-unsupported

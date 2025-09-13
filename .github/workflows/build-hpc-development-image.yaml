@@ -4,83 +4,83 @@ on:
   workflow_call:
     inputs:
       os:
-        description: 'Base OS'
+        description: "Base OS"
         required: false
         type: string
         default: almalinux9
 
       arch:
-        description: 'CPU Architecture'
+        description: "CPU Architecture"
         required: false
         type: string
-        default: 'x86_64'
+        default: "x86_64"
 
       runner:
-        description: 'GitHub Runner Type'
+        description: "GitHub Runner Type"
         required: false
         type: string
-        default: 'ubuntu-latest'
+        default: "ubuntu-latest"
 
       free_runner_space:
-        description: 'Remove unneeded software on runner host to free up disk space'
+        description: "Remove unneeded software on runner host to free up disk space"
         type: boolean
         required: false
         default: false
 
       buildx_driver:
-        description: 'Docker setup-buildx-action driver type'
+        description: "Docker setup-buildx-action driver type"
         required: false
         type: string
-        default: 'docker-container'
+        default: "docker-container"
 
       buildx_endpoint:
-        description: 'Docker setup-buildx-action endpoint'
+        description: "Docker setup-buildx-action endpoint"
         required: false
         type: string
-        default: ''
+        default: ""
 
       buildx_cloud:
-        description: 'Docker buildx-action - use buildcloud'
+        description: "Docker buildx-action - use buildcloud"
         required: false
         type: boolean
         default: false
 
       conda:
-        description: 'Include Conda (Miniforge)'
+        description: "Include Conda (Miniforge)"
         type: boolean
         required: false
         default: true
 
       compiler:
-        description: 'Compiler'
+        description: "Compiler"
         type: string
         required: false
-        default: 'os-gcc'
+        default: "os-gcc"
 
       compiler_build_args:
-        description: 'Compiler Docker BUILD_ARGS'
+        description: "Compiler Docker BUILD_ARGS"
         type: string
         required: false
 
       mpi:
-        description: 'MPI'
+        description: "MPI"
         type: string
         required: false
-        default: 'openmpi'
+        default: "openmpi"
 
       mpi_build_args:
-        description: 'MPI Docker BUILD_ARGS'
+        description: "MPI Docker BUILD_ARGS"
         type: string
         required: false
 
       gpu:
-        description: 'GPU / Accelerator framework'
+        description: "GPU / Accelerator framework"
         type: string
         required: false
-        default: 'nogpu'
+        default: "nogpu"
 
       gpu_build_args:
-        description: 'GPU Docker BUILD_ARGS'
+        description: "GPU Docker BUILD_ARGS"
         type: string
         required: false
 
@@ -91,18 +91,18 @@ on:
         default: "ncarcisl/hpcdev"
 
       extra_build_args:
-        description: 'Miscellaneous Docker BUILD_ARGS'
+        description: "Miscellaneous Docker BUILD_ARGS"
         type: string
         required: false
 
       test:
-        description: 'Test Image'
+        description: "Test Image"
         type: boolean
         required: false
         default: false
 
       publish:
-        description: 'Publish Image'
+        description: "Publish Image"
         type: boolean
         required: false
         default: false
@@ -111,10 +111,7 @@ on:
       dockerhub_token:
         required: true
 
-
-
 jobs:
-
   build-image:
     name: Build, Test, & Publish ${{inputs.os }}
     runs-on: ${{ inputs.runner }}
@@ -123,7 +120,7 @@ jobs:
       - name: Check out Repository
         uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
           fetch-depth: 0
 
       - name: Free Disk Space on Runner
@@ -177,7 +174,7 @@ jobs:
         with:
           platforms: ${{ inputs.arch == 'x86_64' && 'linux/amd64' || 'linux/arm64' }}
           driver: cloud
-          endpoint: 'ncarcisl/benkirk'
+          endpoint: "ncarcisl/benkirk"
           install: true
 
       - name: Query Docker Environment
