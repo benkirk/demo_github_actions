@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       os:
-        description: 'Base OS'
+        description: "Base OS"
         type: choice
         required: true
         default: almalinux9
@@ -29,29 +29,28 @@ on:
           - "ncarcisl/hpcdev"
 
       test:
-        description: 'Test Image'
+        description: "Test Image"
         type: boolean
         required: false
         default: true
 
       publish:
-        description: 'Publish Image'
+        description: "Publish Image"
         type: boolean
         required: false
         default: false
 
 jobs:
-
   build-matrix:
     name: Build
     strategy:
       fail-fast: false
       max-parallel: 16
       matrix:
-        compiler: [ clang, nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
-        mpi:      [ openmpi, mpich, mpich3 ]
-        gpu:      [ nogpu, cuda ]
-        arch:     [ x86_64, aarch64 ]
+        compiler: [clang, nvhpc, oneapi, aocc, gcc, gcc12, gcc14]
+        mpi: [openmpi, mpich, mpich3]
+        gpu: [nogpu, cuda]
+        arch: [x86_64, aarch64]
 
         include:
           # gpu architecture-dependent build arg specifications
@@ -146,8 +145,6 @@ jobs:
 
           - compiler: clang
             arch: aarch64
-
-
 
     uses: ./.github/workflows/build-hpc-development-image.yaml
     with:

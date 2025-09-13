@@ -1,33 +1,33 @@
 # action.yml
-name: 'Docker Run Action'
-description: 'Run a command in a new container'
+name: "Docker Run Action"
+description: "Run a command in a new container"
 inputs:
   image:
-    description: 'Image'
+    description: "Image"
     required: true
   options:
-    description: 'Options'
+    description: "Options"
     required: false
   run:
-    description: 'Run command in container'
+    description: "Run command in container"
     required: false
   shell:
-    description: 'Use a specific shell'
+    description: "Use a specific shell"
     required: false
     default: bash
   registry:
-    description: 'Registry'
+    description: "Registry"
     required: false
   username:
-    description: 'Username'
+    description: "Username"
     required: false
   password:
-    description: 'Password'
+    description: "Password"
     required: false
   docker_network:
-    description: 'Docker Network ID'
+    description: "Docker Network ID"
     default: ${{ job.container.network }}
     required: false
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: "docker"
+  image: "Dockerfile"

@@ -2,7 +2,7 @@
 
 - run a specific step in docker.
 - run an image built by a previous step.
-- See https://github.com/addnab/docker-run-action/blob/main/action.yml for all the available inputs.
+- See <https://github.com/addnab/docker-run-action/blob/main/action.yml> for all the available inputs.
 
 ## Examples
 
@@ -47,7 +47,7 @@
 ```
 
 
-#### use a specific shell (default: sh). 
+#### use a specific shell (default: sh)
 *Note: The shell must be installed in the container*
 ```yaml
 - uses: addnab/docker-run-action@v3

@@ -2,7 +2,7 @@
 
 ### 3.0.0
 
-- Upgrade to docker 20.10 https://github.com/addnab/docker-run-action/pull/12
+- Upgrade to docker 20.10 <https://github.com/addnab/docker-run-action/pull/12>
 
 ### 2.0.0
 
