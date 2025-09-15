@@ -79,7 +79,7 @@ jobs:
       os: ${{ matrix.os }}
       arch: "x86_64"
       runner: "ubuntu-latest"
-      free_runner_space: ${{ matrix.compiler == "nvhpc" }}
+      free_runner_space: ${{ matrix.compiler == 'nvhpc' }}
       conda: true
       gpu: "nogpu"
       gpu_build_args: ${{ matrix.gpu_build_args }}
