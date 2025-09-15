@@ -18,7 +18,7 @@ jobs:
   build-matrix:
     name: Build
     strategy:
-      fail-fast: false
+      fail-fast: true
       max-parallel: 24
       matrix:
         compiler: [gcc, oneapi, nvhpc, aocc]
