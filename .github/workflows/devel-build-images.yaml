@@ -6,30 +6,6 @@ on:
       - main
       - master
   workflow_dispatch:
-    inputs:
-      os:
-        description: "Base OS"
-        type: choice
-        required: true
-        default: almalinux10
-        options:
-          - almalinux8
-          - almalinux9
-          - almalinux10
-          - jammy
-          - noble
-          - leap
-          - tumbleweed
-
-      docker_repo:
-        description: "Docker Repository for Deployment"
-        type: choice
-        required: true
-        default: "benjaminkirk/gh-ci"
-        options:
-          - "benjaminkirk/gh-ci"
-          - "benjaminkirk/hpcdev"
-          - "ncarcisl/gh-ci"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -45,6 +21,7 @@ jobs:
         compiler: [gcc, oneapi, nvhpc, aocc]
         mpi: [openmpi]
         gpu: [nogpu, cuda]
+        os: [ almalinux9, almalinux10, noble, leap ]
 
         include:
           # gpu architecture-dependent build arg specifications
@@ -75,11 +52,11 @@ jobs:
               NVHPC_VERSION=25.7
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
 
-          - compiler: clang
-            compiler_build_args: |
-              COMPILER_FAMILY=clang
-              LLVM_VERSION=21.1.0
-              LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
+          # - compiler: clang
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=clang
+          #     LLVM_VERSION=21.1.0
+          #     LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-X64.tar.xz
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -96,8 +73,8 @@ jobs:
     #      buildx_cloud: ${{ matrix.compiler == 'clang' }}
     uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
-      docker_repo: ${{ inputs.docker_repo }}
-      os: ${{ inputs.os }}
+      docker_repo: "benjaminkirk/gh-ci"
+      os: ${{ matrix.os }}
       arch: "x86_64"
       runner: "ubuntu-latest"
       free_runner_space: true
