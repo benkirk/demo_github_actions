@@ -21,7 +21,7 @@ jobs:
         compiler: [gcc, oneapi, nvhpc, aocc]
         mpi: [openmpi]
         gpu: [nogpu, cuda]
-        os: [ almalinux9, almalinux10, noble, leap ]
+        os: [almalinux9, almalinux10, noble, leap]
 
         include:
           # gpu architecture-dependent build arg specifications
