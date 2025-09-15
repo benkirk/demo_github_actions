@@ -27,14 +27,11 @@ SHOW_ELAPSED_TIME: true
 # Uncomment if you want MegaLinter to detect errors but not block CI to pass
 DISABLE_ERRORS: true
 
+# linter-specific customizations
 BASH_FILTER_REGEX_EXCLUDE: "(Dockerfile)"
 BASH_SHFMT_ARGUMENTS: "--binary-next-line --case-indent --func-next-line --space-redirects --indent 4"
-
+JSON_PRETTIER_FILTER_REGEX_EXCLUDE: '(\.cspell\.json)'
 MARKDOWN_FILTER_REGEX_EXCLUDE: '(license\.md|docs/licenses)'
-
-SPELL_FILTER_REGEX_EXCLUDE: (\.json|\.github|\.mega-linter\.yml)
-
-REPOSITORY_TRIVY_CONFIG_FILE: .trivy.yaml
 REPOSITORY_KICS_ARGUMENTS: --exclude-severities medium,low,info,trace
-
-#JSON_PRETTIER_FILTER_REGEX_EXCLUDE: '(\.cspell\.json)'
+REPOSITORY_TRIVY_CONFIG_FILE: .trivy.yaml
+SPELL_FILTER_REGEX_EXCLUDE: (\.json|\.github|\.mega-linter\.yml)
