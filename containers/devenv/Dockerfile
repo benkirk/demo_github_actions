@@ -476,7 +476,7 @@ LABEL rocm="${ROCM_VERSION}"
 # miniforge stage
 # MINIFORGE_PREREQ could be cuda/rocm, or base_os
 FROM ${MINIFORGE_PREREQ} AS miniforge
-# clean with the --force-pkgs-dirs option now, while we know there are no danlging
+# clean with the --force-pkgs-dirs option now, while we know there are no dangling
 # symbolic links.  Because, later, conda clean --all will not get these.
 #   -f, --force-pkgs-dirs
 #       Remove *all* writable package caches. This option is not included with the
