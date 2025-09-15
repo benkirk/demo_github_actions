@@ -1247,7 +1247,7 @@ LABEL netcdf-fortran="${NETCDF_FORTRAN_VERSION}"
 # PNetCDF & ParallelIO
 FROM iolibs AS mpi-iolibs
 #-------------------------------------------------------------------------------
-ARG PNETCDF_VERSION="1.14.0"
+ARG PNETCDF_VERSION="1.14.1"
 ARG PIO_VERSION="2.6.6"
 ARG PIO_TAG="pio2_6_6"
 RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
@@ -1281,28 +1281,24 @@ RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && ldconfig --verbose \
     && source /container/config_env.sh \
     && echo "building ParallelIO-${PIO_VERSION}" \
-    && case "${COMPILER_FAMILY}" in \
-        "nvhpc"|"aocc"|"clang") export FCFLAGS="${FCFLAGS} -I/container/netcdf/include" ;; \
-        *) ;; \
-       esac \
-    && env \
     && PIO_INSTALL_PATH="/container/parallelio/${PIO_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/NCAR/ParallelIO/archive/refs/tags/${PIO_TAG}.tar.gz | tar zx \
-    && cd ./*${PIO_TAG}/ \
-    && autoreconf -iv --force \
-    && ./configure --help \
-    && (./configure \
-            --prefix=${PIO_INSTALL_PATH} \
-            FCFLAGS="${FCFLAGS}" F77FLAGS="${FCFLAGS}" \
-            --enable-fortran \
-            --disable-static --enable-shared \
-            --disable-dependency-tracking \
-            || cat config.log) \
-    && case "${COMPILER_FAMILY}" in \
-        "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
-       esac \
+    && cd ./*${PIO_TAG}/ && mkdir -p build && cd build \
+    && cmake \
+           -Wno-dev \
+           -DCMAKE_BUILD_TYPE=MinSizeRel \
+           -DCMAKE_INSTALL_PREFIX=${PIO_INSTALL_PATH} \
+           -DBUILD_SHARED_LIBS=ON \
+           -DPIO_ENABLE_FORTRAN=ON \
+           -DPIO_ENABLE_NETCDF_INTEGRATION=ON \
+           -DWITH_PNETCDF=ON \
+           -DNetCDF_C_PATH=${NETCDF} \
+           -DNetCDF_Fortran_PATH=${NETCDF} \
+           -DPnetCDF_PATH=${PNETCDF} \
+           .. \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install-strip \
+    && make --no-print-directory --silent examples \
+    && make --no-print-directory --silent install \
     && add_conf "\n# PIO ${PIO_VERSION}" \
     && add_conf "export PIO=${PIO_INSTALL_PATH}" \
     && add_conf "export PIO_VERSION=${PIO_VERSION}" \
