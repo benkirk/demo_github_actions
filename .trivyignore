@@ -2,3 +2,6 @@
 AVD-DS-0001
 AVD-DS-0002
 AVD-DS-0013
+
+# this one is redundant with our docker-clean script
+AVD-DS-0020
