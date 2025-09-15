@@ -7,8 +7,8 @@ on:
       - main
       - master
     paths:
-      - '**/Dockerfile'
-      - 'scripts/**'
+      - "**/Dockerfile"
+      - "scripts/**"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -72,7 +72,7 @@ jobs:
           #     MPICH_VERSION=4.3.1
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
-    #      buildx_cloud: ${{ matrix.compiler == 'clang' }}
+    #      buildx_cloud: ${{ matrix.compiler == "clang" }}
     uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
       docker_repo: "benjaminkirk/gh-ci"
@@ -81,7 +81,7 @@ jobs:
       runner: "ubuntu-latest"
       free_runner_space: true
       conda: true
-      gpu: 'nogpu'
+      gpu: "nogpu"
       gpu_build_args: ${{ matrix.gpu_build_args }}
       compiler: ${{ matrix.compiler }}
       compiler_build_args: ${{ matrix.compiler_build_args }}
