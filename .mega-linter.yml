@@ -5,6 +5,8 @@
 
 # all, none, or list of linter keys
 APPLY_FIXES:
+  - BASH_SHFMT
+  - JSON_PRETTIER
 
 # If you use ENABLE variable, all other languages/formats/tooling-formats will
 # be disabled by default
@@ -35,3 +37,4 @@ MARKDOWN_FILTER_REGEX_EXCLUDE: '(license\.md|docs/licenses)'
 SPELL_FILTER_REGEX_EXCLUDE: (\.json|\.github|\.mega-linter\.yml)
 
 REPOSITORY_TRIVY_CONFIG_FILE: .trivy.yaml
+REPOSITORY_KICS_ARGUMENTS: --exclude-severities medium,low,info,trace
