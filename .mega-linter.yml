@@ -31,4 +31,8 @@ DISABLE_ERRORS: true
 BASH_FILTER_REGEX_EXCLUDE: "(Dockerfile)"
 BASH_SHFMT_ARGUMENTS: "--binary-next-line --case-indent --func-next-line --space-redirects --indent 4"
 
+MARKDOWN_FILTER_REGEX_EXCLUDE: '(license\.md|docs/licenses)'
+
 SPELL_FILTER_REGEX_EXCLUDE: (\.json|\.github)
+
+REPOSITORY_TRIVY_CONFIG_FILE: .trivy.yaml
