@@ -23,7 +23,7 @@ env:
   # (in github/workflows/mega-linter.yml or other CI tool)
   APPLY_FIXES: |
     - BASH_SHFMT
-    - JSON_PRETTIER]
+    - JSON_PRETTIER
 
   # Decide which event triggers application of fixes in a commit or a PR
   # (pull_request, push, all)
