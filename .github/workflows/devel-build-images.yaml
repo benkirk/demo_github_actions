@@ -18,12 +18,12 @@ jobs:
   build-matrix:
     name: Build
     strategy:
-      fail-fast: true
+      fail-fast: false
       max-parallel: 24
       matrix:
         compiler: [gcc, oneapi, nvhpc, aocc]
         mpi: [openmpi]
-        gpu: [nogpu, cuda]
+        gpu: [nogpu]
         os: [almalinux9, almalinux10, noble, leap]
 
         include:
