@@ -1,4 +1,1 @@
-program hello
-  implicit none
-  write(*,*) "Hello, World!"
-end program hello
+../scripts/hello_world.f90
