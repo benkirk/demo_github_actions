@@ -11,12 +11,6 @@
   ],
   "language": "en",
   "noConfigSearch": true,
-    "words": [
-        "megalinter",
-        "oxsecurity",
-        "benkirk",
-        "almalinux",
-        "shfmt"
-    ],
+  "words": ["megalinter", "oxsecurity", "benkirk", "almalinux", "shfmt"],
   "version": "0.2"
 }

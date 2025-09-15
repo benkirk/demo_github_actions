@@ -19,8 +19,8 @@ DISABLE_LINTERS:
   - REPOSITORY_DEVSKIM
 
 # DISABLE:
-  # - COPYPASTE # Uncomment to disable checks of excessive copy-pastes
-  # - SPELL # Uncomment to disable checks of spelling mistakes
+# - COPYPASTE # Uncomment to disable checks of excessive copy-pastes
+# - SPELL # Uncomment to disable checks of spelling mistakes
 
 SHOW_ELAPSED_TIME: true
 
