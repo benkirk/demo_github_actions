@@ -11,7 +11,7 @@ source ${SCRIPTDIR}/build_common.cfg \
     || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
 #-------------------------------------------------------------------------eh-
 
-export WRF_VERSION="${WRF_VERSION:-4.6.1}"
+export WRF_VERSION="${WRF_VERSION:-4.7.1}"
 export WPS_VERSION="${WPS_VERSION:-4.6.0}"
 
 # default WRF & WPS-specific CMake args; set-if-unset

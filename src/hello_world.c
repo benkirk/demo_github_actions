@@ -1,7 +1,1 @@
-#include <stdio.h>
-
-int main (int argc, char **argv)
-{
-  printf("Hello World!\n");
-  return 0;
-}
+../scripts/hello_world.c
