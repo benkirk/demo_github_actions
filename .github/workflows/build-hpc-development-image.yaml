@@ -223,6 +223,8 @@ jobs:
           CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
 
           CI_CACHE=${CI_REPO}-cache:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
+          CI_CACHE_2=benjaminkirk/hpcdev-cache:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
+          CI_CACHE_3=benjaminkirk/gh-ci-cache:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
 
           PUBLISH_REPO=${CI_REPO}
 
@@ -232,6 +234,8 @@ jobs:
           CI_REPO=${CI_REPO}
           CI_TAG=${CI_TAG}
           CI_CACHE=${CI_CACHE}
+          CI_CACHE_2=${CI_CACHE_2}
+          CI_CACHE_3=${CI_CACHE_3}
           PUBLISH_REPO=${PUBLISH_REPO}
           PUBLISH_TAG=${PUBLISH_TAG}
           EOF
@@ -255,8 +259,14 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: mode=max
           sbom: false
-          cache-from: type=registry,ref=${{env.CI_CACHE }}
-          cache-to: type=registry,ref=${{ env.CI_CACHE }},mode=max
+          cache-from: |
+            type=registry,ref=${{env.CI_CACHE }}
+            type=registry,ref=${{env.CI_CACHE_2 }}
+            type=registry,ref=${{env.CI_CACHE_3 }}
+          cache-to: |
+            type=registry,ref=${{ env.CI_CACHE }},mode=max,
+            type=registry,ref=${{ env.CI_CACHE_2 }},mode=max,
+            type=registry,ref=${{ env.CI_CACHE_3 }},mode=max
           context: containers/devenv
           file: containers/devenv/Dockerfile
           target: final

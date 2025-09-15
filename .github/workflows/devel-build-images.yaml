@@ -22,8 +22,8 @@ jobs:
       max-parallel: 24
       matrix:
         compiler: [gcc, oneapi, nvhpc, aocc]
-        mpi: [openmpi]
         os: [almalinux9, almalinux10, noble, leap]
+        mpi: [openmpi]
 
         include:
           # # gpu architecture-dependent build arg specifications
