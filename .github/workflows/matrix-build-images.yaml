@@ -170,7 +170,7 @@ jobs:
         HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
         NETCDF_C_VERSION=4.9.3
         NETCDF_FORTRAN_VERSION=4.6.2
-        PNETCDF_VERSION=1.14.0
+        PNETCDF_VERSION=1.14.1
         PIO_VERSION=2.6.6
         PIO_TAG=pio2_6_6
         FFTW_VERSION=3.3.10
