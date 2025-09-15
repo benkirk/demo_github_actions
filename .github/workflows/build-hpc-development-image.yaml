@@ -232,8 +232,6 @@ jobs:
           CI_REPO=${CI_REPO}
           CI_TAG=${CI_TAG}
           CI_CACHE=${CI_CACHE}
-          CI_CACHE_2=${CI_CACHE_2}
-          CI_CACHE_3=${CI_CACHE_3}
           PUBLISH_REPO=${PUBLISH_REPO}
           PUBLISH_TAG=${PUBLISH_TAG}
           EOF
