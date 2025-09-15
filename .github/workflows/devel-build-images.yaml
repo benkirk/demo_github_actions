@@ -31,18 +31,6 @@ on:
           - "benjaminkirk/hpcdev"
           - "ncarcisl/gh-ci"
 
-      test:
-        description: "Test Image"
-        type: boolean
-        required: true
-        default: true
-
-      publish:
-        description: "Publish Image"
-        type: boolean
-        required: true
-        default: true
-
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
@@ -120,8 +108,8 @@ jobs:
       compiler_build_args: ${{ matrix.compiler_build_args }}
       mpi: ${{ matrix.mpi }}
       mpi_build_args: ${{ matrix.mpi_build_args }}
-      test: ${{ inputs.test }}
-      publish: ${{ inputs.publish }}
+      test: true
+      publish: true
       extra_build_args: |
         HDF5_VERSION=1.12.3
         HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
