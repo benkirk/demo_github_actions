@@ -6,10 +6,7 @@ name: MegaLinter
 # Trigger mega-linter at every push. Action will also be visible from
 # Pull Requests to main
 on:
-  # Comment this line to trigger action only on pull-requests
-  # (not recommended if you don't pay for GH Actions)
-  #push:
-
+  push:
   pull_request:
     branches:
       - main
@@ -63,7 +60,7 @@ jobs:
 
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.io/latest/flavors/
-        uses: oxsecurity/megalinter/flavors/documentation@v8
+        uses: oxsecurity/megalinter/flavors/cupcake@v8
 
         id: ml
 
