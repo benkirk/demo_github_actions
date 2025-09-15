@@ -1,11 +1,14 @@
 name: Devel - Build HPC Development Images
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - main
       - master
-  workflow_dispatch:
+    paths:
+      - '**/Dockerfile'
+      - 'scripts/**'
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
