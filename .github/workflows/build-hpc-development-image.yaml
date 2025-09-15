@@ -259,7 +259,7 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: mode=max
           sbom: false
-          cache-from: type=registry,ref=${{env.CI_CACHE }},type=registry,ref=${{env.CI_CACHE_2 }},type=registry,ref=${{env.CI_CACHE_3 }}
+          cache-from: type=registry,ref=${{env.CI_CACHE }
           cache-to: type=registry,ref=${{ env.CI_CACHE }},mode=max,type=registry,ref=${{ env.CI_CACHE_2 }},mode=max,type=registry,ref=${{ env.CI_CACHE_3 }},mode=max
           context: containers/devenv
           file: containers/devenv/Dockerfile
