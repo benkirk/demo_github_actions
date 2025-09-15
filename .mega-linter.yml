@@ -37,4 +37,4 @@ SPELL_FILTER_REGEX_EXCLUDE: (\.json|\.github|\.mega-linter\.yml)
 REPOSITORY_TRIVY_CONFIG_FILE: .trivy.yaml
 REPOSITORY_KICS_ARGUMENTS: --exclude-severities medium,low,info,trace
 
-JSON_PRETTIER_ARGUMENTS: --write
+#JSON_PRETTIER_FILTER_REGEX_EXCLUDE: '(\.cspell\.json)'
