@@ -1,6 +1,10 @@
 name: Devel - Build HPC Development Images
 
 on:
+  pull_request:
+    branches:
+      - main
+      - master
   workflow_dispatch:
     inputs:
       os:
@@ -38,6 +42,10 @@ on:
         type: boolean
         required: false
         default: true
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   build-matrix:
@@ -97,10 +105,10 @@ jobs:
           #     MPICH_VERSION=4.3.1
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
-    uses: ./.github/workflows/devel-hpc-development-image.yaml
+    #      buildx_cloud: ${{ matrix.compiler == 'clang' }}
+    uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
-      buildx_cloud: ${{ matrix.compiler == 'clang' }}
       os: ${{ inputs.os }}
       arch: "x86_64"
       runner: "ubuntu-latest"
