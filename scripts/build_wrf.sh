@@ -5,10 +5,13 @@ set -ex
 #-------------------------------------------------------------------------bh-
 # Common Configuration Environment:
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 source ${SCRIPTDIR}/build_common.cfg \
     || source /container/extras/build_common.cfg \
-    || { echo "cannot locate a suitable build_common.cfg!!"; exit 1; }
+    || {
+        echo "cannot locate a suitable build_common.cfg!!"
+        exit 1
+    }
 #-------------------------------------------------------------------------eh-
 
 export WRF_VERSION="${WRF_VERSION:-4.7.1}"
@@ -24,14 +27,14 @@ echo "${id_tag}"
 
 case "${id_tag}" in
 
-    *"almalinux"*|*"|rocky|"*|*"|rhel|"*)
+    *"almalinux"* | *"|rocky|"* | *"|rhel|"*)
         ${PKG_INSTALL_CMD} --enablerepo crb \
             tcsh time file hostname \
             file flex byacc \
             libtirpc-devel \
             libpng-devel
         ;;
-    *"-leap|"*|"-tumbleweed|")
+    *"-leap|"* | "-tumbleweed|")
         ${PKG_INSTALL_CMD} \
             tcsh time file hostname \
             file flex byacc \
