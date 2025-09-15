@@ -26,6 +26,12 @@ jobs:
         os: [almalinux9, almalinux10, noble, leap]
 
         include:
+          # # gpu architecture-dependent build arg specifications
+          # - gpu: cuda
+          #   gpu_build_args: |
+          #     CUDA_VERSION=12.9
+          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
+
           # compiler build arg specifications
           - compiler: gcc
             compiler_build_args: |
@@ -75,7 +81,7 @@ jobs:
       runner: "ubuntu-latest"
       free_runner_space: true
       conda: true
-      gpu: "nogpu"
+      gpu: 'nogpu'
       gpu_build_args: ${{ matrix.gpu_build_args }}
       compiler: ${{ matrix.compiler }}
       compiler_build_args: ${{ matrix.compiler_build_args }}
