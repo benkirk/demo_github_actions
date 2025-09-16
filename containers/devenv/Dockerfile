@@ -246,12 +246,19 @@ echo "After: $(du -hs ${dir})"
 FILE7
 
 
+#---------------------------------------------------------------------------------
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
 # a common development environment
 
 # we initialize /container/config_env.sh here via add_conf,
 # setting variables like PATH etc. to whatever they are preconfigured from the OS.
 # (We set rather than append at initialization; we will occasionally re-source this file repeatedly)
+#
+# Notes:
+#  leap/GPG_TTY: sourcing /etc/bash.bashrc with no TTY can cause a failure,
+#                particularly when running under "bash -elo pipefail"
+#                so we simply comment-out the offending line below.
+#---------------------------------------------------------------------------------
 RUN exec &> >(tee /container/logs/base-os.log) \
     && cat /etc/*-release \
     && source /etc/os-release \
