@@ -129,11 +129,6 @@ jobs:
           submodules: "true"
           fetch-depth: 0
 
-      - name: Cold start - debugging shell startup
-        shell: bash -xelo pipefail {0}
-        run: |
-          true
-
       - name: Interrogate Runtime Environment
         run: |
           cat /container/config_env.sh
