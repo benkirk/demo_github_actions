@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
-        compiler: [gcc, oneapi, nvhpc, aocc]
+        compiler: [gcc, oneapi, aocc]
         os: [almalinux9, almalinux10, noble, leap]
         mpi: [openmpi]
 
@@ -48,12 +48,12 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=aocc
 
-          - compiler: nvhpc
-            compiler_build_args: |
-              COMPILER_FAMILY=nvhpc
-              MARCH_FLAGS=-march=x86-64-v3
-              NVHPC_VERSION=25.7
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
+          # - compiler: nvhpc
+          #   compiler_build_args: |
+          #     COMPILER_FAMILY=nvhpc
+          #     MARCH_FLAGS=-march=x86-64-v3
+          #     NVHPC_VERSION=25.7
+          #     NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
 
           # - compiler: clang
           #   compiler_build_args: |
