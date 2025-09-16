@@ -615,7 +615,7 @@ RUN exec &> >(tee /container/logs/oneapi.log) \
     && add_conf "\n# Intel OneAPI compilers" \
     && add_conf "export COMPILER_FAMILY=oneapi" \
     && add_conf "export ONEAPI_VERSION=${ONEAPI_VERSION}" \
-    && add_conf "source ${ONEAPI_INSTALL_PATH}/setvars.sh >/dev/null 2>&1" \
+    && add_conf "source ${ONEAPI_INSTALL_PATH}/setvars.sh --force >/dev/null 2>&1" \
     && source /container/config_env.sh \
     && add_conf "export oneapi_CC=$(which icx) && export CC=\${oneapi_CC}" \
     && add_conf "export oneapi_CXX=$(which icpx) && export CXX=\${oneapi_CXX}" \
