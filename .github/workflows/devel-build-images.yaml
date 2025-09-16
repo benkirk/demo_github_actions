@@ -119,7 +119,7 @@ jobs:
     runs-on: "ubuntu-latest"
     defaults:
       run:
-        shell: bash -elo pipefail {0}
+        shell: bash -el {0}
 
     container:
       image: benjaminkirk/gh-ci-x86_64:${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}-latest
