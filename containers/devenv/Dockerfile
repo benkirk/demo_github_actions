@@ -297,6 +297,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
+                && if [ -f /etc/bash.bashrc ]; then sed -i 's/GPG_TTY="`tty`"/#GPG_TTY="`tty`"/g' /etc/bash.bashrc; fi \
             ;; \
         *"|ubuntu|"*) \
                 add_conf 'export PKG_INSTALL_CMD="apt-get install -y"' \
@@ -1427,7 +1428,6 @@ RUN exec &> >(tee /container/logs/final.log) \
     && useradd plainuser -d /home/plainuser \
     && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
     && chown -R plainuser: /container/ \
-    && if [ -f /etc/bash.bashrc ]; then sed -i 's/GPG_TTY="`tty`"/#GPG_TTY="`tty`"/g' /etc/bash.bashrc; fi \
     && cat /container/config_env.sh
 
 # ref: https://spack.readthedocs.io/en/latest/containers.html
