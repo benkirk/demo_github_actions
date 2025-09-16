@@ -125,7 +125,7 @@ jobs:
         shell: bash -elo pipefail {0}
 
     container:
-      image: "benjaminkirk/gh-ci-x86_64":${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}-latest
+      image: benjaminkirk/gh-ci-x86_64:${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}-latest
 
     steps:
       - uses: actions/checkout@v4
