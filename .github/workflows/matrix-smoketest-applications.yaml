@@ -28,15 +28,14 @@ on:
           - "ncarcisl/hpcdev"
 
 jobs:
-
   run-matrix:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
-        mpi:      [ openmpi, mpich ]
-        gpu:      [ nogpu, cuda ]
-        arch:     [ x86_64, aarch64 ]
+        compiler: [nvhpc, oneapi, aocc, gcc, gcc12, gcc14]
+        mpi: [openmpi, mpich]
+        gpu: [nogpu, cuda]
+        arch: [x86_64, aarch64]
 
         exclude:
           - arch: aarch64
@@ -65,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
           fetch-depth: 0
 
       - name: Interrogate Runtime Environment
