@@ -1418,7 +1418,7 @@ LABEL heffte="${HEFFTE_VERSION}"
 #  remove duplicates from the front of the LD_LIBRARY_PATH
 ################################################################################
 FROM ${FINAL_TARGET} AS final
-ADD extras/ /container/extras/
+COPY extras/ /container/extras/
 RUN exec &> >(tee /container/logs/final.log) \
     && list-large-directories \
     && add_conf "\n# Final configuration:" | tee -a /container/config_env.sh \

@@ -17,7 +17,7 @@ concurrency:
 jobs:
   # Matrix 1: builds & publishes gh-ci images
   build-matrix:
-    name: Build
+    name: Image
     strategy:
       fail-fast: false
       max-parallel: 24
