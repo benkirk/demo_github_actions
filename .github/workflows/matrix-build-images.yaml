@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       os:
-        description: 'Base OS'
+        description: "Base OS"
         type: choice
         required: true
         default: almalinux9
@@ -29,29 +29,28 @@ on:
           - "ncarcisl/hpcdev"
 
       test:
-        description: 'Test Image'
+        description: "Test Image"
         type: boolean
         required: false
         default: true
 
       publish:
-        description: 'Publish Image'
+        description: "Publish Image"
         type: boolean
         required: false
         default: false
 
 jobs:
-
   build-matrix:
     name: Build
     strategy:
       fail-fast: false
       max-parallel: 16
       matrix:
-        compiler: [ clang, nvhpc, oneapi, aocc, gcc, gcc12, gcc14 ]
-        mpi:      [ openmpi, mpich, mpich3 ]
-        gpu:      [ nogpu, cuda ]
-        arch:     [ x86_64, aarch64 ]
+        compiler: [clang, nvhpc, oneapi, aocc, gcc, gcc12, gcc14]
+        mpi: [openmpi, mpich, mpich3]
+        gpu: [nogpu, cuda]
+        arch: [x86_64, aarch64]
 
         include:
           # gpu architecture-dependent build arg specifications
@@ -85,9 +84,9 @@ jobs:
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
-              ONEAPI_VERSION=2025.2.0
-              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh
-              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh
+              ONEAPI_VERSION=2025.2.1
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/04c5fd98-57e6-4a4b-be4d-e84de3aea45a/intel-dpcpp-cpp-compiler-2025.2.1.7_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/466b0d65-e502-4172-9e06-24c565029b96/intel-fortran-compiler-2025.2.1.9_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
@@ -114,7 +113,7 @@ jobs:
           - compiler: clang
             compiler_build_args: |
               COMPILER_FAMILY=clang
-              LLVM_VERSION=21.1.0
+              LLVM_VERSION=21.1.1
 
           # mpi build arg specifications
           - mpi: openmpi
@@ -147,8 +146,6 @@ jobs:
           - compiler: clang
             arch: aarch64
 
-
-
     uses: ./.github/workflows/build-hpc-development-image.yaml
     with:
       docker_repo: ${{ inputs.docker_repo }}
@@ -170,7 +167,7 @@ jobs:
         HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
         NETCDF_C_VERSION=4.9.3
         NETCDF_FORTRAN_VERSION=4.6.2
-        PNETCDF_VERSION=1.14.0
+        PNETCDF_VERSION=1.14.1
         PIO_VERSION=2.6.6
         PIO_TAG=pio2_6_6
         FFTW_VERSION=3.3.10

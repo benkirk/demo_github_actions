@@ -246,12 +246,19 @@ echo "After: $(du -hs ${dir})"
 FILE7
 
 
+#---------------------------------------------------------------------------------
 # Initialize the base OS; whether it is a RHEL, SUSE, or Ubuntu variant to provide
 # a common development environment
 
 # we initialize /container/config_env.sh here via add_conf,
 # setting variables like PATH etc. to whatever they are preconfigured from the OS.
 # (We set rather than append at initialization; we will occasionally re-source this file repeatedly)
+#
+# Notes:
+#  leap/GPG_TTY: sourcing /etc/bash.bashrc with no TTY can cause a failure,
+#                particularly when running under "bash -elo pipefail"
+#                so we simply comment-out the offending line below.
+#---------------------------------------------------------------------------------
 RUN exec &> >(tee /container/logs/base-os.log) \
     && cat /etc/*-release \
     && source /etc/os-release \
@@ -297,6 +304,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-${gcc_v} 50 \
+                && if [ -f /etc/bash.bashrc ]; then sed -i 's/GPG_TTY="`tty`"/#GPG_TTY="`tty`"/g' /etc/bash.bashrc; fi \
             ;; \
         *"|ubuntu|"*) \
                 add_conf 'export PKG_INSTALL_CMD="apt-get install -y"' \
@@ -476,7 +484,7 @@ LABEL rocm="${ROCM_VERSION}"
 # miniforge stage
 # MINIFORGE_PREREQ could be cuda/rocm, or base_os
 FROM ${MINIFORGE_PREREQ} AS miniforge
-# clean with the --force-pkgs-dirs option now, while we know there are no danlging
+# clean with the --force-pkgs-dirs option now, while we know there are no dangling
 # symbolic links.  Because, later, conda clean --all will not get these.
 #   -f, --force-pkgs-dirs
 #       Remove *all* writable package caches. This option is not included with the
@@ -597,9 +605,9 @@ FROM toolkits AS oneapi
 # We'd rather not need that, so add to the system search path
 #
 # Install and remove C++, Fortran one at a time as we go for when disk space is tight, rather than downloading both installers at once.
-ARG ONEAPI_VERSION="2025.2.0"
-ARG ONEAPI_CC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/39c79383-66bf-4f44-a6dd-14366e34e255/intel-dpcpp-cpp-compiler-2025.2.0.527_offline.sh"
-ARG ONEAPI_FC_URL="https://registrationcenter-download.intel.com/akdlm/IRC_NAS/2c69ab6a-dfff-4d8f-ae1c-8368c79a1709/intel-fortran-compiler-2025.2.0.534_offline.sh"
+ARG ONEAPI_VERSION=2025.2.1
+ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/04c5fd98-57e6-4a4b-be4d-e84de3aea45a/intel-dpcpp-cpp-compiler-2025.2.1.7_offline.sh
+ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/466b0d65-e502-4172-9e06-24c565029b96/intel-fortran-compiler-2025.2.1.9_offline.sh
 RUN exec &> >(tee /container/logs/oneapi.log) \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
@@ -615,7 +623,7 @@ RUN exec &> >(tee /container/logs/oneapi.log) \
     && add_conf "\n# Intel OneAPI compilers" \
     && add_conf "export COMPILER_FAMILY=oneapi" \
     && add_conf "export ONEAPI_VERSION=${ONEAPI_VERSION}" \
-    && add_conf "source ${ONEAPI_INSTALL_PATH}/setvars.sh >/dev/null 2>&1" \
+    && add_conf "source ${ONEAPI_INSTALL_PATH}/setvars.sh --force >/dev/null 2>&1" \
     && source /container/config_env.sh \
     && add_conf "export oneapi_CC=$(which icx) && export CC=\${oneapi_CC}" \
     && add_conf "export oneapi_CXX=$(which icpx) && export CXX=\${oneapi_CXX}" \
@@ -753,7 +761,7 @@ FROM toolkits AS clang-src
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 # ref. https://llvm.org/docs/CMake.html
-ARG LLVM_VERSION="21.1.0"
+ARG LLVM_VERSION="21.1.1"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -827,8 +835,8 @@ LABEL clang="${LLVM_VERSION}"
 # LLVM (clang) stage - binary download
 FROM toolkits AS clang-binaries
 #-------------------------------------------------------------------------------
-ARG LLVM_VERSION="21.1.0"
-ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz"
+ARG LLVM_VERSION="21.1.1"
+ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.1/LLVM-21.1.1-Linux-ARM64.tar.xz"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && echo "downloading ${LLVM_URL}" \
@@ -1247,7 +1255,7 @@ LABEL netcdf-fortran="${NETCDF_FORTRAN_VERSION}"
 # PNetCDF & ParallelIO
 FROM iolibs AS mpi-iolibs
 #-------------------------------------------------------------------------------
-ARG PNETCDF_VERSION="1.14.0"
+ARG PNETCDF_VERSION="1.14.1"
 ARG PIO_VERSION="2.6.6"
 ARG PIO_TAG="pio2_6_6"
 RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
@@ -1281,28 +1289,24 @@ RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && ldconfig --verbose \
     && source /container/config_env.sh \
     && echo "building ParallelIO-${PIO_VERSION}" \
-    && case "${COMPILER_FAMILY}" in \
-        "nvhpc"|"aocc"|"clang") export FCFLAGS="${FCFLAGS} -I/container/netcdf/include" ;; \
-        *) ;; \
-       esac \
-    && env \
     && PIO_INSTALL_PATH="/container/parallelio/${PIO_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/NCAR/ParallelIO/archive/refs/tags/${PIO_TAG}.tar.gz | tar zx \
-    && cd ./*${PIO_TAG}/ \
-    && autoreconf -iv --force \
-    && ./configure --help \
-    && (./configure \
-            --prefix=${PIO_INSTALL_PATH} \
-            FCFLAGS="${FCFLAGS}" F77FLAGS="${FCFLAGS}" \
-            --enable-fortran \
-            --disable-static --enable-shared \
-            --disable-dependency-tracking \
-            || cat config.log) \
-    && case "${COMPILER_FAMILY}" in \
-        "aocc"|"clang") sed -i -e 's/wl=""/wl="-Wl,"/g' libtool ;; \
-       esac \
+    && cd ./*${PIO_TAG}/ && mkdir -p build && cd build \
+    && cmake \
+           -Wno-dev \
+           -DCMAKE_BUILD_TYPE=MinSizeRel \
+           -DCMAKE_INSTALL_PREFIX=${PIO_INSTALL_PATH} \
+           -DBUILD_SHARED_LIBS=ON \
+           -DPIO_ENABLE_FORTRAN=ON \
+           -DPIO_ENABLE_NETCDF_INTEGRATION=ON \
+           -DWITH_PNETCDF=ON \
+           -DNetCDF_C_PATH=${NETCDF} \
+           -DNetCDF_Fortran_PATH=${NETCDF} \
+           -DPnetCDF_PATH=${PNETCDF} \
+           .. \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
-    && make --no-print-directory --silent install-strip \
+    && make --no-print-directory --silent examples \
+    && make --no-print-directory --silent install \
     && add_conf "\n# PIO ${PIO_VERSION}" \
     && add_conf "export PIO=${PIO_INSTALL_PATH}" \
     && add_conf "export PIO_VERSION=${PIO_VERSION}" \
@@ -1422,7 +1426,7 @@ LABEL heffte="${HEFFTE_VERSION}"
 #  remove duplicates from the front of the LD_LIBRARY_PATH
 ################################################################################
 FROM ${FINAL_TARGET} AS final
-ADD extras/ /container/extras/
+COPY extras/ /container/extras/
 RUN exec &> >(tee /container/logs/final.log) \
     && list-large-directories \
     && add_conf "\n# Final configuration:" | tee -a /container/config_env.sh \
