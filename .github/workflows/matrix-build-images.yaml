@@ -113,7 +113,7 @@ jobs:
           - compiler: clang
             compiler_build_args: |
               COMPILER_FAMILY=clang
-              LLVM_VERSION=21.1.0
+              LLVM_VERSION=21.1.1
 
           # mpi build arg specifications
           - mpi: openmpi

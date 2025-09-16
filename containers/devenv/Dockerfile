@@ -753,7 +753,7 @@ FROM toolkits AS clang-src
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 # ref. https://llvm.org/docs/CMake.html
-ARG LLVM_VERSION="21.1.0"
+ARG LLVM_VERSION="21.1.1"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -827,8 +827,8 @@ LABEL clang="${LLVM_VERSION}"
 # LLVM (clang) stage - binary download
 FROM toolkits AS clang-binaries
 #-------------------------------------------------------------------------------
-ARG LLVM_VERSION="21.1.0"
-ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/LLVM-21.1.0-Linux-ARM64.tar.xz"
+ARG LLVM_VERSION="21.1.1"
+ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.1/LLVM-21.1.1-Linux-ARM64.tar.xz"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && echo "downloading ${LLVM_URL}" \
