@@ -118,7 +118,6 @@ jobs:
         os: [almalinux9, almalinux10, noble, leap]
         mpi: [openmpi]
 
-    name: Apps
     runs-on: 'ubuntu-latest'
     defaults:
       run:
