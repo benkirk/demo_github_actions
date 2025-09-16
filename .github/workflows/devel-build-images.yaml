@@ -104,8 +104,6 @@ jobs:
     secrets:
       dockerhub_token: ${{ secrets.BENKIRK_DOCKERHUB_TOKEN }}
 
-
-
   # Matrix 2: test NCAR apps with gh-ci images
   apps-matrix:
     name: Apps
@@ -118,7 +116,7 @@ jobs:
         os: [almalinux9, almalinux10, noble, leap]
         mpi: [openmpi]
 
-    runs-on: 'ubuntu-latest'
+    runs-on: "ubuntu-latest"
     defaults:
       run:
         shell: bash -elo pipefail {0}
@@ -129,7 +127,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
           fetch-depth: 0
 
       - name: Interrogate Runtime Environment
