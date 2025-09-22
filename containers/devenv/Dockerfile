@@ -313,7 +313,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && if [ -f /etc/bash.bashrc ]; then sed -i 's/GPG_TTY="`tty`"/#GPG_TTY="`tty`"/g' /etc/bash.bashrc; fi \
             ;; \
         *"|ubuntu|"*) \
-                add_conf 'export PKG_INSTALL_CMD="apt-get install -y"' \
+                add_conf 'export PKG_INSTALL_CMD="apt-get install -y --no-install-recommends"' \
                 && case "${id_tag}" in \
                     *"|jammy|"*) gcc_v=12 ;; \
                     *"|noble|"*) gcc_v=14 ;; \
@@ -322,7 +322,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && apt-get update \
                 && apt-get upgrade \
                 && apt-get autoclean \
-                && apt-get install -y \
+                && apt-get install -y --no-install-recommends \
                            procps \
                            {gcc,g++,gfortran}-${gcc_v} gdb \
                            libc-dev linux-libc-dev libc6-dev file rsync pkg-config patch \
