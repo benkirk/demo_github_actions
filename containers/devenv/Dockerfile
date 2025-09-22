@@ -295,7 +295,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && zypper --non-interactive refresh \
                 && zypper --non-interactive update \
                 && zypper --non-interactive install \
-                          procps \
+                          procps hostname \
                           gcc${gcc_v}{,-c++,-fortran} gdb \
                           glibc-devel file pkgconf patch \
                           man man-pages man-pages-posix \
