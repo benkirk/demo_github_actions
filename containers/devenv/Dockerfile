@@ -285,7 +285,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                        emacs-nox \
                        python3 \
                        cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
-                       libxml2-devel curl-devel \
+                       libxml2-devel curl-devel libedit-devel \
                        sudo fakeroot \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
@@ -305,7 +305,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                           emacs-nox \
                           python3 \
                           cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
-                          libxml2-devel libedit-devel curl-devel \
+                          libxml2-devel curl-devel libedit-devel \
                           sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
@@ -332,7 +332,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                            emacs-nox \
                            python3 \
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
-                           libxml2-dev libcurl4-openssl-dev \
+                           libxml2-dev libcurl4-openssl-dev libedit-dev \
                            sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
@@ -775,16 +775,16 @@ RUN exec &> >(tee /container/logs/llvm.log) \
     && case "${id_tag}" in \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
             ${PKG_INSTALL_CMD} --enablerepo crb \
-                libedit-devel ninja-build \
+                ninja-build \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
-                libedit-devel ninja python311 \
+                ninja python311 \
             ;; \
         *"|ubuntu|"*) \
             apt-get update \
             && ${PKG_INSTALL_CMD} \
-                libedit-dev ninja-build \
+                ninja-build \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
