@@ -91,10 +91,11 @@ RUN mkdir -p /container/{bin,extras,logs} && \
 # Container Environment Configuration
 #  (source this script to configure installed software)
 #-------------------------------------------------------
-export PATH=${PATH}:/container/bin
+export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v root | tr '\n' ':' | sed 's/:$//'):/container/bin
 export CPATH=${CPATH}
 export LIBRARY_PATH=${LIBRARY_PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+export MANPATH=${MANPATH}
 
 export MAKE_J_PROCS=\${MAKE_J_PROCS:-\$(nproc)}
 TOGGLE_ENABLE_PARALLEL="--disable-parallel"
@@ -271,35 +272,40 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && dnf -y install epel-release \
                 && dnf group list \
                 && dnf -y update \
+                && sed -i 's/tsflags=nodocs/#tsflags=nodocs/g' /etc/yum.conf \
+                && sed -i 's/tsflags=nodocs/#tsflags=nodocs/g' /etc/dnf/dnf.conf \
                 && dnf -y install \
                        procps \
-                       gcc{,-c++,-gfortran} gdb man \
+                       gcc{,-c++,-gfortran} gdb \
                        glibc-devel file pkgconf patch \
+                       man man-pages man-db \
                        make autoconf automake libtool \
                        git wget which tar gzip bzip2 xz \
                        diffutils file rsync \
                        emacs-nox \
                        python3 \
                        cmake lld zlib-devel libzstd-devel xz-devel bzip2-devel lz4-devel \
-                       libxml2-devel curl-devel \
+                       libxml2-devel curl-devel libedit-devel \
                        sudo fakeroot \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
                 add_conf 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' \
                 && gcc_v=14 \
+                && sed -i 's/rpm.install.excludedocs = yes/rpm.install.excludedocs = no/g' /etc/zypp/zypp.conf \
                 && zypper --non-interactive refresh \
                 && zypper --non-interactive update \
                 && zypper --non-interactive install \
-                          procps \
-                          gcc${gcc_v}{,-c++,-fortran} gdb man \
+                          procps hostname \
+                          gcc${gcc_v}{,-c++,-fortran} gdb \
                           glibc-devel file pkgconf patch \
+                          man man-pages man-pages-posix \
                           gmake autoconf automake libtool \
                           git wget which tar gzip bzip2 xz \
                           awk diffutils file rsync \
                           emacs-nox \
                           python3 \
                           cmake lld zlib-devel libzstd-devel xz-devel libbz2-devel liblz4-devel \
-                          libxml2-devel libedit-devel curl-devel \
+                          libxml2-devel curl-devel libedit-devel \
                           sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
@@ -318,14 +324,15 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && apt-get autoclean \
                 && apt-get install -y \
                            procps \
-                           {gcc,g++,gfortran}-${gcc_v} gdb man man-db \
+                           {gcc,g++,gfortran}-${gcc_v} gdb \
                            libc-dev linux-libc-dev libc6-dev file rsync pkg-config patch \
+                           man man-db manpages-dev manpages-posix manpages-posix-dev \
                            make autoconf automake libtool libtool-bin \
                            git curl wget tar gzip bzip2 xz-utils \
                            emacs-nox \
                            python3 \
                            cmake lld zlib1g-dev libzstd-dev liblzma-dev libbz2-dev liblz4-dev \
-                           libxml2-dev libcurl4-openssl-dev \
+                           libxml2-dev libcurl4-openssl-dev libedit-dev \
                            sudo fakeroot \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${gcc_v} 50 \
                 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${gcc_v} 50 \
@@ -370,7 +377,6 @@ RUN exec &> >(tee /container/logs/cuda.log) \
             --silent \
             --toolkit \
             --toolkitpath=${CUDA_HOME} \
-            --no-man-page \
     && rm -f ./cuda_*_linux*.run \
     && cd ${CUDA_HOME} \
     && rm_paths="nsight-*/ extras/ bin/nsys* bin/nsight* libnvvp/ nsightee_plugins/" \
@@ -769,16 +775,16 @@ RUN exec &> >(tee /container/logs/llvm.log) \
     && case "${id_tag}" in \
         *"almalinux"*|*"|rocky|"*|*"|rhel|"*) \
             ${PKG_INSTALL_CMD} --enablerepo crb \
-                libedit-devel ninja-build \
+                ninja-build \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
             ${PKG_INSTALL_CMD} \
-                libedit-devel ninja python311 \
+                ninja python311 \
             ;; \
         *"|ubuntu|"*) \
             apt-get update \
             && ${PKG_INSTALL_CMD} \
-                libedit-dev ninja-build \
+                ninja-build \
             ;; \
         *) \
             echo "Unrecognized base operating system!!" \
@@ -1424,6 +1430,7 @@ LABEL heffte="${HEFFTE_VERSION}"
 # Final Image
 #  notes:
 #  remove duplicates from the front of the LD_LIBRARY_PATH
+#  handle MANPATH all at once
 ################################################################################
 FROM ${FINAL_TARGET} AS final
 COPY extras/ /container/extras/
@@ -1431,6 +1438,7 @@ RUN exec &> >(tee /container/logs/final.log) \
     && list-large-directories \
     && add_conf "\n# Final configuration:" | tee -a /container/config_env.sh \
     && add_conf "export LD_LIBRARY_PATH=$(echo "${LD_LIBRARY_PATH}" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/:$//')" \
+    && add_conf "export MANPATH=$(find / -type d -path "*/share/man" -o -path "*/doc/man" | sort -u | tr '\n' ':')" \
     && add_conf "\n# (container image build completed at $(date))" \
     && useradd plainuser -d /home/plainuser \
     && echo "plainuser 	ALL=(ALL)	NOPASSWD: ALL" >> /etc/sudoers \
