@@ -228,12 +228,15 @@ jobs:
 
           PUBLISH_TAG=${PUBLISH_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-latest
 
+          PUBLISH_TAG_YYMM=${PUBLISH_TAG//-latest/-$(date +%y.%m)}
+
           cat << EOF > tags.sh
           CI_REPO=${CI_REPO}
           CI_TAG=${CI_TAG}
           CI_CACHE=${CI_CACHE}
           PUBLISH_REPO=${PUBLISH_REPO}
           PUBLISH_TAG=${PUBLISH_TAG}
+          PUBLISH_TAG_YYMM=${PUBLISH_TAG_YYMM}
           EOF
 
           cat tags.sh
@@ -334,7 +337,7 @@ jobs:
         with:
           push: true
           load: false
-          tags: ${{ env.PUBLISH_TAG }}
+          tags: ${{ env.PUBLISH_TAG }},${{ env.PUBLISH_TAG_YYMM }}
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: mode=max
           sbom: true
