@@ -394,7 +394,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
     && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
-    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-sm=turing,ampere,hopper\"" \
+    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda-stubs.conf \
     && ldconfig --verbose \
@@ -420,7 +420,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && source /container/config_env.sh \
-    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-libdir=${CUDA_STUBDIR} --with-cuda-sm=turing,ampere,hopper\"" \
+    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-libdir=${CUDA_STUBDIR}\"" \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda-stubs.conf \
     && ldconfig --verbose \
     && docker-clean
@@ -943,7 +943,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --with-device=ch4:ofi \
            --enable-silent-rules \
            --disable-static --enable-shared \
-           --enable-fortran ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
+           --enable-fortran ${TOGGLE_WITH_CUDA} --with-cuda-sm=turing,ampere,ada,hopper ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
