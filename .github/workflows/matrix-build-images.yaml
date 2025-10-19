@@ -48,7 +48,7 @@ jobs:
       max-parallel: 16
       matrix:
         compiler: [clang, nvhpc, oneapi, aocc, gcc, gcc12, gcc14]
-        mpi: [openmpi, mpich, mpich3]
+        mpi: [openmpi, mpich]
         gpu: [nogpu, cuda]
         arch: [x86_64, aarch64]
 
@@ -126,10 +126,10 @@ jobs:
               MPI_FAMILY=mpich
               MPICH_VERSION=4.3.2
 
-          - mpi: mpich3
-            mpi_build_args: |
-              MPI_FAMILY=mpich3
-              MPICH_VERSION=3.4.3
+          # - mpi: mpich3
+          #   mpi_build_args: |
+          #     MPI_FAMILY=mpich3
+          #     MPICH_VERSION=3.4.3
 
         exclude:
           - arch: aarch64
