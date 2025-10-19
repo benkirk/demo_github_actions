@@ -943,7 +943,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --with-device=ch4:ofi \
            --enable-silent-rules \
            --disable-static --enable-shared \
-           --enable-fortran ${TOGGLE_WITH_CUDA} --with-cuda-sm=turing,ampere,ada,hopper ${TOGGLE_WITH_ROCM} \
+           --enable-fortran ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
@@ -996,7 +996,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --with-device=${MPICH_DEVICE} \
            --enable-silent-rules \
            --disable-static --enable-shared \
-           --disable-cxx ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
+           --disable-cxx ${TOGGLE_WITH_CUDA} --with-cuda-sm=turing,ampere,ada,hopper ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
