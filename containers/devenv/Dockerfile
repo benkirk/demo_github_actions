@@ -975,7 +975,7 @@ LABEL mpich="${MPICH_VERSION}"
 # MPICH
 FROM compilers AS mpich
 #-------------------------------------------------------------------------------
-ARG MPICH_VERSION="4.3.1"
+ARG MPICH_VERSION="4.3.2"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
 ARG MPICH_DEVICE="ch4:ucx"
 RUN exec &> >(tee /container/logs/mpich.log) \

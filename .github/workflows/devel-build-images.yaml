@@ -69,7 +69,7 @@ jobs:
           # - mpi: mpich
           #   mpi_build_args: |
           #     MPI_FAMILY=mpich
-          #     MPICH_VERSION=4.3.1
+          #     MPICH_VERSION=4.3.2
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
     #      buildx_cloud: ${{ matrix.compiler == "clang" }}

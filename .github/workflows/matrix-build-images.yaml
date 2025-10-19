@@ -124,7 +124,7 @@ jobs:
           - mpi: mpich
             mpi_build_args: |
               MPI_FAMILY=mpich
-              MPICH_VERSION=4.3.1
+              MPICH_VERSION=4.3.2
 
           - mpi: mpich3
             mpi_build_args: |
