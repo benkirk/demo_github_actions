@@ -394,7 +394,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export LD_LIBRARY_PATH=/usr/lib64:/usr/lib:\${LD_LIBRARY_PATH}" \
     && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
-    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME}\" --with-cuda-sm=all-major" \
+    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-sm=all-major\"" \
     && source /container/config_env.sh \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda-stubs.conf \
     && ldconfig --verbose \
@@ -420,7 +420,7 @@ RUN exec &> >(tee /container/logs/cuda.log) \
     && add_conf "export LIBRARY_PATH=${CUDA_HOME}/lib64:\${CUDA_STUBDIR}:\${LIBRARY_PATH}" \
     && add_conf "export NVCC_PREPEND_FLAGS=\"-arch=all-major --cudart shared -allow-unsupported-compiler -Wno-deprecated-gpu-targets\"" \
     && source /container/config_env.sh \
-    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-libdir=${CUDA_STUBDIR}\" --with-cuda-sm=all-major" \
+    && add_conf "TOGGLE_WITH_CUDA=\"--with-cuda=${CUDA_HOME} --with-cuda-libdir=${CUDA_STUBDIR} --with-cuda-sm=all-major\"" \
     && echo "${CUDA_STUBDIR}" >> /etc/ld.so.conf.d/cuda-stubs.conf \
     && ldconfig --verbose \
     && docker-clean
