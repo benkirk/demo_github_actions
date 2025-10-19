@@ -362,8 +362,8 @@ RUN exec &> >(tee /container/logs/base-os.log) \
 #   LD_LIBRARY_PATH precedence should find the host libcuda.so should there be one.
 FROM base_os AS cuda-runfile
 #-------------------------------------------------------------------------------
-ARG CUDA_VERSION="12.9"
-ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
+ARG CUDA_VERSION="13.0"
+ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) \
@@ -975,7 +975,7 @@ LABEL mpich="${MPICH_VERSION}"
 # MPICH
 FROM compilers AS mpich
 #-------------------------------------------------------------------------------
-ARG MPICH_VERSION="4.3.1"
+ARG MPICH_VERSION="4.3.2"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
 ARG MPICH_DEVICE="ch4:ucx"
 RUN exec &> >(tee /container/logs/mpich.log) \
