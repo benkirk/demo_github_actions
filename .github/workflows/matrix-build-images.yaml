@@ -97,15 +97,15 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
               MARCH_FLAGS=-march=x86-64-v3
-              NVHPC_VERSION=25.7
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_x86_64_cuda_12.9.tar.gz
+              NVHPC_VERSION=25.9
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_x86_64_cuda_13.0.tar.gz
 
           - compiler: nvhpc
             arch: aarch64
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              NVHPC_VERSION=25.7
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.7/nvhpc_2025_257_Linux_aarch64_cuda_12.9.tar.gz
+              NVHPC_VERSION=25.9
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_aarch64_cuda_13.0.tar.gz
 
           # clang+flang from source always seems to fail on GHA public runners -
           # 16GB of RAM simply isn't enough for flang as of 20.1.8.
