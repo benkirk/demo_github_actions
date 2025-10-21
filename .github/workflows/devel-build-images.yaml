@@ -29,8 +29,8 @@ jobs:
           # # gpu architecture-dependent build arg specifications
           # - gpu: cuda
           #   gpu_build_args: |
-          #     CUDA_VERSION=13.0
-          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run
+          #     CUDA_VERSION=12.9
+          #     CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run
 
           # compiler build arg specifications
           - compiler: gcc
@@ -52,7 +52,7 @@ jobs:
               COMPILER_FAMILY=nvhpc
               MARCH_FLAGS=-march=x86-64-v3
               NVHPC_VERSION=25.9
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_x86_64_cuda_13.0.tar.gz
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_x86_64_cuda_multi.tar.gz
 
           # - compiler: clang
           #   compiler_build_args: |

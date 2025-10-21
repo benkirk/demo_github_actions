@@ -100,18 +100,14 @@ jobs:
               COMPILER_FAMILY=nvhpc
               MARCH_FLAGS=-march=x86-64-v3
               NVHPC_VERSION=25.9
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_x86_64_cuda_13.0.tar.gz
-              CUDA_VERSION=13.0
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_x86_64_cuda_multi.tar.gz
 
           - compiler: nvhpc
             arch: aarch64
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
               NVHPC_VERSION=25.9
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_aarch64_cuda_13.0.tar.gz
-              CUDA_VERSION=13.0
-              CUDA_INSTALLER_URL=https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux_sbsa.run
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.9/nvhpc_2025_259_Linux_aarch64_cuda_multi.tar.gz
 
           # # clang+flang from source always seems to fail on GHA public runners -
           # # 16GB of RAM simply isn't enough for flang as of 20.1.8.
@@ -145,9 +141,9 @@ jobs:
           - arch: aarch64
             mpi: mpich3
 
-          - compiler: nvhpc
-            arch: aarch64
-            mpi: mpich
+          # - compiler: nvhpc
+          #   arch: aarch64
+          #   mpi: mpich
 
           - compiler: clang
             arch: aarch64
