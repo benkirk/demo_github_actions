@@ -362,8 +362,8 @@ RUN exec &> >(tee /container/logs/base-os.log) \
 #   LD_LIBRARY_PATH precedence should find the host libcuda.so should there be one.
 FROM base_os AS cuda-runfile
 #-------------------------------------------------------------------------------
-ARG CUDA_VERSION="13.0"
-ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run"
+ARG CUDA_VERSION="12.9"
+ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) \
@@ -695,8 +695,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
     && cd /tmp \
     && echo "downloading ${NVHPC_URL}" \
-    && curl --retry 3 --retry-delay 5 -sO ${NVHPC_URL} && tar zxf nvhpc*.tar.gz \
-    && rm -f nvhpc*.tar.gz \
+    && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | tar zx \
     && export NVHPC_SILENT="true" \
     && export NVHPC_INSTALL_DIR="/container/nvhpc" \
     && export NVHPC_INSTALL_TYPE="single" \
@@ -712,7 +711,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
-    && rm_paths="comm_libs profilers" \
+    && rm_paths="comm_libs profilers cuda/13.0 math_libs/13.0" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
@@ -727,6 +726,10 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
                rm -rf ${dir} && ln -s ${CUDA_HOME} ${dir} ;\
                echo "After: ${parent}" && ls -l ${parent} ;\
            done ;\
+           NVHPC_CUDA_HOME=${CUDA_HOME} ;\
+           add_conf "\n# NVHPC-relinked existing CUDA ${NVHPC_CUDA_VERSION}" ;\
+           add_conf "export NVHPC_CUDA_VERSION=${NVHPC_CUDA_VERSION}" ;\
+           add_conf "export NVHPC_CUDA_HOME=${NVHPC_CUDA_HOME}" ;\
        else \
            NVHPC_CUDA_HOME=$(ls -d ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/${NVHPC_CUDA_VERSION}) ;\
            add_conf "\n# NVHPC-embedded CUDA ${NVHPC_CUDA_VERSION}" ;\
@@ -767,7 +770,7 @@ FROM toolkits AS clang-src
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 # ref. https://llvm.org/docs/CMake.html
-ARG LLVM_VERSION="21.1.3"
+ARG LLVM_VERSION="21.1.4"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -841,8 +844,8 @@ LABEL clang="${LLVM_VERSION}"
 # LLVM (clang) stage - binary download
 FROM toolkits AS clang-binaries
 #-------------------------------------------------------------------------------
-ARG LLVM_VERSION="21.1.3"
-ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.3/LLVM-21.1.3-Linux-ARM64.tar.xz"
+ARG LLVM_VERSION="21.1.4"
+ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.4/LLVM-21.1.4-Linux-ARM64.tar.xz"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && echo "downloading ${LLVM_URL}" \
@@ -974,6 +977,8 @@ LABEL mpich="${MPICH_VERSION}"
 #-------------------------------------------------------------------------------
 # MPICH
 FROM compilers AS mpich
+# Notes:
+#   to restrict yaksa CUDA SM arch, if needed: --with-cuda-sm=turing,ampere,ada,hopper
 #-------------------------------------------------------------------------------
 ARG MPICH_VERSION="4.3.2"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
@@ -996,7 +1001,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
            --with-device=${MPICH_DEVICE} \
            --enable-silent-rules \
            --disable-static --enable-shared \
-           --disable-cxx ${TOGGLE_WITH_CUDA} --with-cuda-sm=turing,ampere,ada,hopper ${TOGGLE_WITH_ROCM} \
+           --disable-cxx ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
            --disable-dependency-tracking \
             || cat config.log) \
     && make --no-print-directory --jobs ${MAKE_J_PROCS} V=0 \
