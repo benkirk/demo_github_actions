@@ -694,7 +694,6 @@ FROM toolkits AS nvhpc
 ARG NVHPC_VERSION="25.1"
 ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
 ARG MARCH_FLAGS=""
-ARG NVHPC_CUDA_EXCLUDE_VERSION="13.0"
 RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "Installing NVIDIA HPC Toolkit ${NVHPC_VERSION}" \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
@@ -702,8 +701,8 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "downloading ${NVHPC_URL}" \
     && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | \
         tar zx \
-            --exclude='*/cuda/${NVHPC_CUDA_EXCLUDE_VERSION}/*' \
-            --exclude='*/math_libs/${NVHPC_CUDA_EXCLUDE_VERSION}/*' \
+            --exclude='*/cuda/13.0/*' \
+            --exclude='*/math_libs/13.0/*' \
             --exclude='*/comm_libs/*' \
             --exclude='*/profilers/*' \
     && export NVHPC_SILENT="true" \
@@ -721,7 +720,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
-    && rm_paths="comm_libs profilers cuda/${NVHPC_CUDA_EXCLUDE_VERSION} math_libs/${NVHPC_CUDA_EXCLUDE_VERSION}" \
+    && rm_paths="comm_libs/ profilers/ cuda/13.0/ math_libs/13.0/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
