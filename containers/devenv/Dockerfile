@@ -683,7 +683,11 @@ FROM toolkits AS nvhpc
 #   the NVHPC directories cuda/XX.Y and math_libs/XX.Y contain bits of the CUDA
 #   toolkit - which we may have already installed.
 #   If so, remove the duplicates and symlink from ${CUDA_HOME}.
-#   (Note for now we assume a match when XX.Y are the same; alternatively we compare the files
+#   (Note for now we assume a match when XX.Y are the same; alternatively we compare the files)
+#
+#   When using the cuda_multi versions; these are LARGE; in addition to removing cruft
+#   after the fact; filter some things at extract time - like the CUDA we don't want.
+#   (especially important for space constrained GHA runners).
 #-------------------------------------------------------------------------------
 # 24.x and previous do not fPIC by default; which cause all sorts of problems
 # when building shared libraries later. (not the case for the other compilers.)
@@ -695,7 +699,12 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "NVHPC: https://docs.nvidia.com/hpc-sdk/eula" >> /container/EULAs.txt \
     && cd /tmp \
     && echo "downloading ${NVHPC_URL}" \
-    && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | tar zx \
+    && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | \
+        tar zx \
+            --exclude='*/cuda/13.0/*' \
+            --exclude='*/math_libs/13.0/*' \
+            --exclude='*/comm_libs/*' \
+            --exclude='*/profilers/*' \
     && export NVHPC_SILENT="true" \
     && export NVHPC_INSTALL_DIR="/container/nvhpc" \
     && export NVHPC_INSTALL_TYPE="single" \
@@ -711,7 +720,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
-    && rm_paths="comm_libs profilers cuda/13.0 math_libs/13.0" \
+    && rm_paths="comm_libs/ profilers/ cuda/13.0/ math_libs/13.0/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
