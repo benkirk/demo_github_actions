@@ -218,18 +218,13 @@ jobs:
               GPU_LABEL=
           fi
 
-          CI_REPO=${{ inputs.docker_repo }}-${{ inputs.arch }}
-
-          CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-devel
-
-          CI_CACHE=${CI_REPO}-cache:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
-
-          PUBLISH_REPO=${CI_REPO}
-
+          PUBLISH_REPO=${{ inputs.docker_repo }}-${{ inputs.arch }}
           PUBLISH_TAG=${PUBLISH_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-latest
-
           PUBLISH_TAG_YYMM=${PUBLISH_TAG//-latest/-$(date +%y.%m)}
           #PUBLISH_TAG_YYMM=${PUBLISH_TAG//-latest/-25.09}
+          CI_REPO=${PUBLISH_REPO}-cache
+          CI_CACHE=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
+          CI_TAG=${CI_CACHE//-cache/-${INPUTS_SHA}}
 
           cat << EOF > tags.sh
           CI_REPO=${CI_REPO}
