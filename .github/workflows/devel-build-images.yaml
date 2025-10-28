@@ -22,8 +22,8 @@ jobs:
       max-parallel: 24
       matrix:
         compiler: [gcc, oneapi, nvhpc, aocc]
-        os: [almalinux9, almalinux10, noble, leap]
-        mpi: [openmpi]
+        os: [almalinux10, noble, leap]
+        mpi: [openmpi, mpich]
 
         include:
           # # gpu architecture-dependent build arg specifications
@@ -66,10 +66,10 @@ jobs:
               MPI_FAMILY=openmpi
               OPENMPI_VERSION=5.0.8
 
-          # - mpi: mpich
-          #   mpi_build_args: |
-          #     MPI_FAMILY=mpich
-          #     MPICH_VERSION=4.3.2
+          - mpi: mpich
+            mpi_build_args: |
+              MPI_FAMILY=mpich
+              MPICH_VERSION=4.3.2
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
     #      buildx_cloud: ${{ matrix.compiler == "clang" }}
