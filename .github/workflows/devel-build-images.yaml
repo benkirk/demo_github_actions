@@ -112,8 +112,8 @@ jobs:
       max-parallel: 24
       matrix:
         compiler: [gcc, oneapi, nvhpc, aocc]
-        os: [almalinux9, almalinux10, noble, leap]
-        mpi: [openmpi]
+        os: [almalinux10, noble, leap]
+        mpi: [openmpi, mpich]
 
     runs-on: "ubuntu-latest"
     defaults:
