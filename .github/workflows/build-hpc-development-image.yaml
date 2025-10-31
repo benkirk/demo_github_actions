@@ -220,8 +220,8 @@ jobs:
           PUBLISH_TAG_YYMM=${PUBLISH_TAG//-latest/-$(date +%y.%m)}
           #PUBLISH_TAG_YYMM=${PUBLISH_TAG//-latest/-25.09}
           CI_REPO=${PUBLISH_REPO}-cache
-          CI_CACHE=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-cache
-          CI_TAG=${CI_CACHE//-cache/-${INPUTS_SHA}}
+          CI_TAG=${CI_REPO}:${{ inputs.os }}${COMPILER_LABEL}${MPI_LABEL}${GPU_LABEL}-${INPUTS_SHA}}
+          CI_CACHE=${CI_TAG//-${INPUTS_SHA}/-cache}
 
           cat << EOF > tags.sh
           CI_REPO=${CI_REPO}
