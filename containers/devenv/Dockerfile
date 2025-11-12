@@ -1045,7 +1045,7 @@ FROM compilers AS openmpi
 #   OMPI_ALLOW_RUN_AS_ROOT: distasteful; but unless we want to deal with multiple UIDs in the build/test process we'll allow
 #     https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#the-allow-run-as-root-option
 #-------------------------------------------------------------------------------
-ARG OPENMPI_VERSION="5.0.8"
+ARG OPENMPI_VERSION="5.0.9"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
 RUN exec &> >(tee /container/logs/openmpi.log) \
     && echo "building OpenMPI-${OPENMPI_VERSION}" \
