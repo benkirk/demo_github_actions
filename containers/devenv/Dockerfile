@@ -611,9 +611,9 @@ FROM toolkits AS oneapi
 # We'd rather not need that, so add to the system search path
 #
 # Install and remove C++, Fortran one at a time as we go for when disk space is tight, rather than downloading both installers at once.
-ARG ONEAPI_VERSION=2025.3.0
-ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/44809add-596f-4484-9cd1-cc032460e241/intel-dpcpp-cpp-compiler-2025.3.0.322_offline.sh
-ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/b3aa3ab5-c79d-4af4-8801-983ef00b90fd/intel-fortran-compiler-2025.3.0.325_offline.sh
+ARG ONEAPI_VERSION=2025.3.1
+ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5adfc398-db78-488c-b98f-78461b3c5760/intel-dpcpp-cpp-compiler-2025.3.1.16_offline.sh
+ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/724303ca-6927-4327-a560-e0aabb55b010/intel-fortran-compiler-2025.3.1.16_offline.sh
 RUN exec &> >(tee /container/logs/oneapi.log) \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
@@ -648,8 +648,8 @@ LABEL oneapi="${ONEAPI_VERSION}"
 FROM toolkits AS aocc
 #-------------------------------------------------------------------------------
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/aocc/package.py
-ARG AOCC_VERSION="5.0.0"
-ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-0/aocc-compiler-5.0.0.tar"
+ARG AOCC_VERSION="5.1.0"
+ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-1/aocc-compiler-5.1.0.tar"
 RUN exec &> >(tee /container/logs/aocc.log) \
     && echo "Installing AMD AOCC-${AOCC_VERSION}" \
     && echo "AMD AOCC: https://www.amd.com/en/developer/aocc/aocc-compiler/eula.html" >> /container/EULAs.txt \
