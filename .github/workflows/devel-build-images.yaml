@@ -39,9 +39,9 @@ jobs:
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
-              ONEAPI_VERSION=2025.3.1
-              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5adfc398-db78-488c-b98f-78461b3c5760/intel-dpcpp-cpp-compiler-2025.3.1.16_offline.sh
-              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/724303ca-6927-4327-a560-e0aabb55b010/intel-fortran-compiler-2025.3.1.16_offline.sh
+              ONEAPI_VERSION=2025.3.2
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0d61d48a-4fe8-4cb2-bd9d-94d2c19c6227/intel-dpcpp-cpp-compiler-2025.3.2.26_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/3e53d136-2870-4836-adb1-892b558fa34a/intel-fortran-compiler-2025.3.2.25_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
@@ -51,25 +51,25 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
               MARCH_FLAGS=-march=x86-64-v3
-              NVHPC_VERSION=25.11
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.11/nvhpc_2025_2511_Linux_x86_64_cuda_multi.tar.gz
+              NVHPC_VERSION=26.1
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.1/nvhpc_2026_261_Linux_x86_64_cuda_multi.tar.gz
 
           # - compiler: clang
           #   compiler_build_args: |
           #     COMPILER_FAMILY=clang
-          #     LLVM_VERSION=21.1.4
-          #     LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.4/LLVM-21.1.4-Linux-X64.tar.xz
+          #     LLVM_VERSION=21.1.8
+          #     LLVM_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/LLVM-21.1.8-Linux-X64.tar.xz
 
           # mpi build arg specifications
           - mpi: openmpi
             mpi_build_args: |
               MPI_FAMILY=openmpi
-              OPENMPI_VERSION=5.0.9
+              OPENMPI_VERSION=5.0.10
 
           - mpi: mpich
             mpi_build_args: |
               MPI_FAMILY=mpich
-              MPICH_VERSION=4.3.2
+              MPICH_VERSION=5.0.0
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
     #      buildx_cloud: ${{ matrix.compiler == "clang" }}

@@ -99,15 +99,15 @@ jobs:
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
               MARCH_FLAGS=-march=x86-64-v3
-              NVHPC_VERSION=25.11
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.11/nvhpc_2025_2511_Linux_x86_64_cuda_multi.tar.gz
+              NVHPC_VERSION=26.1
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.1/nvhpc_2026_261_Linux_x86_64_cuda_multi.tar.gz
 
           - compiler: nvhpc
             arch: aarch64
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              NVHPC_VERSION=25.11
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/25.11/nvhpc_2025_2511_Linux_aarch64_cuda_multi.tar.gz
+              NVHPC_VERSION=26.1
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.1/nvhpc_2026_261_Linux_aarch64_cuda_multi.tar.gz
 
           # # clang+flang from source always seems to fail on GHA public runners -
           # # 16GB of RAM simply isn't enough for flang as of 20.1.8.
@@ -115,18 +115,18 @@ jobs:
           # - compiler: clang
           #   compiler_build_args: |
           #     COMPILER_FAMILY=clang
-          #     LLVM_VERSION=21.1.4
+          #     LLVM_VERSION=21.1.8
 
           # mpi build arg specifications
           - mpi: openmpi
             mpi_build_args: |
               MPI_FAMILY=openmpi
-              OPENMPI_VERSION=5.0.9
+              OPENMPI_VERSION=5.0.10
 
           - mpi: mpich
             mpi_build_args: |
               MPI_FAMILY=mpich
-              MPICH_VERSION=4.3.2
+              MPICH_VERSION=5.0.0
 
           # - mpi: mpich3
           #   mpi_build_args: |

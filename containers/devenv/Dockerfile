@@ -611,9 +611,9 @@ FROM toolkits AS oneapi
 # We'd rather not need that, so add to the system search path
 #
 # Install and remove C++, Fortran one at a time as we go for when disk space is tight, rather than downloading both installers at once.
-ARG ONEAPI_VERSION=2025.3.1
-ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5adfc398-db78-488c-b98f-78461b3c5760/intel-dpcpp-cpp-compiler-2025.3.1.16_offline.sh
-ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/724303ca-6927-4327-a560-e0aabb55b010/intel-fortran-compiler-2025.3.1.16_offline.sh
+ARG ONEAPI_VERSION=2025.3.2
+ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0d61d48a-4fe8-4cb2-bd9d-94d2c19c6227/intel-dpcpp-cpp-compiler-2025.3.2.26_offline.sh
+ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/3e53d136-2870-4836-adb1-892b558fa34a/intel-fortran-compiler-2025.3.2.25_offline.sh
 RUN exec &> >(tee /container/logs/oneapi.log) \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
@@ -779,7 +779,7 @@ FROM toolkits AS clang-src
 # ref. https://flang.llvm.org/docs/GettingStarted.html
 # ref. https://github.com/llvm/llvm-project/blob/main/flang/docs/GettingStarted.md
 # ref. https://llvm.org/docs/CMake.html
-ARG LLVM_VERSION="21.1.4"
+ARG LLVM_VERSION="21.1.8"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && source /etc/os-release \
@@ -853,8 +853,8 @@ LABEL clang="${LLVM_VERSION}"
 # LLVM (clang) stage - binary download
 FROM toolkits AS clang-binaries
 #-------------------------------------------------------------------------------
-ARG LLVM_VERSION="21.1.4"
-ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.4/LLVM-21.1.4-Linux-ARM64.tar.xz"
+ARG LLVM_VERSION="21.1.8"
+ARG LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/LLVM-21.1.8-Linux-ARM64.tar.xz"
 RUN exec &> >(tee /container/logs/llvm.log) \
     && echo "Installing LLVM ${LLVM_VERSION}" \
     && echo "downloading ${LLVM_URL}" \
@@ -989,7 +989,7 @@ FROM compilers AS mpich
 # Notes:
 #   to restrict yaksa CUDA SM arch, if needed: --with-cuda-sm=turing,ampere,ada,hopper
 #-------------------------------------------------------------------------------
-ARG MPICH_VERSION="4.3.2"
+ARG MPICH_VERSION="5.0.0"
 #ARG MPICH_DEVICE="ch4:ofi,ucx"
 ARG MPICH_DEVICE="ch4:ucx"
 RUN exec &> >(tee /container/logs/mpich.log) \
@@ -1045,7 +1045,7 @@ FROM compilers AS openmpi
 #   OMPI_ALLOW_RUN_AS_ROOT: distasteful; but unless we want to deal with multiple UIDs in the build/test process we'll allow
 #     https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#the-allow-run-as-root-option
 #-------------------------------------------------------------------------------
-ARG OPENMPI_VERSION="5.0.9"
+ARG OPENMPI_VERSION="5.0.10"
 ENV OPENMPI_VERSION="${OPENMPI_VERSION}"
 RUN exec &> >(tee /container/logs/openmpi.log) \
     && echo "building OpenMPI-${OPENMPI_VERSION}" \
