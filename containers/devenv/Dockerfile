@@ -290,7 +290,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
             ;; \
         *"leap|"*|*"tumbleweed|"*) \
                 add_conf 'export PKG_INSTALL_CMD="zypper --gpg-auto-import-keys --non-interactive install"' \
-                && gcc_v=14 \
+                && gcc_v=15 \
                 && sed -i 's/rpm.install.excludedocs = yes/rpm.install.excludedocs = no/g' /etc/zypp/zypp.conf \
                 && zypper --non-interactive refresh \
                 && zypper --non-interactive update \
