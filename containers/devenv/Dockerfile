@@ -1156,7 +1156,7 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.tar.gz | tar zx \
     && cd ./c-blosc-${BLOSC_VERSION} \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
-        "gcc:15."*) \
+        "gcc:15."*|"nvhpc:"*) \
             export CFLAGS="-std=gnu17 ${CFLAGS}" \
             ;; \
        esac \
@@ -1286,7 +1286,7 @@ RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://parallel-netcdf.github.io/Release/pnetcdf-${PNETCDF_VERSION}.tar.gz | tar zx \
     && cd ./pnetcdf-${PNETCDF_VERSION} \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
-        "gcc:15."*) \
+        "gcc:15."*|"nvhpc:"*) \
             export CFLAGS="-std=gnu17 ${CFLAGS}" \
             ;; \
        esac \
