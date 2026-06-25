@@ -68,6 +68,12 @@ A version bump = edit `compiler_build_args` / `mpi_build_args` / `extra_build_ar
 two files (library versions like HDF5/NetCDF/PIO live in `extra_build_args`). For NVHPC also
 update the CUDA exclude paths in the Dockerfile (above).
 
+**Matrix gotcha:** a new compiler must be added to the base `compiler:` axis list (not just
+an `include:` entry). An `include:`-only value that matches no base combination can't merge,
+so GitHub creates a single malformed standalone job for it with no `mpi`/`gpu`/`arch` — it
+won't fan out across the matrix. (This is why `gcc15`/`gcc16` are in the base list *and*
+have `include:` build-args.)
+
 ## CI workflows
 
 - `build-hpc-development-image.yaml` — **reusable** build → test → publish; called by the
@@ -84,18 +90,39 @@ update the CUDA exclude paths in the Dockerfile (above).
 
 ## Conventions & gotchas
 
-- **gcc-15 / C23 `-std=gnu17` pattern.** GCC 15 defaults to `-std=gnu23`; several older C
-  libraries (c-blosc, pnetcdf, …) don't compile under C23. The Dockerfile guards these with
-  per-library `case "${COMPILER_FAMILY}:${GCC_VERSION}" in` blocks that prepend
-  `-std=gnu17`. **`nvc` (NVHPC) inherits the host GCC's C-standard default**, so on a distro
-  whose system gcc is 15 (currently `leap`/`tumbleweed`, set at `Dockerfile:293`) nvhpc
-  hits the same C23 errors and must be covered by the same guard — hence the
-  `"gcc:15."*|"nvhpc:"*)` arms at `Dockerfile:1159` (c-blosc) and `:1289` (pnetcdf). If a
-  later C library breaks under nvhpc with *"invalid combination of type specifiers"* or a
-  `bool`/`_Bool` typedef error, add the same arm to that step.
-- Compiler-specific quirks are handled with `case "${COMPILER_FAMILY}" in` (e.g.
-  aocc/clang need `--disable-nonstandard-feature-float16` for HDF5 and a libtool `wl=`
-  patch; nvhpc/clang disable the MPICH f08 interface).
+- **The system gcc is a load-bearing lever.** A distro's *system* gcc drives three things
+  at once: the `os-gcc` compiler family, **nvhpc's host C dialect** (`nvc` inherits the
+  system gcc's default `-std`), and the **CUDA runfile installer's gcc version check**. So
+  keeping a distro's system gcc at a pre-C23 version (≤14) avoids a whole class of breakage.
+  This is why leap is pinned (below) rather than chasing per-library workarounds.
+- **gcc-15 / C23 `-std=gnu17` pattern.** GCC ≥15 defaults to `-std=gnu23`; older C code
+  (c-blosc, pnetcdf, MPICH, ParallelIO's bundled GPTL) breaks under C23 — typically
+  `bool`/`_Bool`/`false`/`true` keyword or `typedef` errors, or "invalid combination of type
+  specifiers". Guarded per-library with `case "${COMPILER_FAMILY}:${GCC_VERSION}" in` blocks
+  that prepend `-std=gnu17`, matched on `"gcc:1[5-9]."*|"gcc:[2-9][0-9]."*` (i.e. gcc ≥15,
+  forward-looking) plus `"nvhpc:"*` as a safety net. These guards are required for the
+  explicit **gcc15/gcc16 source-build** compilers on *any* OS, independent of the leap pin.
+  Sites: `Dockerfile` ~1002 (MPICH5), ~1159 (c-blosc), ~1289 (pnetcdf). If a new C library
+  breaks the same way, add the same arm.
+- **leap base is pinned.** The `opensuse/leap` rolling tag moved to **Leap 16.0**, which
+  ships gcc-15 and dropped the `gcc14` package — that broke nvhpc/leap (C23) and the CUDA
+  install. We pin `FROM docker.io/opensuse/leap:15` (`Dockerfile:53`) and `gcc_v=14`
+  (`Dockerfile:293`, shared `leap|tumbleweed` arm) to keep a pre-C23 system gcc. If leap's
+  system gcc ever must move to ≥15, expect the C23 guards above to start firing for `os-gcc`
+  and `nvhpc` on leap too.
+- **CMake nested sub-projects don't inherit `$CFLAGS`.** Exporting `CFLAGS=-std=gnu17`
+  before `cmake` fixes flat CMake builds (c-blosc), but **not** a bundled sub-project that
+  calls its own `project()` — e.g. PIO's GPTL (`src/gptl/CMakeLists.txt`). Pin the standard
+  via cache instead: `-DCMAKE_C_STANDARD=11 -DCMAKE_C_STANDARD_REQUIRED=ON`
+  (`Dockerfile` PIO step). `REQUIRED=ON` is essential — without it CMake treats the standard
+  as a minimum and won't downgrade from the compiler's newer (C23) default.
+- **CUDA 12.9 runfile installer runs its own host-gcc check** ("Failed to verify gcc
+  version") that rejects gcc ≥15 — separate from nvcc, and *not* relaxed by the
+  `-allow-unsupported-compiler` in `NVCC_PREPEND_FLAGS` (that only affects nvcc compiles).
+  Keep cuda-enabled distros on system gcc ≤14, or pass the installer's `--override` flag.
+- Other compiler-specific quirks use `case "${COMPILER_FAMILY}" in` (e.g. aocc/clang need
+  `--disable-nonstandard-feature-float16` for HDF5 and a libtool `wl=` patch; nvhpc/clang
+  disable the MPICH f08 interface; HDF5 forces its own `-std=c99`, so it's C23-immune).
 - Bloat control is pervasive: `--disable-static --enable-shared`, `install-strip`,
   `docker-clean`, and removal of docs/profilers/static libs. Keep it lean.
 - Spelling/lint via `.cspell.json` and `.mega-linter.yml` (MegaLinter is a separate, often
@@ -108,8 +135,16 @@ gh pr checks <PR#>                       # see which matrix jobs failed
 gh run view --job <job-id> --log         # full job log (use --log-failed for just failures)
 gh run view --job <job-id> --log > out.log && grep -nE 'error:|Error 2' out.log
 gh workflow run dial-an-image.yaml -f …  # rebuild a single variant to reproduce a failure
+# pull ONE job's log while the overall run is still in progress (run-level --log refuses):
+gh api repos/<owner>/<repo>/actions/jobs/<job-id>/logs > out.log
+# authoritative job list (the `--json jobs` view can under-report long matrices):
+gh api --paginate "repos/<owner>/<repo>/actions/runs/<run-id>/jobs?per_page=100" -q '.jobs[].name'
 ```
 
-Note: the real compiler error in a failing image build is usually buried mid-log — the
-buildx "failed to solve" tail only echoes the failing RUN recipe, not the error. Fetch the
-full `--log` and grep for `error:` / `Error 2`.
+Notes:
+- The real compiler error in a failing image build is usually buried mid-log — the buildx
+  "failed to solve" tail only echoes the failing RUN recipe, not the error. Fetch the full
+  `--log` and grep for `error:` / `Error 2`.
+- `matrix-build-images.yaml` is `workflow_dispatch`-only (one base-OS per dispatch) and runs
+  in `max-parallel: 16` waves, so jobs appear in batches — a partial job list early in a run
+  is normal, not a dropped matrix.
