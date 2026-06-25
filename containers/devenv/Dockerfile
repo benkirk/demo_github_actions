@@ -701,8 +701,8 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "downloading ${NVHPC_URL}" \
     && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | \
         tar zx \
-            --exclude='*/cuda/13.1/*' \
-            --exclude='*/math_libs/13.1/*' \
+            --exclude='*/cuda/13.2/*' \
+            --exclude='*/math_libs/13.2/*' \
             --exclude='*/comm_libs/*' \
             --exclude='*/profilers/*' \
     && export NVHPC_SILENT="true" \
@@ -720,7 +720,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
-    && rm_paths="comm_libs/ profilers/ cuda/13.1/ math_libs/13.1/" \
+    && rm_paths="comm_libs/ profilers/ cuda/13.2/ math_libs/13.2/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
