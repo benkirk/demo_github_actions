@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       max-parallel: 16
       matrix:
-        compiler: [nvhpc, oneapi, aocc, gcc, gcc12, gcc14]
+        compiler: [nvhpc, oneapi, aocc, gcc, gcc12, gcc14, gcc15, gcc16]
         mpi: [openmpi, mpich]
         gpu: [nogpu, cuda]
         arch: [x86_64, aarch64]
@@ -94,9 +94,9 @@ jobs:
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
-              ONEAPI_VERSION=2025.3.1
-              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5adfc398-db78-488c-b98f-78461b3c5760/intel-dpcpp-cpp-compiler-2025.3.1.16_offline.sh
-              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/724303ca-6927-4327-a560-e0aabb55b010/intel-fortran-compiler-2025.3.1.16_offline.sh
+              ONEAPI_VERSION=2026.0.0
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e2f4cda3-8891-4d0e-bf60-00d19c4e3e27/intel-dpcpp-cpp-compiler-2026.0.0.564_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/176ca159-bee8-44f2-9164-db26f95de382/intel-fortran-compiler-2026.0.0.573_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
