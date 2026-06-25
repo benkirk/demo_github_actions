@@ -1312,6 +1312,11 @@ RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && PIO_INSTALL_PATH="/container/parallelio/${PIO_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/NCAR/ParallelIO/archive/refs/tags/${PIO_TAG}.tar.gz | tar zx \
     && cd ./*${PIO_TAG}/ && mkdir -p build && cd build \
+    && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
+        "gcc:1[5-9]."*|"gcc:[2-9][0-9]."*|"nvhpc:"*) \
+            export CFLAGS="-std=gnu17 ${CFLAGS}" \
+            ;; \
+       esac \
     && cmake \
            -Wno-dev \
            -DCMAKE_BUILD_TYPE=MinSizeRel \
