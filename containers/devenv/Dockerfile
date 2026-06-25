@@ -611,9 +611,9 @@ FROM toolkits AS oneapi
 # We'd rather not need that, so add to the system search path
 #
 # Install and remove C++, Fortran one at a time as we go for when disk space is tight, rather than downloading both installers at once.
-ARG ONEAPI_VERSION=2025.3.2
-ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0d61d48a-4fe8-4cb2-bd9d-94d2c19c6227/intel-dpcpp-cpp-compiler-2025.3.2.26_offline.sh
-ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/3e53d136-2870-4836-adb1-892b558fa34a/intel-fortran-compiler-2025.3.2.25_offline.sh
+ARG ONEAPI_VERSION=2026.0.0
+ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e2f4cda3-8891-4d0e-bf60-00d19c4e3e27/intel-dpcpp-cpp-compiler-2026.0.0.564_offline.sh
+ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/176ca159-bee8-44f2-9164-db26f95de382/intel-fortran-compiler-2026.0.0.573_offline.sh
 RUN exec &> >(tee /container/logs/oneapi.log) \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
