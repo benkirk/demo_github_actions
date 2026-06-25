@@ -294,7 +294,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && sed -i 's/rpm.install.excludedocs = yes/rpm.install.excludedocs = no/g' /etc/zypp/zypp.conf \
                 && zypper --non-interactive refresh \
                 && zypper --non-interactive update \
-                && zypper --non-interactive install \
+                && zypper --non-interactive install --force-resolution --allow-downgrade \
                           procps hostname \
                           gcc${gcc_v}{,-c++,-fortran} gdb \
                           glibc-devel file pkgconf patch \
