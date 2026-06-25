@@ -648,8 +648,8 @@ LABEL oneapi="${ONEAPI_VERSION}"
 FROM toolkits AS aocc
 #-------------------------------------------------------------------------------
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/aocc/package.py
-ARG AOCC_VERSION="5.1.0"
-ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-1/aocc-compiler-5.1.0.tar"
+ARG AOCC_VERSION="5.2.0"
+ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-2/aocc-compiler-5.2.0.tar"
 RUN exec &> >(tee /container/logs/aocc.log) \
     && echo "Installing AMD AOCC-${AOCC_VERSION}" \
     && echo "AMD AOCC: https://www.amd.com/en/developer/aocc/aocc-compiler/eula.html" >> /container/EULAs.txt \
