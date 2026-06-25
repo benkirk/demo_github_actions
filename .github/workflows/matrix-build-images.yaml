@@ -180,8 +180,8 @@ jobs:
         NETCDF_C_VERSION=4.10.0
         NETCDF_FORTRAN_VERSION=4.6.3
         PNETCDF_VERSION=1.14.1
-        PIO_VERSION=2.7.0
-        PIO_TAG=pio2_7_0
+        PIO_VERSION=2.6.7
+        PIO_TAG=pio2_6_7
         FFTW_VERSION=3.3.10
         HEFFTE_VERSION=2.4.1
 
