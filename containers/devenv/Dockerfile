@@ -386,7 +386,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                     *"|noble|"*) gcc_v=14 ;; \
                     *"|resolute|"*) gcc_v=14 ;; \
                    esac \
-                && (echo -e 'y\n' | unminimize) \
+                && (echo -e 'y\n' | unminimize || true) \
                 && apt-get update \
                 && apt-get upgrade \
                 && apt-get autoclean \
