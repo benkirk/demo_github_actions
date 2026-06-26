@@ -106,7 +106,7 @@ jobs:
     # old base -> compiler -> MPI excessivness follows, for reference
     #-------------------------------------------------------------------------------
     #   - name: Base OS
-    #     uses: docker/build-push-action@v6
+    #     uses: docker/build-push-action@v7
     #     with:
     #       push: true
     #       tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}:latest
@@ -135,7 +135,7 @@ jobs:
 
     #   - name: Additional Compiler
     #     if: ${{ inputs.compiler != '<disabled>' }}
-    #     uses: docker/build-push-action@v6
+    #     uses: docker/build-push-action@v7
     #     with:
     #       push: true
     #       tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}:latest
@@ -164,7 +164,7 @@ jobs:
 
     #   - name: Add MPI
     #     if: ${{ inputs.mpi != '<disabled>' && inputs.compiler != '<disabled>' }}
-    #     uses: docker/build-push-action@v6
+    #     uses: docker/build-push-action@v7
     #     with:
     #       push: true
     #       tags: ${{ secrets.BENKIRK_DOCKERHUB_USERNAME }}/gh-ci-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.mpi }}:latest
