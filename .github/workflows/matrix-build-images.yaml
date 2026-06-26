@@ -151,6 +151,12 @@ jobs:
           - arch: aarch64
             mpi: mpich3
 
+          # CUDA 12.9 incompatibilities
+          - compiler: gcc15
+            gpu: cuda
+          - compiler: gcc16
+            gpu: cuda
+
           # - compiler: nvhpc
           #   arch: aarch64
           #   mpi: mpich
