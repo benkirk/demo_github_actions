@@ -152,10 +152,12 @@ jobs:
             mpi: mpich3
 
           # CUDA 12.9 incompatibilities
-          - compiler: gcc15
-            gpu: cuda
           - compiler: gcc16
             gpu: cuda
+
+          # gcc16 & openmpi 5.0.10 no bueno; reevalute with 5.0.11
+          - compiler: gcc16
+            mpi: openmpi
 
           # - compiler: nvhpc
           #   arch: aarch64

@@ -1055,11 +1055,6 @@ RUN exec &> >(tee /container/logs/openmpi.log) \
     && case "${COMPILER_FAMILY}" in \
         "aocc") extra_config_args="--disable-alt-short-float" ;; \
        esac \
-    && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
-        "gcc:1[6-9]."*|"gcc:[2-9][0-9]."*) \
-            export CFLAGS="--param max-inline-insns-single=20000 ${CFLAGS}" \
-            ;; \
-       esac \
     && ./configure --help \
     && (./configure \
            --prefix=${OPENMPI_INSTALL_PATH} ${extra_config_args} ${TOGGLE_WITH_CUDA} ${TOGGLE_WITH_ROCM} \
