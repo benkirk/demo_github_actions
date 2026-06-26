@@ -22,7 +22,7 @@ jobs:
       max-parallel: 24
       matrix:
         compiler: [gcc, oneapi, nvhpc, aocc]
-        os: [almalinux10, noble, resolute, leap]
+        os: [almalinux10, noble, leap]
         mpi: [openmpi, mpich]
 
         include:
