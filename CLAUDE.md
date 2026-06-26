@@ -102,20 +102,36 @@ have `include:` build-args.)
   that prepend `-std=gnu17`, matched on `"gcc:1[5-9]."*|"gcc:[2-9][0-9]."*` (i.e. gcc ≥15,
   forward-looking) plus `"nvhpc:"*` as a safety net. These guards are required for the
   explicit **gcc15/gcc16 source-build** compilers on *any* OS, independent of the leap pin.
-  Sites: `Dockerfile` ~1002 (MPICH5), ~1159 (c-blosc), ~1289 (pnetcdf). If a new C library
-  breaks the same way, add the same arm.
+  Sites: `Dockerfile` ~1002 (MPICH5), ~1291 (pnetcdf). **c-blosc no longer uses a CFLAGS
+  arm** — it pins the standard via the CMake cache instead (see the CMake bullet below). If
+  a new C library breaks the same way, add the same arm (or the CMake-cache pin if it builds
+  with cmake).
 - **leap base is pinned.** The `opensuse/leap` rolling tag moved to **Leap 16.0**, which
   ships gcc-15 and dropped the `gcc14` package — that broke nvhpc/leap (C23) and the CUDA
   install. We pin `FROM docker.io/opensuse/leap:15` (`Dockerfile:53`) and `gcc_v=14`
   (`Dockerfile:293`, shared `leap|tumbleweed` arm) to keep a pre-C23 system gcc. If leap's
   system gcc ever must move to ≥15, expect the C23 guards above to start firing for `os-gcc`
   and `nvhpc` on leap too.
-- **CMake nested sub-projects don't inherit `$CFLAGS`.** Exporting `CFLAGS=-std=gnu17`
-  before `cmake` fixes flat CMake builds (c-blosc), but **not** a bundled sub-project that
-  calls its own `project()` — e.g. PIO's GPTL (`src/gptl/CMakeLists.txt`). Pin the standard
-  via cache instead: `-DCMAKE_C_STANDARD=11 -DCMAKE_C_STANDARD_REQUIRED=ON`
-  (`Dockerfile` PIO step). `REQUIRED=ON` is essential — without it CMake treats the standard
-  as a minimum and won't downgrade from the compiler's newer (C23) default.
+- **For CMake builds, pin the C standard via cache, not `$CFLAGS`.** Exporting
+  `CFLAGS=-std=gnu17` before `cmake` is unreliable: (a) a bundled sub-project that calls its
+  own `project()` ignores it entirely — e.g. PIO's GPTL (`src/gptl/CMakeLists.txt`); and
+  (b) even for a flat project like **c-blosc** it is *arch-dependent* — c-blosc's CMake only
+  threads the env CFLAGS through on its recognized-CPU (x86 SSE2/AVX2) branch, so on aarch64
+  it logs `Unrecognized system processor aarch64` and compiles `shuffle.c` under the
+  compiler's default (gcc ≥15 → `-std=gnu23` → `'bool' cannot be defined via typedef`). x86_64
+  passed while aarch64 failed for the *same* gcc15/gcc16 build. Fix both with the cache pin:
+  `-DCMAKE_C_STANDARD=11 -DCMAKE_C_STANDARD_REQUIRED=ON` (now on **both** the PIO and c-blosc
+  cmake lines). `REQUIRED=ON` is essential — without it CMake treats the standard as a minimum
+  and won't downgrade from the compiler's newer (C23) default. It's also global, so it applies
+  regardless of c-blosc's per-arch CPU branch.
+- **gcc-16 + OpenMPI: `always_inline` budget error.** GCC 16 fails the build with
+  `inlining failed in call to 'always_inline' 'mca_part_persist_start': --param
+  max-inline-insns-single limit reached` (OpenMPI `part_persist.h`). This is a hard `error:`
+  from the inliner enforcing the `always_inline` contract — there is **no `-W`/`-Wno-error`
+  knob to demote it** (`-Winline` only covers ordinary `inline`). The lever is to raise the
+  budget: a `gcc:1[6-9].`*-scoped guard in the OpenMPI step exports
+  `CFLAGS="--param max-inline-insns-single=20000 ${CFLAGS}"` (`Dockerfile` ~1058). gcc-15
+  OpenMPI builds clean, so the guard is gcc-16-forward only.
 - **CUDA 12.9 runfile installer runs its own host-gcc check** ("Failed to verify gcc
   version") that rejects gcc ≥15 — separate from nvcc, and *not* relaxed by the
   `-allow-unsupported-compiler` in `NVCC_PREPEND_FLAGS` (that only affects nvcc compiles).
