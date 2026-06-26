@@ -97,7 +97,7 @@ jobs:
       - name: MPI+OpenMP Hello World
         run: |
           mpicxx -o ./hello_world_mpi ./scripts/hello_world_mpi.cxx -fopenmp
-          ldd ./hello_world_mpi
+          report_cpu_features ./hello_world_mpi
           export OMP_NUM_THREADS=2
           export OMPI_MCA_opal_cuda_support=false
           export MPIR_CVAR_ENABLE_GPU=0

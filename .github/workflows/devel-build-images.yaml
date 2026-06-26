@@ -50,7 +50,7 @@ jobs:
           - compiler: nvhpc
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              MARCH_FLAGS=-march=x86-64-v3
+              MARCH_FLAGS=-tp=x86-64-v3
               NVHPC_VERSION=26.5
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_multi.tar.gz
 
@@ -159,7 +159,7 @@ jobs:
       - name: MPI+OpenMP Hello World
         run: |
           mpicxx -o ./hello_world_mpi ./scripts/hello_world_mpi.cxx -fopenmp
-          ldd ./hello_world_mpi
+          report_cpu_features ./hello_world_mpi
           export OMP_NUM_THREADS=2
           export OMPI_MCA_opal_cuda_support=false
           export MPIR_CVAR_ENABLE_GPU=0

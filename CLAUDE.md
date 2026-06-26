@@ -124,14 +124,28 @@ have `include:` build-args.)
   cmake lines). `REQUIRED=ON` is essential — without it CMake treats the standard as a minimum
   and won't downgrade from the compiler's newer (C23) default. It's also global, so it applies
   regardless of c-blosc's per-arch CPU branch.
-- **gcc-16 + OpenMPI: `always_inline` budget error.** GCC 16 fails the build with
-  `inlining failed in call to 'always_inline' 'mca_part_persist_start': --param
-  max-inline-insns-single limit reached` (OpenMPI `part_persist.h`). This is a hard `error:`
-  from the inliner enforcing the `always_inline` contract — there is **no `-W`/`-Wno-error`
-  knob to demote it** (`-Winline` only covers ordinary `inline`). The lever is to raise the
-  budget: a `gcc:1[6-9].`*-scoped guard in the OpenMPI step exports
-  `CFLAGS="--param max-inline-insns-single=20000 ${CFLAGS}"` (`Dockerfile` ~1058). gcc-15
-  OpenMPI builds clean, so the guard is gcc-16-forward only.
+- **gcc-16 + OpenMPI 5.0.10: `always_inline` budget error → combo skipped.** GCC 16 fails the
+  build with `inlining failed in call to 'always_inline' 'mca_part_persist_start': --param
+  max-inline-insns-single limit reached` (OpenMPI `part_persist.h`). It's a hard `error:` from
+  the inliner enforcing the `always_inline` contract — **no `-W`/`-Wno-error` knob demotes it**
+  (`-Winline` only covers ordinary `inline`); the only lever is to raise the budget
+  (`CFLAGS="--param max-inline-insns-single=20000 …"`). The fix lands upstream in OpenMPI
+  5.0.11, so rather than carry the workaround we **exclude `gcc16 + openmpi` in
+  `matrix-build-images.yaml`** (see the `reevaluate with 5.0.11` comment) — gcc-15 OpenMPI and
+  gcc16+mpich build clean. Drop the exclude once OpenMPI is bumped to ≥5.0.11.
+- **nvhpc ignores `-march=`; microarch must be set with `-tp`.** `nvc` does not understand
+  GNU's `-march=x86-64-v3`, so passing it via `MARCH_FLAGS` is a silent no-op and nvc falls
+  back to its auto-detected default `-tp` = the *build runner's* native CPU (e.g. `-tp znver4`
+  → AVX-512). The image then carries instructions the **test/deploy** host may lack → a bare
+  `Illegal instruction` (SIGILL) that looks OS-specific but is really build-vs-run runner
+  roulette. Use nvc's own ABI-level target instead: the nvhpc matrix entry sets
+  `MARCH_FLAGS=-tp=x86-64-v3` (other families keep `-march=…`). Note `nvc -V` prints the
+  *default* `-tp`, not the per-compile one — don't trust it; inspect the binary.
+- **`report_cpu_features [binary]`** (`/container/bin/`, a base_os FILE-heredoc) is the tool
+  for the above: it prints the host's SIMD level and, given an executable, the ISA it
+  *requires* (`readelf -n` note + `objdump` scan for x86 `%zmm` / arm SVE `z*` regs). The
+  hello-world smoke tests (`devel`/`matrix-smoketest` workflows, `containers/test`) call it so
+  an over-built binary is visible *before* the SIGILL. Reusable for any executable.
 - **CUDA 12.9 runfile installer runs its own host-gcc check** ("Failed to verify gcc
   version") that rejects gcc ≥15 — separate from nvcc, and *not* relaxed by the
   `-allow-unsupported-compiler` in `NVCC_PREPEND_FLAGS` (that only affects nvcc compiles).

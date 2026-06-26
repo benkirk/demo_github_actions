@@ -84,6 +84,7 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<'FILE5' cat > /container/bin/strip-binaries &&\
     <<'FILE6' cat > /container/bin/remove-redundant-static-libs && \
     <<'FILE7' cat > /container/bin/remove-cuda-static-libs && \
+    <<'FILE8' cat > /container/bin/report_cpu_features && \
     chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
@@ -245,6 +246,71 @@ while read -r static_lib; do
 done < <(find ${dir} -readable -type f -name "lib*_static*.a")
 echo "After: $(du -hs ${dir})"
 FILE7
+#!/bin/bash
+#-------------------------------------------------------------------------------
+# report_cpu_features [executable]
+#
+#  (1) always: report this host's CPU and its microarchitecture (SIMD) features.
+#  (2) optional: given an executable, also report the ISA it REQUIRES, so a
+#      binary built for a newer CPU than the host (a latent SIGILL, e.g. an
+#      nvhpc binary targeting -tp znver4/AVX-512 run on an AVX2-only runner)
+#      is obvious instead of a bare "Illegal instruction".
+#
+#  Works on x86_64 and aarch64; purely informational, never fails the caller.
+#-------------------------------------------------------------------------------
+arch=$(uname -m)
+
+echo "== host: $(uname -mns) =="
+case "${arch}" in
+    x86_64)
+        grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//'
+        echo -n "  ISA flags: "
+        grep -m1 flags /proc/cpuinfo | grep -oE 'avx512[a-z]*|avx2|fma|bmi[12]|sse4_[12]' | sort -u | tr '\n' ' '
+        echo
+        ;;
+    aarch64|arm64)
+        grep -m1 -E 'CPU implementer|CPU part' /proc/cpuinfo
+        echo -n "  SIMD: "
+        grep -m1 'Features' /proc/cpuinfo | grep -oE 'asimd|sve[0-9]*|fphp|bf16|i8mm' | sort -u | tr '\n' ' '
+        echo
+        ;;
+    *)
+        echo "  (unhandled arch ${arch})"
+        ;;
+esac
+
+bin="${1:-}"
+[[ -z "${bin}" ]] && exit 0
+if [[ ! -e "${bin}" ]]; then
+    echo "report_cpu_features: no such file: ${bin}" >&2
+    exit 0
+fi
+
+echo "== ${bin} requires =="
+command -v ldd     >/dev/null 2>&1 && { ldd "${bin}" 2>/dev/null || true; }
+command -v readelf >/dev/null 2>&1 \
+    && { readelf -nW "${bin}" 2>/dev/null | grep -iE 'ISA|feature|properties' || echo "  (no GNU ISA-needed note)"; }
+
+if command -v objdump >/dev/null 2>&1; then
+    case "${arch}" in
+        x86_64)
+            if objdump -d "${bin}" 2>/dev/null | grep -qE '%zmm[0-9]+'; then
+                echo "  AVX-512 (zmm) used by binary: YES  (requires an AVX-512 host)"
+            else
+                echo "  AVX-512 (zmm) used by binary: no"
+            fi
+            ;;
+        aarch64|arm64)
+            if objdump -d "${bin}" 2>/dev/null | grep -qE 'z[0-9]+\.[bhsd]'; then
+                echo "  SVE (z-regs) used by binary: YES  (requires an SVE host)"
+            else
+                echo "  SVE (z-regs) used by binary: no"
+            fi
+            ;;
+    esac
+fi
+exit 0
+FILE8
 
 
 #---------------------------------------------------------------------------------

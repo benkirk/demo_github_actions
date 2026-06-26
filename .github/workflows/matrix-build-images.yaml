@@ -108,7 +108,7 @@ jobs:
             arch: x86_64
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              MARCH_FLAGS=-march=x86-64-v3
+              MARCH_FLAGS=-tp=x86-64-v3
               NVHPC_VERSION=26.5
               NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_multi.tar.gz
 
