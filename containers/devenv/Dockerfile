@@ -55,6 +55,7 @@ FROM docker.io/opensuse/tumbleweed AS tumbleweed
 
 FROM ubuntu:jammy AS jammy
 FROM ubuntu:noble AS noble
+FROM ubuntu:resolute AS resolute
 
 # In theory we could not install CUDA or ROCM and instead take a
 # preconfigured vendor image; leaving these here for reference.
@@ -383,6 +384,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && case "${id_tag}" in \
                     *"|jammy|"*) gcc_v=12 ;; \
                     *"|noble|"*) gcc_v=14 ;; \
+                    *"|resolute|"*) gcc_v=14 ;; \
                    esac \
                 && (echo -e 'y\n' | unminimize) \
                 && apt-get update \

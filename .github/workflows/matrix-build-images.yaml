@@ -14,6 +14,7 @@ on:
           - almalinux10
           - jammy
           - noble
+          - resolute
           - leap
           - tumbleweed
 
@@ -152,6 +153,9 @@ jobs:
             mpi: mpich3
 
           # CUDA 12.9 incompatibilities
+          - compiler: gcc15
+            gpu: cuda
+
           - compiler: gcc16
             gpu: cuda
 
