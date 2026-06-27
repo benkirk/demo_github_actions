@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       hello_world:
-        description: 'Build Simple OpenMP Hello World'
+        description: "Build Simple OpenMP Hello World"
         type: boolean
         default: true
   push:
@@ -14,8 +14,7 @@ on:
   schedule:
     # run at 2:42 UTC every Saturday
     # ref: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onschedule
-    - cron: '42 2 * * 6'
-
+    - cron: "42 2 * * 6"
 
 jobs:
   build-from-conda-env:
@@ -30,12 +29,12 @@ jobs:
         shell: bash -elo pipefail {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          submodules: 'true'
+          submodules: "true"
           fetch-depth: 0
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v4
         with:
           activate-environment: demo-github-actions
           environment-file: conda.yaml

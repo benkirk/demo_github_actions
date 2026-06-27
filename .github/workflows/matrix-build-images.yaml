@@ -14,6 +14,7 @@ on:
           - almalinux10
           - jammy
           - noble
+          - resolute
           - leap
           - tumbleweed
 
@@ -47,7 +48,7 @@ jobs:
       fail-fast: false
       max-parallel: 16
       matrix:
-        compiler: [nvhpc, oneapi, aocc, gcc, gcc12, gcc14]
+        compiler: [nvhpc, oneapi, aocc, gcc, gcc12, gcc14, gcc15, gcc16]
         mpi: [openmpi, mpich]
         gpu: [nogpu, cuda]
         arch: [x86_64, aarch64]
@@ -79,14 +80,24 @@ jobs:
           - compiler: gcc14
             compiler_build_args: |
               COMPILER_FAMILY=gcc
-              GCC_VERSION=14.2.0
+              GCC_VERSION=14.3.0
+
+          - compiler: gcc15
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=15.3.0
+
+          - compiler: gcc16
+            compiler_build_args: |
+              COMPILER_FAMILY=gcc
+              GCC_VERSION=16.1.0
 
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
-              ONEAPI_VERSION=2025.3.1
-              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/5adfc398-db78-488c-b98f-78461b3c5760/intel-dpcpp-cpp-compiler-2025.3.1.16_offline.sh
-              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/724303ca-6927-4327-a560-e0aabb55b010/intel-fortran-compiler-2025.3.1.16_offline.sh
+              ONEAPI_VERSION=2026.0.0
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e2f4cda3-8891-4d0e-bf60-00d19c4e3e27/intel-dpcpp-cpp-compiler-2026.0.0.564_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/176ca159-bee8-44f2-9164-db26f95de382/intel-fortran-compiler-2026.0.0.573_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
@@ -98,16 +109,16 @@ jobs:
             arch: x86_64
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              MARCH_FLAGS=-march=x86-64-v3
-              NVHPC_VERSION=26.1
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.1/nvhpc_2026_261_Linux_x86_64_cuda_multi.tar.gz
+              MARCH_FLAGS=-tp=x86-64-v3
+              NVHPC_VERSION=26.5
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_multi.tar.gz
 
           - compiler: nvhpc
             arch: aarch64
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              NVHPC_VERSION=26.1
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.1/nvhpc_2026_261_Linux_aarch64_cuda_multi.tar.gz
+              NVHPC_VERSION=26.5
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_aarch64_cuda_multi.tar.gz
 
           # # clang+flang from source always seems to fail on GHA public runners -
           # # 16GB of RAM simply isn't enough for flang as of 20.1.8.
@@ -126,7 +137,7 @@ jobs:
           - mpi: mpich
             mpi_build_args: |
               MPI_FAMILY=mpich
-              MPICH_VERSION=5.0.0
+              MPICH_VERSION=5.0.1
 
           # - mpi: mpich3
           #   mpi_build_args: |
@@ -140,6 +151,17 @@ jobs:
             compiler: aocc
           - arch: aarch64
             mpi: mpich3
+
+          # CUDA 12.9 incompatibilities
+          - compiler: gcc15
+            gpu: cuda
+
+          - compiler: gcc16
+            gpu: cuda
+
+          # gcc16 & openmpi 5.0.10 no bueno; reevalute with 5.0.11
+          - compiler: gcc16
+            mpi: openmpi
 
           # - compiler: nvhpc
           #   arch: aarch64
@@ -165,13 +187,13 @@ jobs:
       test: ${{ inputs.test }}
       publish: ${{ inputs.publish }}
       extra_build_args: |
-        HDF5_VERSION=1.12.3
-        HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
-        NETCDF_C_VERSION=4.9.3
-        NETCDF_FORTRAN_VERSION=4.6.2
+        HDF5_VERSION=1.14.5
+        HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.5/hdf5-1.14.5.tar.gz
+        NETCDF_C_VERSION=4.10.0
+        NETCDF_FORTRAN_VERSION=4.6.3
         PNETCDF_VERSION=1.14.1
-        PIO_VERSION=2.6.6
-        PIO_TAG=pio2_6_6
+        PIO_VERSION=2.6.7
+        PIO_TAG=pio2_6_7
         FFTW_VERSION=3.3.10
         HEFFTE_VERSION=2.4.1
 

@@ -50,11 +50,12 @@ FROM rockylinux/rockylinux:8 AS rockylinux8
 FROM rockylinux/rockylinux:9 AS rockylinux9
 FROM rockylinux/rockylinux:10 AS rockylinux10
 
-FROM docker.io/opensuse/leap AS leap
+FROM docker.io/opensuse/leap:15 AS leap
 FROM docker.io/opensuse/tumbleweed AS tumbleweed
 
 FROM ubuntu:jammy AS jammy
 FROM ubuntu:noble AS noble
+FROM ubuntu:resolute AS resolute
 
 # In theory we could not install CUDA or ROCM and instead take a
 # preconfigured vendor image; leaving these here for reference.
@@ -84,6 +85,7 @@ RUN mkdir -p /container/{bin,extras,logs} && \
     <<'FILE5' cat > /container/bin/strip-binaries &&\
     <<'FILE6' cat > /container/bin/remove-redundant-static-libs && \
     <<'FILE7' cat > /container/bin/remove-cuda-static-libs && \
+    <<'FILE8' cat > /container/bin/report_cpu_features && \
     chmod a+rx /container/bin/* \
     && cat /container/config_env.sh \
     && ln -s /container/config_env.sh /etc/profile.d/z00-build-env.sh
@@ -245,6 +247,71 @@ while read -r static_lib; do
 done < <(find ${dir} -readable -type f -name "lib*_static*.a")
 echo "After: $(du -hs ${dir})"
 FILE7
+#!/bin/bash
+#-------------------------------------------------------------------------------
+# report_cpu_features [executable]
+#
+#  (1) always: report this host's CPU and its microarchitecture (SIMD) features.
+#  (2) optional: given an executable, also report the ISA it REQUIRES, so a
+#      binary built for a newer CPU than the host (a latent SIGILL, e.g. an
+#      nvhpc binary targeting -tp znver4/AVX-512 run on an AVX2-only runner)
+#      is obvious instead of a bare "Illegal instruction".
+#
+#  Works on x86_64 and aarch64; purely informational, never fails the caller.
+#-------------------------------------------------------------------------------
+arch=$(uname -m)
+
+echo "== host: $(uname -mns) =="
+case "${arch}" in
+    x86_64)
+        grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//'
+        echo -n "  ISA flags: "
+        grep -m1 flags /proc/cpuinfo | grep -oE 'avx512[a-z]*|avx2|fma|bmi[12]|sse4_[12]' | sort -u | tr '\n' ' '
+        echo
+        ;;
+    aarch64|arm64)
+        grep -m1 -E 'CPU implementer|CPU part' /proc/cpuinfo
+        echo -n "  SIMD: "
+        grep -m1 'Features' /proc/cpuinfo | grep -oE 'asimd|sve[0-9]*|fphp|bf16|i8mm' | sort -u | tr '\n' ' '
+        echo
+        ;;
+    *)
+        echo "  (unhandled arch ${arch})"
+        ;;
+esac
+
+bin="${1:-}"
+[[ -z "${bin}" ]] && exit 0
+if [[ ! -e "${bin}" ]]; then
+    echo "report_cpu_features: no such file: ${bin}" >&2
+    exit 0
+fi
+
+echo "== ${bin} requires =="
+command -v ldd     >/dev/null 2>&1 && { ldd "${bin}" 2>/dev/null || true; }
+command -v readelf >/dev/null 2>&1 \
+    && { readelf -nW "${bin}" 2>/dev/null | grep -iE 'ISA|feature|properties' || echo "  (no GNU ISA-needed note)"; }
+
+if command -v objdump >/dev/null 2>&1; then
+    case "${arch}" in
+        x86_64)
+            if objdump -d "${bin}" 2>/dev/null | grep -qE '%zmm[0-9]+'; then
+                echo "  AVX-512 (zmm) used by binary: YES  (requires an AVX-512 host)"
+            else
+                echo "  AVX-512 (zmm) used by binary: no"
+            fi
+            ;;
+        aarch64|arm64)
+            if objdump -d "${bin}" 2>/dev/null | grep -qE 'z[0-9]+\.[bhsd]'; then
+                echo "  SVE (z-regs) used by binary: YES  (requires an SVE host)"
+            else
+                echo "  SVE (z-regs) used by binary: no"
+            fi
+            ;;
+    esac
+fi
+exit 0
+FILE8
 
 
 #---------------------------------------------------------------------------------
@@ -294,7 +361,7 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && sed -i 's/rpm.install.excludedocs = yes/rpm.install.excludedocs = no/g' /etc/zypp/zypp.conf \
                 && zypper --non-interactive refresh \
                 && zypper --non-interactive update \
-                && zypper --non-interactive install \
+                && zypper --non-interactive install --force-resolution --allow-downgrade \
                           procps hostname \
                           gcc${gcc_v}{,-c++,-fortran} gdb \
                           glibc-devel file pkgconf patch \
@@ -317,8 +384,9 @@ RUN exec &> >(tee /container/logs/base-os.log) \
                 && case "${id_tag}" in \
                     *"|jammy|"*) gcc_v=12 ;; \
                     *"|noble|"*) gcc_v=14 ;; \
+                    *"|resolute|"*) gcc_v=14 ;; \
                    esac \
-                && (echo -e 'y\n' | unminimize) \
+                && (echo -e 'y\n' | unminimize || true) \
                 && apt-get update \
                 && apt-get upgrade \
                 && apt-get autoclean \
@@ -611,9 +679,9 @@ FROM toolkits AS oneapi
 # We'd rather not need that, so add to the system search path
 #
 # Install and remove C++, Fortran one at a time as we go for when disk space is tight, rather than downloading both installers at once.
-ARG ONEAPI_VERSION=2025.3.2
-ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0d61d48a-4fe8-4cb2-bd9d-94d2c19c6227/intel-dpcpp-cpp-compiler-2025.3.2.26_offline.sh
-ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/3e53d136-2870-4836-adb1-892b558fa34a/intel-fortran-compiler-2025.3.2.25_offline.sh
+ARG ONEAPI_VERSION=2026.0.0
+ARG ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e2f4cda3-8891-4d0e-bf60-00d19c4e3e27/intel-dpcpp-cpp-compiler-2026.0.0.564_offline.sh
+ARG ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/176ca159-bee8-44f2-9164-db26f95de382/intel-fortran-compiler-2026.0.0.573_offline.sh
 RUN exec &> >(tee /container/logs/oneapi.log) \
     && echo "Installing Intel-OneAPI" \
     && echo "Intel OneAPI: https://www.intel.com/content/www/us/en/content-details/777700/intel-end-user-license-agreement-for-developer-tools-august-2024.html" >> /container/EULAs.txt \
@@ -648,8 +716,8 @@ LABEL oneapi="${ONEAPI_VERSION}"
 FROM toolkits AS aocc
 #-------------------------------------------------------------------------------
 # https://github.com/spack/spack/blob/develop/var/spack/repos/builtin/packages/aocc/package.py
-ARG AOCC_VERSION="5.1.0"
-ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-1/aocc-compiler-5.1.0.tar"
+ARG AOCC_VERSION="5.2.0"
+ARG AOCC_URL="https://download.amd.com/developer/eula/aocc/aocc-5-2/aocc-compiler-5.2.0.tar"
 RUN exec &> >(tee /container/logs/aocc.log) \
     && echo "Installing AMD AOCC-${AOCC_VERSION}" \
     && echo "AMD AOCC: https://www.amd.com/en/developer/aocc/aocc-compiler/eula.html" >> /container/EULAs.txt \
@@ -701,8 +769,8 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "downloading ${NVHPC_URL}" \
     && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | \
         tar zx \
-            --exclude='*/cuda/13.1/*' \
-            --exclude='*/math_libs/13.1/*' \
+            --exclude='*/cuda/13.2/*' \
+            --exclude='*/math_libs/13.2/*' \
             --exclude='*/comm_libs/*' \
             --exclude='*/profilers/*' \
     && export NVHPC_SILENT="true" \
@@ -720,7 +788,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
-    && rm_paths="comm_libs/ profilers/ cuda/13.1/ math_libs/13.1/" \
+    && rm_paths="comm_libs/ profilers/ cuda/13.2/ math_libs/13.2/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
@@ -999,7 +1067,7 @@ RUN exec &> >(tee /container/logs/mpich.log) \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz | tar xz \
     && cd ./mpich-${MPICH_VERSION} \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
-        "gcc:15."*) \
+        "gcc:1[5-9]."*|"gcc:[2-9][0-9]."*) \
             export CFLAGS="-std=gnu17 -Wno-incompatible-pointer-types ${CFLAGS}" \
             ;; \
        esac \
@@ -1155,14 +1223,11 @@ RUN exec &> >(tee /container/logs/iolibs.log) \
     && BLOSC_INSTALL_PATH="/container/c-blosc/${BLOSC_VERSION}" \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.tar.gz | tar zx \
     && cd ./c-blosc-${BLOSC_VERSION} \
-    && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
-        "gcc:15."*) \
-            export CFLAGS="-std=gnu17 ${CFLAGS}" \
-            ;; \
-       esac \
     && cmake \
            -DCMAKE_INSTALL_PREFIX=${BLOSC_INSTALL_PATH} \
            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+           -DCMAKE_C_STANDARD=11 \
+           -DCMAKE_C_STANDARD_REQUIRED=ON \
            -DCMAKE_INSTALL_DO_STRIP=1 \
            -DPREFER_EXTERNAL_ZLIB=ON \
            -DPREFER_EXTERNAL_ZSTD=ON \
@@ -1286,7 +1351,7 @@ RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && cd /tmp && curl --retry 3 --retry-delay 5 -sSL https://parallel-netcdf.github.io/Release/pnetcdf-${PNETCDF_VERSION}.tar.gz | tar zx \
     && cd ./pnetcdf-${PNETCDF_VERSION} \
     && case "${COMPILER_FAMILY}:${GCC_VERSION}" in \
-        "gcc:15."*) \
+        "gcc:1[5-9]."*|"gcc:[2-9][0-9]."*|"nvhpc:"*) \
             export CFLAGS="-std=gnu17 ${CFLAGS}" \
             ;; \
        esac \
@@ -1315,6 +1380,8 @@ RUN exec &> >(tee /container/logs/mpi-iolibs.log) \
     && cmake \
            -Wno-dev \
            -DCMAKE_BUILD_TYPE=MinSizeRel \
+           -DCMAKE_C_STANDARD=11 \
+           -DCMAKE_C_STANDARD_REQUIRED=ON \
            -DCMAKE_INSTALL_PREFIX=${PIO_INSTALL_PATH} \
            -DBUILD_SHARED_LIBS=ON \
            -DPIO_ENABLE_FORTRAN=ON \

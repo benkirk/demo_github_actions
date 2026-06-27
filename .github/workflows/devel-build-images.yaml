@@ -39,9 +39,9 @@ jobs:
           - compiler: oneapi
             compiler_build_args: |
               COMPILER_FAMILY=oneapi
-              ONEAPI_VERSION=2025.3.2
-              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0d61d48a-4fe8-4cb2-bd9d-94d2c19c6227/intel-dpcpp-cpp-compiler-2025.3.2.26_offline.sh
-              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/3e53d136-2870-4836-adb1-892b558fa34a/intel-fortran-compiler-2025.3.2.25_offline.sh
+              ONEAPI_VERSION=2026.0.0
+              ONEAPI_CC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e2f4cda3-8891-4d0e-bf60-00d19c4e3e27/intel-dpcpp-cpp-compiler-2026.0.0.564_offline.sh
+              ONEAPI_FC_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/176ca159-bee8-44f2-9164-db26f95de382/intel-fortran-compiler-2026.0.0.573_offline.sh
 
           - compiler: aocc
             compiler_build_args: |
@@ -50,9 +50,9 @@ jobs:
           - compiler: nvhpc
             compiler_build_args: |
               COMPILER_FAMILY=nvhpc
-              MARCH_FLAGS=-march=x86-64-v3
-              NVHPC_VERSION=26.1
-              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.1/nvhpc_2026_261_Linux_x86_64_cuda_multi.tar.gz
+              MARCH_FLAGS=-tp=x86-64-v3
+              NVHPC_VERSION=26.5
+              NVHPC_URL=https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_multi.tar.gz
 
           # - compiler: clang
           #   compiler_build_args: |
@@ -69,7 +69,7 @@ jobs:
           - mpi: mpich
             mpi_build_args: |
               MPI_FAMILY=mpich
-              MPICH_VERSION=5.0.0
+              MPICH_VERSION=5.0.1
 
     # (use a cloud builder for clang -- too resource intensive for free GHA runners)
     #      buildx_cloud: ${{ matrix.compiler == "clang" }}
@@ -90,13 +90,13 @@ jobs:
       test: true
       publish: true
       extra_build_args: |
-        HDF5_VERSION=1.12.3
-        HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5-1_12_3/hdf5-1_12_3.tar.gz
-        NETCDF_C_VERSION=4.9.3
-        NETCDF_FORTRAN_VERSION=4.6.2
+        HDF5_VERSION=1.14.5
+        HDF5_URL=https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.5/hdf5-1.14.5.tar.gz
+        NETCDF_C_VERSION=4.10.0
+        NETCDF_FORTRAN_VERSION=4.6.3
         PNETCDF_VERSION=1.14.1
-        PIO_VERSION=2.6.6
-        PIO_TAG=pio2_6_6
+        PIO_VERSION=2.6.7
+        PIO_TAG=pio2_6_7
         FFTW_VERSION=3.3.10
         HEFFTE_VERSION=2.4.1
 
@@ -124,7 +124,7 @@ jobs:
       image: benjaminkirk/gh-ci-x86_64:${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: "true"
           fetch-depth: 0
@@ -159,7 +159,7 @@ jobs:
       - name: MPI+OpenMP Hello World
         run: |
           mpicxx -o ./hello_world_mpi ./scripts/hello_world_mpi.cxx -fopenmp
-          ldd ./hello_world_mpi
+          report_cpu_features ./hello_world_mpi
           export OMP_NUM_THREADS=2
           export OMPI_MCA_opal_cuda_support=false
           export MPIR_CVAR_ENABLE_GPU=0

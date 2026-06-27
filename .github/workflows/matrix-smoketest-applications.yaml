@@ -62,7 +62,7 @@ jobs:
       image: ${{ inputs.docker_repo }}-${{ matrix.arch }}:${{ inputs.os }}-${{ matrix.compiler }}-${{ matrix.mpi }}${{ matrix.gpu == 'cuda' && '-cuda' || '' }}-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: "true"
           fetch-depth: 0
@@ -97,7 +97,7 @@ jobs:
       - name: MPI+OpenMP Hello World
         run: |
           mpicxx -o ./hello_world_mpi ./scripts/hello_world_mpi.cxx -fopenmp
-          ldd ./hello_world_mpi
+          report_cpu_features ./hello_world_mpi
           export OMP_NUM_THREADS=2
           export OMPI_MCA_opal_cuda_support=false
           export MPIR_CVAR_ENABLE_GPU=0
