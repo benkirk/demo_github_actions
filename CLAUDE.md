@@ -146,7 +146,7 @@ have `include:` build-args.)
   *requires* (`readelf -n` note + `objdump` scan for x86 `%zmm` / arm SVE `z*` regs). The
   hello-world smoke tests (`devel`/`matrix-smoketest` workflows, `containers/test`) call it so
   an over-built binary is visible *before* the SIGILL. Reusable for any executable.
-- **CUDA 12.9 runfile installer runs its own host-gcc check** ("Failed to verify gcc
+- **CUDA runfile installer runs its own host-gcc check** ("Failed to verify gcc
   version") that rejects gcc ≥15 — separate from nvcc, and *not* relaxed by the
   `-allow-unsupported-compiler` in `NVCC_PREPEND_FLAGS` (that only affects nvcc compiles).
   Keep cuda-enabled distros on system gcc ≤14, or pass the installer's `--override` flag.
