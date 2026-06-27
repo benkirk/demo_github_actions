@@ -430,8 +430,8 @@ RUN exec &> >(tee /container/logs/base-os.log) \
 #   LD_LIBRARY_PATH precedence should find the host libcuda.so should there be one.
 FROM base_os AS cuda-runfile
 #-------------------------------------------------------------------------------
-ARG CUDA_VERSION="12.9"
-ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_575.57.08_linux.run"
+ARG CUDA_VERSION="13.2"
+ARG CUDA_INSTALLER_URL="https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux.run"
 ARG CUDA_HOME="/container/cuda/${CUDA_VERSION}"
 ENV CUDA_HOME="${CUDA_HOME}"
 RUN exec &> >(tee /container/logs/cuda.log) \
@@ -759,8 +759,8 @@ FROM toolkits AS nvhpc
 #-------------------------------------------------------------------------------
 # 24.x and previous do not fPIC by default; which cause all sorts of problems
 # when building shared libraries later. (not the case for the other compilers.)
-ARG NVHPC_VERSION="25.1"
-ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/25.1/nvhpc_2025_251_Linux_x86_64_cuda_12.6.tar.gz"
+ARG NVHPC_VERSION="26.5"
+ARG NVHPC_URL="https://developer.download.nvidia.com/hpc-sdk/26.5/nvhpc_2026_265_Linux_x86_64_cuda_multi.tar.gz"
 ARG MARCH_FLAGS=""
 RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "Installing NVIDIA HPC Toolkit ${NVHPC_VERSION}" \
@@ -769,8 +769,8 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && echo "downloading ${NVHPC_URL}" \
     && curl --retry 3 --retry-delay 5 -sSL ${NVHPC_URL} | \
         tar zx \
-            --exclude='*/cuda/13.2/*' \
-            --exclude='*/math_libs/13.2/*' \
+            --exclude='*/cuda/12.9/*' \
+            --exclude='*/math_libs/12.9/*' \
             --exclude='*/comm_libs/*' \
             --exclude='*/profilers/*' \
     && export NVHPC_SILENT="true" \
@@ -788,7 +788,7 @@ RUN exec &> >(tee /container/logs/nvhpc.log) \
     && add_conf "export MARCH_FLAGS=\"${MARCH_FLAGS}\"" \
     && source /container/config_env.sh \
     && cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION} \
-    && rm_paths="comm_libs/ profilers/ cuda/13.2/ math_libs/13.2/" \
+    && rm_paths="comm_libs/ profilers/ cuda/12.9/ math_libs/12.9/" \
     && echo "Removing extra bloat: ${rm_paths}" > README.whered_stuff_go && (du -hs ${rm_paths} >> README.whered_stuff_go || true) \
     && rm -rf ${rm_paths} \
     && NVHPC_CUDA_VERSION=$(cd ${NVCOMPILERS}/${NVARCH}/${NVHPC_VERSION}/cuda/ && ls * -d | grep -E '[0-9]+\.[0-9]+$') \
